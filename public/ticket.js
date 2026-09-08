@@ -330,7 +330,7 @@ nextBtn.addEventListener("click", function () {
   } else if (currentStep === 2) {
     if (validateStep(2)) goTo(3);
   } else {
-    form.requestSubmit();
+    submitForm();
   }
 });
 
@@ -338,9 +338,7 @@ prevBtn.addEventListener("click", function () {
   if (currentStep > 1) goTo(currentStep - 1);
 });
 
-form.addEventListener("submit", function (e) {
-  e.preventDefault();
-
+function submitForm() {
   if (!validateStep(3)) return;
 
   nextBtn.disabled = true;
@@ -375,6 +373,11 @@ form.addEventListener("submit", function (e) {
       nextBtn.disabled = false;
       showToast("ส่งข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง");
     });
+}
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  submitForm();
 });
 
 function showLoading() {
