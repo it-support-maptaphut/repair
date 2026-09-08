@@ -537,10 +537,136 @@
     }
     .toast.show { opacity: 1; }
 
-    @media (max-width: 640px) {
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 900px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .det-grid { grid-template-columns: 1fr; }
       .form-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 767px) {
+      body { padding: 12px 12px 90px; }
+
+      .app-header { padding: 14px 16px; }
+      .app-logo { width: 40px; height: 40px; }
+      .app-title { font-size: 16px; }
+      .app-sub { font-size: 12px; }
+      .btn-refresh { padding: 8px 12px; font-size: 13px; }
+
+      .stats { gap: 10px; }
+      .stat-card { padding: 11px 12px; gap: 10px; }
+      .stat-icon { width: 38px; height: 38px; }
+      .stat-num { font-size: 19px; }
+      .stat-label { font-size: 11px; }
+
+      .button-only {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+    }
+
+    /* ตาราง -> การ์ดบนจอเล็ก */
+    @media (max-width: 767px) {
+      .table-wrap {
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+      }
+      .table-wrap thead { display: none; }
+      table { min-width: 0; }
+
+      #ticketsBody tr.ticket-card {
+        display: grid;
+        grid-template-columns: 1fr;
+        position: relative;
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        animation: cardIn 0.25s ease both;
+        cursor: pointer;
+        padding-top: 4px;
+      }
+
+      #ticketsBody tr.ticket-card:hover { background: var(--card); }
+
+      /* แถวบนสุด: เลขที่ซ่อม */
+      #ticketsBody tr.ticket-card td[data-c="no"] {
+        display: flex;
+        align-items: center;
+        padding: 12px 92px 10px 15px;
+        border-bottom: none;
+        background: #f6faf7;
+      }
+      #ticketsBody tr.ticket-card td[data-c="no"] .tno { font-size: 17px; }
+      /* badge สถานะ -> มุมขวาบน */
+      #ticketsBody tr.ticket-card td[data-c="status"] {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        display: block;
+      }
+
+      /* Meta rows 2 คอลัมน์ */
+      #ticketsBody tr.ticket-card td[data-c="date"],
+      #ticketsBody tr.ticket-card td[data-c="device"],
+      #ticketsBody tr.ticket-card td[data-c="user"],
+      #ticketsBody tr.ticket-card td[data-c="loc"],
+      #ticketsBody tr.ticket-card td[data-c="symptom"] {
+        display: block;
+        padding: 7px 15px;
+        border: none;
+        background: #fff;
+        font-size: 13px;
+      }
+
+      /* เรียง meta เป็น grid 2 คอลัมน์ label:value */
+      #ticketsBody tr.ticket-card td[data-c="date"]::before,
+      #ticketsBody tr.ticket-card td[data-c="device"]::before,
+      #ticketsBody tr.ticket-card td[data-c="loc"]::before,
+      #ticketsBody tr.ticket-card td[data-c="user"]::before,
+      #ticketsBody tr.ticket-card td[data-c="symptom"]::before {
+        content: attr(data-label) " : ";
+        color: var(--muted);
+        font-size: 12px;
+        display: inline;
+      }
+
+      #ticketsBody tr.ticket-card td[data-c="symptom"] { padding-top: 2px; }
+      #ticketsBody tr.ticket-card .cell-trunc { max-width: none; white-space: normal; }
+
+      /* Action bar ล่างสุด */
+      #ticketsBody tr.ticket-card td[data-c="actions"] {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 15px 14px;
+        border-top: 1px solid var(--line);
+        background: #f6faf7;
+      }
+      #ticketsBody tr.ticket-card td[data-c="actions"] .row-actions { flex-wrap: wrap; }
+      #ticketsBody tr.ticket-card td[data-c="actions"] .icon-btn { width: 38px; height: 38px; }
+      #ticketsBody tr.ticket-card td[data-c="actions"] .status-btn,
+      #ticketsBody tr.ticket-card td[data-c="actions"] .pdf-chip { font-size: 12px; padding: 7px 12px; }
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ปุ่มรีเฟรช -> เฉพาะไอคอนบนจอเล็กมาก */
+    @media (max-width: 420px) {
+      .btn-refresh { padding: 8px 10px; }
+      .btn-refresh .label-text { display: none; }
+      .ticket-card-head .tno { font-size: 16px; }
     }
   </style>
 </head>
@@ -562,7 +688,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/>
           </svg>
-          รีเฟรช
+          <span class="label-text">รีเฟรช</span>
         </button>
       </div>
     </header>
@@ -864,24 +990,23 @@
       empty.classList.add("hidden");
       body.innerHTML = tickets.map(function (t, i) {
         var st = statusInfo(t);
+        var loc = parseLocation(t.location);
         return (
-          "<tr>" +
-          '<td><span class="tno">' + esc(t.ticket_no) + "</span></td>" +
-          '<td><span class="t-date">' + esc(fmtDate(t.created_at)) + "</span></td>" +
-          '<td>' + esc(t.device || "-") + "</td>" +
-          '<td><span class="cell-trunc" title="' + esc(t.symptom) + '">' + esc(t.symptom || "-") + "</span></td>" +
-          '<td>' + esc(t.location || "-") + "</td>" +
-          '<td class="cell-user">' + esc(t.reporter_line_id || "-") + "</td>" +
-          '<td>' +
+          '<tr class="ticket-card" data-no="' + esc(t.ticket_no) + '">' +
+          '<td data-c="no" data-label="เลขที่ซ่อม"><span class="tno">' + esc(t.ticket_no) + "</span></td>" +
+          '<td data-c="date" data-label="เวลา / วันที่"><span class="t-date">' + esc(fmtDate(t.created_at)) + "</span></td>" +
+          '<td data-c="device" data-label="หมวด">' + esc(t.device || "-") + "</td>" +
+          '<td data-c="symptom" data-label="อาการ"><span class="cell-trunc" data-full="' + esc(t.symptom) + '">' + esc(t.symptom || "-") + "</span></td>" +
+          '<td data-c="loc" data-label="สถานที่"><span class="cell-loc" data-label="สถานที่">' + esc(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</span></td>" +
+          '<td data-c="user" data-label="บัญชี Line" class="cell-user">' + esc(t.reporter_line_id || "-") + "</td>" +
+          '<td data-c="status" data-label="สถานะ">' +
           '<span class="badge ' + st.cls + '">' + st.label + "</span>" +
-          '<div class="row-actions" style="margin-top:6px;flex-wrap:wrap">' + statusButtons(t, i) + "</div>" +
           "</td>" +
-          '<td><div class="row-actions" style="justify-content:flex-end">' +
+          '<td data-c="actions" data-label="จัดการ">' +
+            '<div class="row-actions" style="justify-content:flex-end">' +
+            statusButtons(t, i) +
             '<button class="icon-btn share" data-act="share" data-i="' + i + '" title="แชร์เป็น PDF">' +
               '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>' +
-            "</button>" +
-            '<button class="icon-btn" data-act="detail" data-i="' + i + '" title="รายละเอียด">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>' +
             "</button>" +
             '<button class="icon-btn edit" data-act="edit" data-i="' + i + '" title="แก้ไข">' +
               '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"/></svg>' +
@@ -889,10 +1014,23 @@
             '<button class="icon-btn del" data-act="del" data-i="' + i + '" title="ลบ">' +
               '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>' +
             "</button>" +
-          "</div></td>" +
+            '<button class="icon-btn" data-act="detail" data-i="' + i + '" title="รายละเอียด">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>' +
+            "</button>" +
+            "</div>" +
+          "</td>" +
           "</tr>"
         );
       }).join("");
+
+      // ทำให้ทั้งการ์ด (บนมือถือ) คลิกเปิดรายละเอียดได้
+      var cards = body.querySelectorAll("tr.ticket-card");
+      cards.forEach(function (tr2, idx) {
+        tr2.addEventListener("click", function (e) {
+          if (e.target.closest("button, a, .icon-btn, .status-btn, .pdf-chip")) return;
+          openDetail(tickets[idx]);
+        });
+      });
 
       body.querySelectorAll("button[data-act]").forEach(function (btn) {
         btn.addEventListener("click", function () {
