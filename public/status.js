@@ -151,7 +151,8 @@ function renderMyList(tickets) {
   myTicketsEl.classList.remove("hidden");
 }
 
-backLink.addEventListener("click", function () {
+backLink.addEventListener("click", function (e) {
+  e.preventDefault();
   closeWebView();
 });
 
