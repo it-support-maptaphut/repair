@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06c755">
+<title>ตรวจสอบสถานะงาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="status.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <h1 class="header-title">ตรวจสอบสถานะงาน</h1>
+    
+  </div>
+</header>
+
+<main class="status-wrap">
+
+  <section class="status-card">
+    <label class="field-label" for="statusNo">หมายเลขใบแจ้งซ่อม</label>
+    <p class="field-hint">ใส่รหัสที่ได้รับหลังแจ้งซ่อม เช่น HW-001 หรือ SW-012</p>
+    <div class="search-row">
+      <input type="text" id="statusNo" class="text-input" inputmode="text" maxlength="12" placeholder="เช่น HW-001" autocomplete="off">
+      <button id="statusBtn" class="action-btn primary" type="button">ตรวจสอบ</button>
+    </div>
+  </section>
+
+  <div id="myTickets" class="my-tickets hidden">
+    <h2 class="sub-heading">งานของคุณ</h2>
+    <div id="myList"></div>
+  </div>
+
+  <div id="result" class="result hidden"></div>
+
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="backLineWrap" class="back-line hidden">
+  <a id="backLine" class="back-btn" href="#">กลับเข้าสู่ Line</a>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="status.js"></script>
+</body>
+</html>

@@ -96,6 +96,73 @@ app.get("/api/admin/tickets", async (req, res) => {
   }
 });
 
+app.get("/status", (req, res) => res.redirect("/status.html"));
+
+app.get("/api/tickets/:ticketNo/status", async (req, res) => {
+  try {
+    const ticketNo = String(req.params.ticketNo || "").trim();
+    if (!supab.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    }
+    const { data, error } = await supab.supabase
+      .from("tickets")
+      .select("ticket_no,device,symptom,location,reporter_name,reporter_phone,status,approved_at,created_at,pdf_url")
+      .eq("ticket_no", ticketNo)
+      .single();
+    if (error && /approved_at/.test(error.message)) {
+      const retry = await supab.supabase
+        .from("tickets")
+        .select("ticket_no,device,symptom,location,reporter_name,reporter_phone,status,created_at,pdf_url")
+        .eq("ticket_no", ticketNo)
+        .single();
+      if (retry.error || !retry.data) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+      return res.json({ ok: true, ticket: retry.data });
+    }
+    if (error || !data) {
+      return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+    }
+    res.json({ ok: true, ticket: data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/user/tickets", async (req, res) => {
+  try {
+    const uid = String(req.query.uid || "").trim();
+    if (!uid) {
+      return res.status(400).json({ ok: false, message: "ไม่มีรหัสผู้ใช้" });
+    }
+    if (!supab.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    }
+    const { data, error } = await supab.supabase
+      .from("tickets")
+      .select("ticket_no,device,symptom,location,status,approved_at,created_at,pdf_url")
+      .eq("reporter_line_id", uid)
+      .order("id", { ascending: false })
+      .limit(50);
+    if (error && /approved_at/.test(error.message)) {
+      const retry = await supab.supabase
+        .from("tickets")
+        .select("ticket_no,device,symptom,location,status,created_at,pdf_url")
+        .eq("reporter_line_id", uid)
+        .order("id", { ascending: false })
+        .limit(50);
+      if (retry.error) throw retry.error;
+      return res.json({ ok: true, tickets: retry.data || [] });
+    }
+    if (error) throw error;
+    res.json({ ok: true, tickets: data || [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 app.put("/api/tickets/:ticketNo", async (req, res) => {
   try {
     const ticketNo = String(req.params.ticketNo || "").trim();

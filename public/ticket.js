@@ -393,6 +393,11 @@ function showSuccess(ticketNo) {
   loadingOverlay.classList.add("hidden");
   successOverlay.classList.remove("hidden");
 
+  var statusLink = document.getElementById("statusLink");
+  if (statusLink) {
+    statusLink.href = "status.html?no=" + encodeURIComponent(ticketNo);
+  }
+
   var seconds = 5;
   countdownEl.textContent = "กลับเข้าสู่ Line อัตโนมัติใน " + seconds + " วินาที";
 

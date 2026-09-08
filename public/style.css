@@ -668,6 +668,18 @@ textarea.invalid,
   font-weight: 600;
 }
 
+.back-btn.ghost {
+  background: #fff;
+  color: var(--green);
+  border: 1.5px solid var(--green-line);
+  margin-bottom: 8px;
+}
+
+.back-btn + .back-btn {
+  margin-top: 8px;
+}
+
+.back-btn.ghost:active,
 .back-btn:active {
   transform: scale(0.98);
 }
