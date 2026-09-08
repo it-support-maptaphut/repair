@@ -64,6 +64,7 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
     await supab.addPhotos(ticketId, urls);
 
     await line.notifyAdminTicket({ ticketNo, device, symptom, location, urls, name, phone });
+    await line.notifyUserSubmitted({ ticketNo, reporterLineId });
 
     res.json({ ok: true, ticketNo });
   } catch (err) {
@@ -159,16 +160,35 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
     if (!supab.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
     }
-    const { data, error } = await supab.supabase
+    const patch = { status };
+    const approvedAt = new Date().toISOString();
+    if (status === "working") patch.approved_at = approvedAt;
+    let { data, error } = await supab.supabase
       .from("tickets")
-      .update({ status })
+      .update(patch)
       .eq("ticket_no", ticketNo)
       .select("*, ticket_photos(id, cloud_url)")
       .single();
+    if (error && status === "working" && /approved_at/.test(error.message)) {
+      patch.approved_at = undefined;
+      const retry = await supab.supabase
+        .from("tickets")
+        .update({ status })
+        .eq("ticket_no", ticketNo)
+        .select("*, ticket_photos(id, cloud_url)")
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error || !data) {
       return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
     }
-    await line.notifyStatus({ ticketNo, status, reporterLineId: data.reporter_line_id || "" });
+    await line.notifyStatus({
+      ticketNo,
+      status,
+      reporterLineId: data.reporter_line_id || "",
+      approvedAt: status === "done" ? data.approved_at || approvedAt : data.approved_at || null
+    });
 
     if (status === "done") {
       try {

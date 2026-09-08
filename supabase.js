@@ -102,7 +102,7 @@ async function updateArchive(ticketNo, gzipBase64, sizeBytes) {
 
 async function listTickets(limit = 500) {
   const cols =
-    "id,ticket_no,device,symptom,location,reporter_name,reporter_phone,reporter_line_id,status,created_at,pdf_url,archive_size,archived_at,ticket_photos(id,cloud_url,sort_order)";
+    "id,ticket_no,device,symptom,location,reporter_name,reporter_phone,reporter_line_id,status,approved_at,created_at,pdf_url,archive_size,archived_at,ticket_photos(id,cloud_url,sort_order)";
   const { data, error } = await supabase
     .from("tickets")
     .select(cols)

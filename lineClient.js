@@ -89,13 +89,35 @@ async function pushToUser(userId, text) {
     .catch((err) => console.warn("[Line] push ถึงผู้แจ้งไม่สำเร็จ:", err.message));
 }
 
-async function notifyStatus({ ticketNo, status, reporterLineId }) {
+async function notifyUserSubmitted({ ticketNo, reporterLineId }) {
+  if (!client || !reporterLineId) {
+    console.log(`[Line] ข้ามตอบกลับผู้แจ้ง (ไม่มี Line ID); งาน ${ticketNo}`);
+    return;
+  }
+  await pushToUser(
+    reporterLineId,
+    "ได้รับแจ้งซ่อมแล้ว หมายเลข " + ticketNo + "\nกรุณารอฝ่าย IT SUPPORT ตอบรับสักครู่นะครับ"
+  );
+}
+
+function formatThaiTime(d) {
+  if (!d) return "";
+  return new Date(d).toLocaleString("th-TH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+async function notifyStatus({ ticketNo, status, reporterLineId, approvedAt }) {
   const text =
     status === "working"
-      ? "อัปเดตงานหมายเลข " + ticketNo + "\nฝ่าย IT SUPPORT ทราบแล้ว กำลังไปดำเนินการครับ"
+      ? "อัปเดตงานหมายเลข " + ticketNo + "\nตอนนี้ฝ่าย IT SUPPORT ทราบแล้ว กรุณารอสักครู่ครับ"
       : status === "done"
-      ? "อัปเดตงานหมายเลข " + ticketNo + "\nงานเสร็จสิ้นแล้วครับ ขอบคุณที่แจ้งซ่อม"
-      : "อัปเดตงาน " + ticketNo + "\nสถานะ: ได้รับแจ้งแจ้งเรียบร้อย";
+      ? "งานซ่อมเสร็จสิ้นแล้วครับ\nรหัสซ่อม: " + ticketNo + "\nวันที่อนุมัติ: " + formatThaiTime(approvedAt)
+      : "อัปเดตงาน " + ticketNo + "\nสถานะ: ได้รับแจ้งเรียบร้อย";
 
   if (reporterLineId && client) {
     await pushToUser(reporterLineId, text);
@@ -109,6 +131,7 @@ module.exports = {
   middleware: secretReady ? middleware({ channelSecret: config.CHANNEL_SECRET }) : null,
   canPush,
   notifyAdminTicket,
+  notifyUserSubmitted,
   pushTextToAdmin,
   pushToUser,
   notifyStatus,
