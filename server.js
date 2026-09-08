@@ -239,6 +239,10 @@ if (line.middleware) {
   console.log("[webhook] ข้ามตั้งค่า (Channel Secret ยังไม่พร้อม)");
 }
 
-app.listen(config.PORT, () => {
-  console.log(`Server เริ่มที่ http://localhost:${config.PORT}`);
-});
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  app.listen(config.PORT, () => {
+    console.log(`Server เริ่มที่ http://localhost:${config.PORT}`);
+  });
+}
