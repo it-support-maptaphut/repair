@@ -17,6 +17,7 @@ create table if not exists public.tickets (
   reporter_phone text default '',
   reporter_line_id text default '',
   status text default 'new',
+  approved_at timestamptz,
   created_at timestamptz default now()
 );
 
