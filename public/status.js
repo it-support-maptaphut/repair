@@ -115,12 +115,16 @@ function lookup() {
     return;
   }
   statusBtn.disabled = true;
+  statusBtn.innerHTML = '<span class="spinner-sm"></span>';
+  resultEl.innerHTML = "";
+  resultEl.classList.add("hidden");
   fetch("/api/tickets/" + encodeURIComponent(no) + "/status")
     .then(function (r) {
       return r.json().then(function (d) { return { ok: r.ok, d: d }; });
     })
     .then(function (res) {
       statusBtn.disabled = false;
+      statusBtn.textContent = "ตรวจสอบ";
       if (!res.ok) {
         renderError(res.d.message || "ไม่พบงาน ตรวจสอบหมายเลขอีกครั้ง");
         return;
@@ -129,6 +133,7 @@ function lookup() {
     })
     .catch(function () {
       statusBtn.disabled = false;
+      statusBtn.textContent = "ตรวจสอบ";
       renderError("ตรวจสอบไม่สำเร็จ กรุณาลองใหม่");
     });
 }

@@ -25,6 +25,25 @@
 .search-row .action-btn {
   flex: 0 0 auto;
   padding: 12px 18px;
+  min-width: 90px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.search-row .action-btn:disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
 .my-tickets {
@@ -43,6 +62,12 @@
 
 .result {
   margin-top: 22px;
+  animation: resultFadeIn 0.25s ease both;
+}
+
+@keyframes resultFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .result-empty {
@@ -73,7 +98,13 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(23, 36, 28, 0.04);
-  animation: fadeUp 0.3s ease both;
+  will-change: transform, opacity;
+  animation: cardReveal 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .card-head {
