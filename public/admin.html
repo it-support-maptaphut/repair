@@ -1,0 +1,1306 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบแจ้งซ่อม IT — จัดการงาน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #eef3f0;
+      --card: #ffffff;
+      --green-dark: #0b3d25;
+      --green: #0e6b3a;
+      --green-soft: #e6f4ec;
+      --text: #23362b;
+      --muted: #6b7d72;
+      --line: #e2ece6;
+      --yellow: #d9a406;
+      --yellow-soft: #fff7db;
+      --blue: #2563eb;
+      --blue-soft: #e8f0ff;
+      --red: #dc2626;
+      --red-soft: #fdecec;
+      --radius: 14px;
+      --shadow: 0 6px 24px rgba(11, 61, 37, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Prompt", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px 60px;
+    }
+
+    .page { max-width: 1080px; margin: 0 auto; }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: linear-gradient(135deg, var(--green-dark), #145c37);
+      color: #fff;
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .app-logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .app-title {
+      font-size: 19px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .app-sub { font-size: 13px; color: rgba(255, 255, 255, 0.75); font-weight: 300; }
+
+    .header-right { margin-left: auto; }
+
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-refresh:hover { background: rgba(255, 255, 255, 0.24); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .stat-num { font-size: 22px; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    .stat-new .stat-icon { background: var(--yellow-soft); color: #92600a; }
+    .stat-working .stat-icon { background: var(--blue-soft); color: var(--blue); }
+    .stat-done .stat-icon { background: var(--green-soft); color: var(--green); }
+    .stat-all .stat-icon { background: #eef1f3; color: #37474f; }
+
+    .table-wrap {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+      font-size: 14px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 13px 14px;
+      background: #f5faf7;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover { background: #f8fcf9; }
+
+    .tno { font-weight: 600; color: var(--green-dark); white-space: nowrap; }
+    .t-date { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+    .cell-trunc {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cell-user { font-size: 12.5px; }
+    .cell-user .uline { color: var(--muted); font-size: 11.5px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .b-new { background: var(--yellow-soft); color: #92600a; }
+    .b-working { background: var(--blue-soft); color: var(--blue); }
+    .b-done { background: var(--green-soft); color: var(--green); }
+
+    .row-actions { display: flex; gap: 6px; white-space: nowrap; }
+
+    .icon-btn {
+      width: 33px;
+      height: 33px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-soft); }
+    .icon-btn.edit:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+    .icon-btn.del:hover { border-color: var(--red); color: var(--red); background: var(--red-soft); }
+    .icon-btn.share:hover { border-color: #0f766e; color: #0f766e; background: #ecfdf7; }
+
+    .empty {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 44px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    /* ---------- MODAL ---------- */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 40, 24, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 50;
+      opacity: 1;
+      transition: opacity 0.18s;
+    }
+
+    .modal-mask.hidden { display: none; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 88vh;
+      overflow: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      position: relative;
+      animation: popUp 0.18s ease;
+    }
+
+    @keyframes popUp {
+      from { opacity: 0; transform: scale(0.94) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-body { padding: 22px 24px 24px; }
+
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f1f5f3;
+      color: var(--muted);
+      border-radius: 8px;
+      font-size: 17px;
+      cursor: pointer;
+      line-height: 1;
+      z-index: 2;
+    }
+    .modal-close:hover { background: var(--red-soft); color: var(--red); }
+
+    .modal-title { font-size: 17px; font-weight: 600; color: var(--green-dark); margin-bottom: 2px; }
+    .modal-no { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+
+    .det-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .det-item { background: #f6faf7; border-radius: 10px; padding: 10px 12px; }
+    .det-item.full { grid-column: 1 / -1; }
+    .det-k { font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
+    .det-v { font-size: 14px; font-weight: 500; word-break: break-word; }
+    .det-v.symptom { font-weight: 400; line-height: 1.5; }
+
+    .ph-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .ph-grid a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+    .ph-grid img {
+      width: 100%;
+      height: 92px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.2s;
+    }
+    .ph-grid a:hover img { transform: scale(1.05); }
+    .no-photo {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 14px;
+      background: #f6faf7;
+      border-radius: 10px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: none;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: #0d5e32; }
+    .btn-danger { background: var(--red-soft); color: var(--red); border: 1px solid #f6caca; }
+    .btn-danger:hover { background: var(--red); color: #fff; }
+    .btn-ghost { background: #f1f5f3; color: var(--text); }
+    .btn-ghost:hover { background: #e4ebe7; }
+    .btn-share { background: #0f766e; color: #fff; }
+    .btn-share:hover { background: #0b5d56; }
+    .btn-drive { background: #ecfdf7; color: #0f766e; border: 1px solid #b8e6db; }
+    .btn-drive:hover { background: #0f766e; color: #fff; }
+    .btn-edit { background: var(--blue-soft); color: var(--blue); }
+    .btn-edit:hover { background: var(--blue); color: #fff; }
+    .btn-approve { background: #e2f7eb; color: #15803d; border: 1px solid #c3ecd1; }
+    .btn-approve:hover { background: var(--green); color: #fff; border-color: var(--green); }
+    .btn-finish { background: var(--blue-soft); color: var(--blue); border: 1px solid #d3e0fa; }
+    .btn-finish:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    .status-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .status-btn.approve { color: #15803d; border-color: #c3ecd1; background: #e2f7eb; }
+    .status-btn.approve:hover { background: var(--green); color: #fff; border-color: var(--green); }
+    .status-btn.finish { color: var(--blue); border-color: #d3e0fa; background: var(--blue-soft); }
+    .status-btn.finish:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    .pdf-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #0f766e;
+      background: #ecfdf7;
+      border: 1px solid #b8e6db;
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: 0.15s;
+    }
+    .pdf-chip:hover { background: #10b981; color: #fff; }
+
+    .archive-box { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .archive-size {
+      font-size: 13px;
+      color: var(--muted);
+      background: #f0f5f2;
+      border: 1px dashed #c9dcd1;
+      padding: 5px 10px;
+      border-radius: 8px;
+    }
+
+    .form-field { margin-bottom: 12px; }
+    .form-field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+    .form-field select,
+    .form-field input,
+    .form-field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fbfdfc;
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border 0.15s;
+    }
+    .form-field select:focus,
+    .form-field input:focus,
+    .form-field textarea:focus { border-color: var(--green); background: #fff; }
+    .form-field textarea { resize: vertical; min-height: 84px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .confirm-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: var(--red-soft);
+      color: var(--red);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+    }
+    .confirm-no { font-weight: 600; color: var(--green-dark); text-align: center; font-size: 16px; margin-bottom: 6px; }
+    .confirm-text { text-align: center; color: var(--muted); font-size: 13.5px; margin-bottom: 18px; }
+
+    /* ---------- PDF CARD ---------- */
+    .pdf-card {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 640px;
+      background: #ffffff;
+      color: #1f2b25;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+      font-family: "Prompt", sans-serif;
+    }
+    .pdf-hero {
+      background: linear-gradient(135deg, #0b3d25, #145c37);
+      color: #fff;
+      text-align: center;
+      padding: 34px 36px 30px;
+    }
+    .pdf-hero-label {
+      font-size: 14px;
+      opacity: 0.9;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .pdf-hero-no {
+      font-size: 34px;
+      font-weight: 700;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+    .pdf-badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .pdf-section-h {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0a6b3b;
+      padding-bottom: 8px;
+      margin-bottom: 4px;
+      border-bottom: 2px solid #dbe7e1;
+    }
+    .pdf-info-pad { padding: 16px 36px 8px; }
+    .pdf-meta { width: 100%; border-collapse: collapse; margin: 0; }
+    .pdf-meta tr { border-bottom: 1px solid #e6eeea; }
+    .pdf-meta td, .pdf-meta th {
+      padding: 10px 0;
+      font-size: 14px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .pdf-meta th { color: #6b7d72; font-weight: 500; width: 150px; }
+    .pdf-sec {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1.5px solid #dbe7e1;
+    }
+    .pdf-sec-title {
+      font-size: 12px;
+      color: #0a6b3b;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+    .pdf-photo-block {
+      padding: 14px 36px 18px;
+      border-top: 1.5px solid #dbe7e1;
+    }
+    .pdf-photo-row { display: flex; gap: 16px; margin-bottom: 14px; }
+    .pdf-photo-row:last-child { margin-bottom: 0; }
+    .pdf-photo-row img {
+      width: 276px;
+      height: 207px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e6eeea;
+    }
+    .pdf-photo-row img.sm {
+      width: 176px;
+      height: 132px;
+    }
+    .pdf-no-photo {
+      padding: 2px 0;
+      color: #6b7d72;
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      background: var(--green-dark);
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+      z-index: 99;
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .det-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="app-header">
+      <div class="app-logo">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+          <circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="app-title">แดชบอร์ดงานแจ้งซ่อม IT</div>
+        <div class="app-sub">จัดการใบแจ้งงานทั้งหมด</div>
+      </div>
+      <div class="header-right">
+        <button class="btn-refresh" onclick="fetchTickets()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/>
+          </svg>
+          รีเฟรช
+        </button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat-card stat-new">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
+        </div>
+        <div><div class="stat-num" id="statNew">0</div><div class="stat-label">งานใหม่</div></div>
+      </div>
+      <div class="stat-card stat-working">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <div><div class="stat-num" id="statWorking">0</div><div class="stat-label">กำลังดำเนินการ</div></div>
+      </div>
+      <div class="stat-card stat-done">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div><div class="stat-num" id="statDone">0</div><div class="stat-label">เสร็จสิ้น</div></div>
+      </div>
+      <div class="stat-card stat-all">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        </div>
+        <div><div class="stat-num" id="statAll">0</div><div class="stat-label">รวมทั้งหมด</div></div>
+      </div>
+    </section>
+
+    <main>
+      <div class="table-wrap">
+        <table id="ticketsTable">
+          <thead>
+            <tr>
+              <th>เลขที่ซ่อม</th>
+              <th>เวลา / วันที่</th>
+              <th>หมวด</th>
+              <th>อาการ</th>
+              <th>สถานที่</th>
+              <th>บัญชี Line</th>
+              <th>สถานะ</th>
+              <th style="text-align:right">จัดการข้อมูล</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyBox" class="empty hidden">
+        <p>ยังไม่มีใบแจ้งงาน</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-mask hidden" id="modalMask">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()" title="ปิด">&times;</button>
+      <div class="modal-body">
+
+        <!-- รายละเอียด -->
+        <div id="detailView">
+          <h3 class="modal-title">รายละเอียดใบแจ้งซ่อม</h3>
+          <div class="modal-no">
+            <span class="tno" id="detNo"></span>
+            <span class="badge" id="detStatus"></span>
+          </div>
+          <div class="det-grid">
+            <div class="det-item"><div class="det-k">วัน / เวลา</div><div class="det-v" id="detDate"></div></div>
+            <div class="det-item"><div class="det-k">หมวด</div><div class="det-v" id="detDevice"></div></div>
+            <div class="det-item"><div class="det-k">สาขา</div><div class="det-v" id="detBranch"></div></div>
+            <div class="det-item"><div class="det-k">ตำแหน่ง / สถานที่</div><div class="det-v" id="detPosition"></div></div>
+            <div class="det-item"><div class="det-k">เบอร์โทรติดต่อ</div><div class="det-v" id="detPhone"></div></div>
+            <div class="det-item"><div class="det-k">บัญชี Line (ผู้แจ้ง)</div><div class="det-v" id="detLineId"></div></div>
+            <div class="det-item full"><div class="det-k">อาการเสีย</div><div class="det-v symptom" id="detSymptom"></div></div>
+            <div class="det-item full">
+              <div class="det-k">รูปภาพ · สภาพอุปกรณ์</div>
+              <div class="ph-grid" id="detPhotos"></div>
+            </div>
+            <div class="det-item full">
+              <div class="det-k">รูปสถานที่ / โซน</div>
+              <div class="ph-grid" id="detZonePhotos"></div>
+            </div>
+            <div class="det-item full" id="detArchiveWrap" hidden>
+              <div class="det-k">ข้อมูลที่จัดเก็บ (บีบอัด)</div>
+              <div class="archive-box">
+                <span id="archiveSize" class="archive-size"></span>
+                <a class="pdf-chip" id="archiveDownload" href="#" download>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  ดาวน์โหลดข้อมูล (บีบอัด)
+                </a>
+
+      </div>
+            </div>
+            <div class="det-item full" id="detPdfWrap" hidden>
+              <div class="det-k">ลิงก์ PDF ที่พี่ตั้งไว้</div>
+              <a id="detPdfLink" class="pdf-chip" target="_blank" rel="noopener">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>
+                เปิด PDF ใน Google Drive
+              </a>
+            </div>
+          </div>
+          <div class="modal-actions" style="margin-bottom:12px">
+            <button class="btn btn-approve" id="btnApprove" onclick="setStatus(currentRow,'working')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              อนุมัติแล้ว
+            </button>
+            <button class="btn btn-finish" id="btnFinish" onclick="setStatus(currentRow,'done')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.73c.6.5 1 1.27 1 2.27h6c0-1 .4-1.77 1-2.27A7 7 0 0 0 12 2Z"/></svg>
+              เสร็จสิ้น
+            </button>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-edit" onclick="openEditView()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"/></svg>
+              แก้ไข
+            </button>
+            <button class="btn btn-danger" onclick="openConfirmView()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+              ลบ
+            </button>
+            <button class="btn btn-share" onclick="openPdfChoice(currentRow)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>
+              แชร์เป็น PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- แก้ไข -->
+        <div id="editView" hidden>
+          <h3 class="modal-title">แก้ไขใบแจ้งซ่อม</h3>
+          <div class="modal-no"><span class="tno" id="editNo"></span></div>
+          <div class="form-field">
+            <label>หมวด</label>
+            <select id="editDevice">
+              <option value="อุปกรณ์ IT">อุปกรณ์ IT</option>
+              <option value="โปรแกรม">โปรแกรม</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>อาการเสีย</label>
+            <textarea id="editSymptom"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>สถานที่</label>
+              <input id="editLocation" placeholder="เช่น โซนผัก">
+            </div>
+            <div class="form-field">
+              <label>บัญชี Line (ผู้แจ้ง)</label>
+              <input id="editLineId" placeholder="U..." disabled>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveEdit()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              บันทึกการแก้ไข
+            </button>
+          </div>
+        </div>
+
+        <!-- ยืนยันลบ -->
+        <div id="confirmView" hidden>
+          <div class="confirm-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">ยืนยันการลบงาน</h3>
+          <p class="confirm-no" id="confirmNo"></p>
+          <p class="confirm-text">การลบนี้ไม่สามารถกู้คืนได้ ทั้งข้อมูลและรูปภาพจะถูกลบออกทันที</p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="doDelete()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+        <!-- เลือกวิธี แชร์ / เก็บ PDF -->
+        <div id="pdfChoiceView" hidden>
+          <div class="confirm-icon" style="background:#ecfdf7;color:#0f766e">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">แชร์ / เก็บ PDF</h3>
+          <p class="confirm-text">ไฟล์ PDF ของเลขที่ <span class="tno" id="choiceNo"></span> เลือกวิธีส่งได้ 2 ทาง</p>
+          <div class="modal-actions" style="flex-direction:column;align-items:stretch;margin:0">
+            <button class="btn btn-drive" onclick="startDriveUpload()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              อัปโหลดไป Google Drive
+            </button>
+            <button class="btn btn-share" onclick="shareNormal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+              แชร์ปกติ
+            </button>
+          </div>
+          <p class="drive-note" style="margin-top:14px;color:var(--muted);font-size:12.5px;line-height:1.6">
+            วิธีอัปโหลด : ระบบจะสร้างไฟล์ PDF (ตั้งชื่อตามรหัสซ่อม เช่น HW-001.pdf) แล้วโหลดให้อัตโนมัติ
+            พร้อมเปิดโฟลเดอร์ Google Drive ขึ้นมา — ลากไฟล์ที่โหลดไปวางในโฟลเดอร์ได้เลย
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="pdf-card" id="pdfCard"></div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var tickets = [];
+    var currentRow = null;
+
+    var STATUS = {
+      new: { label: "งานใหม่",  cls: "b-new" },
+      working: { label: "กำลังดำเนินการ", cls: "b-working" },
+      done: { label: "เสร็จสิ้น", cls: "b-done" }
+    };
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+      });
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "-";
+      var d = new Date(iso);
+      if (isNaN(d)) return "-";
+      return d.toLocaleString("th-TH", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function statusInfo(row) {
+      return STATUS[row.status] || STATUS.new;
+    }
+
+    function toast(msg) {
+      var t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(function () { t.classList.remove("show"); }, 2200);
+    }
+
+    function loadTickets() {
+      document.getElementById("ticketsBody").innerHTML =
+        '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      return fetch("/api/admin/tickets")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          tickets = data.tickets || [];
+          renderStats();
+          renderTable();
+        })
+        .catch(function () {
+          document.getElementById("ticketsBody").innerHTML =
+            '<tr><td colspan="8" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ โปรดลองใหม่</td></tr>';
+        });
+    }
+
+    window.fetchTickets = loadTickets;
+
+    function renderStats() {
+      var n = 0, w = 0, d = 0;
+      tickets.forEach(function (t) {
+        if (t.status === "new") n++;
+        else if (t.status === "working") w++;
+        else if (t.status === "done") d++;
+      });
+      document.getElementById("statNew").textContent = n;
+      document.getElementById("statWorking").textContent = w;
+      document.getElementById("statDone").textContent = d;
+      document.getElementById("statAll").textContent = tickets.length;
+    }
+
+    function statusButtons(t, i) {
+      var h = "";
+      if (t.status === "new") {
+        h += '<button class="status-btn approve" data-act="approve" data-i="' + i + '" title="อนุมัติงานแล้ว กดเพื่อเปลี่ยนสถานะ">อนุมัติแล้ว</button>';
+      }
+      if (t.status === "new" || t.status === "working") {
+        h += '<button class="status-btn finish" data-act="finish" data-i="' + i + '" title="งานเสร็จสิ้น + สร้าง PDF เก็บใน Drive">เสร็จสิ้น</button>';
+      }
+      if (t.archive_size) {
+        var kb = t.archive_size < 1024 ? t.archive_size + " B" : Math.round(t.archive_size / 1024) + " KB";
+        h += '<a class="pdf-chip" href="/api/tickets/' + encodeURIComponent(t.ticket_no) + '/archive" title="ดาวน์โหลดข้อมูลบีบอัด (' + kb + ')">ไฟล์ ' + kb + "</a>";
+      }
+      if (t.pdf_url) {
+        h += '<a class="pdf-chip" href="' + esc(t.pdf_url) + '" target="_blank" rel="noopener" title="เปิด PDF">PDF</a>';
+      }
+      return h;
+    }
+
+    function renderTable() {
+      var body = document.getElementById("ticketsBody");
+      var empty = document.getElementById("emptyBox");
+      if (!tickets.length) {
+        body.innerHTML = "";
+        empty.classList.remove("hidden");
+        return;
+      }
+      empty.classList.add("hidden");
+      body.innerHTML = tickets.map(function (t, i) {
+        var st = statusInfo(t);
+        return (
+          "<tr>" +
+          '<td><span class="tno">' + esc(t.ticket_no) + "</span></td>" +
+          '<td><span class="t-date">' + esc(fmtDate(t.created_at)) + "</span></td>" +
+          '<td>' + esc(t.device || "-") + "</td>" +
+          '<td><span class="cell-trunc" title="' + esc(t.symptom) + '">' + esc(t.symptom || "-") + "</span></td>" +
+          '<td>' + esc(t.location || "-") + "</td>" +
+          '<td class="cell-user">' + esc(t.reporter_line_id || "-") + "</td>" +
+          '<td>' +
+          '<span class="badge ' + st.cls + '">' + st.label + "</span>" +
+          '<div class="row-actions" style="margin-top:6px;flex-wrap:wrap">' + statusButtons(t, i) + "</div>" +
+          "</td>" +
+          '<td><div class="row-actions" style="justify-content:flex-end">' +
+            '<button class="icon-btn share" data-act="share" data-i="' + i + '" title="แชร์เป็น PDF">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>' +
+            "</button>" +
+            '<button class="icon-btn" data-act="detail" data-i="' + i + '" title="รายละเอียด">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>' +
+            "</button>" +
+            '<button class="icon-btn edit" data-act="edit" data-i="' + i + '" title="แก้ไข">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"/></svg>' +
+            "</button>" +
+            '<button class="icon-btn del" data-act="del" data-i="' + i + '" title="ลบ">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>' +
+            "</button>" +
+          "</div></td>" +
+          "</tr>"
+        );
+      }).join("");
+
+      body.querySelectorAll("button[data-act]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var act = btn.getAttribute("data-act");
+          var row = tickets[parseInt(btn.getAttribute("data-i"), 10)];
+          if (act === "detail") openDetail(row);
+          else if (act === "edit") openEdit(row);
+          else if (act === "share") openPdfChoice(row);
+          else if (act === "del") openConfirm(row);
+          else if (act === "approve") setStatus(row, "working");
+          else if (act === "finish") setStatus(row, "done");
+        });
+      });
+    }
+
+    function openModal() {
+      document.getElementById("modalMask").classList.remove("hidden");
+      document.getElementById("modalMask").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("modalMask").classList.add("hidden");
+      document.getElementById("modalMask").style.display = "";
+    }
+
+    function showView(name) {
+      document.getElementById("detailView").hidden = true;
+      document.getElementById("editView").hidden = true;
+      document.getElementById("confirmView").hidden = true;
+      document.getElementById("pdfChoiceView").hidden = true;
+      document.getElementById(name).hidden = false;
+    }
+
+    function parseLocation(loc) {
+      if (!loc) return { branch: "-", position: "-" };
+      var i = loc.indexOf(" · ");
+      if (i > -1) return { branch: loc.slice(0, i), position: loc.slice(i + 3) };
+      return { branch: loc, position: "-" };
+    }
+
+    function splitPhotos(list) {
+      var zone = [];
+      var problem = [];
+      (list || []).forEach(function (p) {
+        var name = String(p.cloud_url || "").split("/").pop() || "";
+        if (/-z\d+\.[a-z0-9]+$/i.test(name)) zone.push(p);
+        else problem.push(p);
+      });
+      return { problem: problem, zone: zone };
+    }
+
+    function fillPhotoGrid(id, photos) {
+      var el = document.getElementById(id);
+      el.innerHTML = "";
+      if (!photos.length) {
+        el.innerHTML = '<div class="no-photo">ไม่มีรูปภาพ</div>';
+        return;
+      }
+      photos.forEach(function (p) {
+        var a = document.createElement("a");
+        a.href = p.cloud_url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        var img = document.createElement("img");
+        img.src = p.cloud_url;
+        img.loading = "lazy";
+        img.alt = "รูปประกอบ";
+        a.appendChild(img);
+        el.appendChild(a);
+      });
+    }
+
+    function openDetail(row) {
+      currentRow = row;
+      var st = statusInfo(row);
+      document.getElementById("detNo").textContent = row.ticket_no;
+      var badge = document.getElementById("detStatus");
+      badge.className = "badge " + st.cls;
+      badge.textContent = st.label;
+      var loc = parseLocation(row.location);
+      document.getElementById("detDate").textContent = fmtDate(row.created_at);
+      document.getElementById("detDevice").textContent = row.device || "-";
+      document.getElementById("detBranch").textContent = loc.branch;
+      document.getElementById("detPosition").textContent = loc.position;
+      document.getElementById("detPhone").textContent = row.reporter_phone || "-";
+      document.getElementById("detLineId").textContent = row.reporter_line_id || "-";
+      document.getElementById("detSymptom").textContent = row.symptom || "-";
+
+      var groups = splitPhotos(row.ticket_photos);
+      fillPhotoGrid("detPhotos", groups.problem);
+      fillPhotoGrid("detZonePhotos", groups.zone);
+      document.getElementById("btnApprove").hidden = row.status !== "new";
+      document.getElementById("btnFinish").hidden = row.status === "done";
+
+      var archiveWrap = document.getElementById("detArchiveWrap");
+      if (row.archive_size) {
+        archiveWrap.hidden = false;
+        var kb = row.archive_size < 1024 ? row.archive_size + " B" : Math.round(row.archive_size / 1024) + " KB";
+        document.getElementById("archiveSize").textContent = "จัดเก็บแล้ว · " + kb;
+        document.getElementById("archiveDownload").href = "/api/tickets/" + encodeURIComponent(row.ticket_no) + "/archive";
+      } else {
+        archiveWrap.hidden = true;
+      }
+
+      var pdfWrap = document.getElementById("detPdfWrap");
+      pdfWrap.hidden = !row.pdf_url;
+      if (row.pdf_url) document.getElementById("detPdfLink").href = row.pdf_url;
+
+      showView("detailView");
+      openModal();
+    }
+
+    function setStatus(row, status) {
+      if (!row) return;
+      var label = status === "working" ? "อนุมัติงานแล้ว" : "งานเสร็จสิ้นแล้ว";
+      fetch("/api/tickets/" + encodeURIComponent(row.ticket_no) + "/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: status })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "เปลี่ยนสถานะไม่สำเร็จ");
+          toast(label + (status === "done" ? " · ข้อมูลจัดเก็บถาวร(บีบอัด)แล้ว" : ""));
+          closeModal();
+          return loadTickets();
+        })
+        .catch(function (e) { toast(e.message); });
+    }
+
+    window.setStatus = setStatus;
+
+    function openEdit(row) {
+      currentRow = row;
+      openDetail(row);
+      document.getElementById("editNo").textContent = row.ticket_no;
+      document.getElementById("editDevice").value = row.device || "อุปกรณ์ IT";
+      document.getElementById("editSymptom").value = row.symptom || "";
+      document.getElementById("editLocation").value = row.location || "";
+      document.getElementById("editLineId").value = row.reporter_line_id || "";
+      showView("editView");
+    }
+
+    window.openEditView = function () { openEdit(currentRow); };
+
+    function openConfirm(row) {
+      currentRow = row;
+      document.getElementById("confirmNo").textContent = row.ticket_no;
+      showView("confirmView");
+      openModal();
+    }
+
+    window.openConfirmView = function () { openConfirm(currentRow); };
+    window.closeModal = closeModal;
+
+    function saveEdit() {
+      var row = currentRow;
+      if (!row) return;
+      var payload = {
+        device: document.getElementById("editDevice").value,
+        symptom: document.getElementById("editSymptom").value.trim(),
+        location: document.getElementById("editLocation").value.trim()
+      };
+      fetch("/api/tickets/" + encodeURIComponent(row.ticket_no), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "แก้ไขไม่สำเร็จ");
+          toast("บันทึกการแก้ไขแล้ว");
+          closeModal();
+          return loadTickets();
+        })
+        .catch(function (e) { toast(e.message); });
+    }
+
+    window.saveEdit = saveEdit;
+
+    function doDelete() {
+      var row = currentRow;
+      if (!row) return;
+      fetch("/api/tickets/" + encodeURIComponent(row.ticket_no), { method: "DELETE" })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "ลบไม่สำเร็จ");
+          toast("ลบงานแล้ว: " + row.ticket_no);
+          closeModal();
+          return loadTickets();
+        })
+        .catch(function (e) { toast(e.message); });
+    }
+
+    window.doDelete = doDelete;
+
+    // ---------- แชร์ PDF ----------
+    function photosBlocksHtml(title, list) {
+      if (!list || !list.length) {
+        return '<div class="pdf-frag"><div class="pdf-photo-block">' +
+          '<div class="pdf-sec-title">' + title + "</div>" +
+          '<div class="pdf-no-photo">ไม่มีรูปภาพ</div></div></div>';
+      }
+      var cols = list.length >= 5 ? 3 : 2;
+      var imgCls = cols === 3 ? ' class="sm"' : "";
+      var html = "";
+      for (var i = 0; i < list.length; i += cols) {
+        var slice = list.slice(i, i + cols).map(function (p) {
+          return '<img src="' + esc(p.cloud_url) + '"' + imgCls + ' crossorigin="anonymous">';
+        }).join("");
+        html += '<div class="pdf-frag"><div class="pdf-photo-block">' +
+          (i === 0 ? '<div class="pdf-sec-title">' + title + "</div>" : "") +
+          '<div class="pdf-photo-row">' + slice + "</div></div></div>";
+      }
+      return html;
+    }
+
+    function fillPdfCard(row) {
+      var st = statusInfo(row);
+      var loc = parseLocation(row.location);
+      var groups = splitPhotos(row.ticket_photos);
+      document.getElementById("pdfCard").innerHTML =
+        '<div class="pdf-frag"><div class="pdf-hero">' +
+          '<div class="pdf-hero-label">รหัสแจ้งซ่อม</div>' +
+          '<div class="pdf-hero-no">' + esc(row.ticket_no) + "</div>" +
+          '<span class="pdf-badge">' + st.label + "</span>" +
+        "</div></div>" +
+        '<div class="pdf-frag"><div class="pdf-info-pad">' +
+          '<div class="pdf-section-h">รายละเอียดการแจ้งซ่อม</div>' +
+          '<table class="pdf-meta">' +
+            "<tr><th>หมวด</th><td>" + esc(row.device || "-") + "</td></tr>" +
+            "<tr><th>วัน / เวลา</th><td>" + esc(fmtDate(row.created_at)) + "</td></tr>" +
+            "<tr><th>สาขา</th><td>" + esc(loc.branch) + "</td></tr>" +
+            "<tr><th>ตำแหน่ง / สถานที่</th><td>" + esc(loc.position) + "</td></tr>" +
+            "<tr><th>เบอร์โทรติดต่อ</th><td>" + esc(row.reporter_phone || "-") + "</td></tr>" +
+            "<tr><th>บัญชี Line (ผู้แจ้ง)</th><td>" + esc(row.reporter_line_id || "-") + "</td></tr>" +
+            "<tr><th>อาการเสีย</th><td>" + esc(row.symptom || "-") + "</td></tr>" +
+          "</table>" +
+        "</div></div>" +
+        photosBlocksHtml("รูปภาพ · สภาพอุปกรณ์", groups.problem) +
+        photosBlocksHtml("รูปสถานที่ / โซน", groups.zone);
+    }
+
+    function resetPdfCard() {
+      var card = document.getElementById("pdfCard");
+      card.style.left = "-9999px";
+      card.style.top = "0";
+      card.style.opacity = "0";
+      card.style.zIndex = "2";
+      card.innerHTML = "";
+    }
+
+    // ครอบภาพให้เป็นอัตราส่วนเดียวกับกล่อง (ไม่ให้ html2canvas ยืดรูป)
+    function cropToDataUrl(url, ratioW, ratioH) {
+      return new Promise(function (resolve) {
+        var img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function () {
+          var iw = img.naturalWidth || img.width;
+          var ih = img.naturalHeight || img.height;
+          var sw = iw, sh = ih, sx = 0, sy = 0;
+          if (iw / ih > ratioW / ratioH) {
+            sw = ih * (ratioW / ratioH);
+            sx = (iw - sw) / 2;
+          } else {
+            sh = iw / (ratioW / ratioH);
+            sy = (ih - sh) / 2;
+          }
+          var c = document.createElement("canvas");
+          c.width = ratioW * 160;
+          c.height = ratioH * 160;
+          var ctx = c.getContext("2d");
+          try {
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+          } catch (e) {
+            resolve(url);
+            return;
+          }
+          resolve(c.toDataURL("image/jpeg", 0.9));
+        };
+        img.onerror = function () { resolve(url); };
+        img.src = url;
+      });
+    }
+
+    // สร้าง PDF จริงขึ้นมา (เรียงชิ้นต่อหน้า เมื่อเต็มให้ตัดไปหน้าถัดไป) แล้วคืนค่า blob + ชื่อไฟล์
+    function makePdfBlob(row) {
+      return new Promise(function (resolve, reject) {
+        var card = document.getElementById("pdfCard");
+        fillPdfCard(row);
+        // ย้ายการ์ดเข้ามาบนจอเฉพาะช่วงจับภาพ (ป้องกัน PDF หน้าขาว)
+        card.style.left = "4px";
+        card.style.top = "8px";
+        card.style.opacity = "1";
+        card.style.zIndex = "2";
+        var imgs = card.querySelectorAll("img");
+        Promise.all(Array.prototype.map.call(imgs, function (img) {
+          return cropToDataUrl(img.src, 4, 3).then(function (dataUrl) {
+            img.src = dataUrl;
+          });
+        })).then(function () {
+          setTimeout(function () {
+            var frags = card.querySelectorAll(".pdf-frag");
+            var pdf = new window.jspdf.jsPDF("p", "mm", "a4");
+            var pageW = pdf.internal.pageSize.getWidth();
+            var pageH = pdf.internal.pageSize.getHeight();
+            var margin = 12;
+            var usableW = pageW - margin * 2;
+            var y = margin;
+            var firstOnPage = true;
+
+            function ensure(h) {
+              if (!firstOnPage && y + h > pageH - margin) {
+                pdf.addPage();
+                y = margin;
+              }
+            }
+
+            var seq = Promise.resolve();
+            Array.prototype.forEach.call(frags, function (frag) {
+              seq = seq.then(function () {
+                return html2canvas(frag, { scale: 2, backgroundColor: "#ffffff", useCORS: true })
+                  .then(function (cnv) {
+                    var w = usableW;
+                    var h = cnv.height * (w / cnv.width);
+                    ensure(h);
+                    pdf.addImage(cnv.toDataURL("image/jpeg", 0.92), "JPEG", margin, y, w, h);
+                    y += h + 5;
+                    firstOnPage = false;
+                  });
+              });
+            });
+
+            seq.then(function () {
+              resetPdfCard();
+              resolve({ blob: pdf.output("blob"), name: row.ticket_no + ".pdf" });
+            }).catch(function (e) {
+              resetPdfCard();
+              reject(e);
+            });
+          }, 120);
+        }).catch(function (e) {
+          resetPdfCard();
+          reject(e);
+        });
+      });
+    }
+
+    var DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1m8-JuFHqhv3x1GRgk1Qy6gbJCl8SHo1e";
+
+    window.openPdfChoice = function (row) {
+      if (!row) return;
+      currentRow = row;
+      document.getElementById("choiceNo").textContent = row.ticket_no;
+      showView("pdfChoiceView");
+      openModal();
+    };
+
+    window.startDriveUpload = function () {
+      var row = currentRow;
+      if (!row) return;
+      toast("กำลังสร้าง PDF ...");
+      makePdfBlob(row).then(function (out) {
+        downloadBlob(out.blob, out.name);
+        window.open(DRIVE_FOLDER_URL, "_blank");
+        closeModal();
+        resetPdfCard();
+        toast("สร้าง PDF แล้ว: " + out.name);
+      }).catch(function () { toast("สร้าง PDF ไม่สำเร็จ"); });
+    };
+
+    window.shareNormal = function () {
+      var row = currentRow;
+      if (!row) return;
+      toast("กำลังสร้าง PDF ...");
+      makePdfBlob(row).then(function (out) {
+        var file = new File([out.blob], out.name, { type: "application/pdf" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          return navigator.share({ files: [file], title: "ใบแจ้งซ่อม " + row.ticket_no }).then(function () {
+            closeModal();
+            toast("ส่งเรียบร้อย");
+          }).catch(function (e) {
+            if (e && e.name === "AbortError") { closeModal(); return; }
+            downloadBlob(out.blob, out.name);
+          });
+        }
+        closeModal();
+        downloadBlob(out.blob, out.name);
+        toast("สร้าง PDF แล้ว: " + out.name);
+      }).catch(function () { toast("สร้าง PDF ไม่สำเร็จ"); });
+    };
+
+    function downloadBlob(blob, name) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+    }
+
+    document.getElementById("modalMask").addEventListener("click", function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    loadTickets();
+  </script>
+</body>
+</html>
