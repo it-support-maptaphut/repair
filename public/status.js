@@ -56,9 +56,16 @@ function statusView(t, isSingle) {
   var st = STATUS[t.status] || STATUS.new;
   var loc = parseLocation(t.location);
   var icon = t.status === "new" ? bellIcon() : t.status === "working" ? stampIcon() : checkIcon();
-  var pdfHtml = t.pdf_url
-    ? '<a class="back-btn" target="_blank" rel="noopener" href="' + esc(t.pdf_url) + '">เปิด PDF ใบเสร็จงาน</a>'
-    : "";
+  var cardActions = "";
+  if (isSingle || t.pdf_url) {
+    cardActions =
+      '<div class="card-actions">' +
+        '<button class="back-btn ghost" type="button" data-copy="' + esc(t.ticket_no) + '">คัดลอกรหัสซ่อม</button>' +
+        (t.pdf_url
+          ? '<a class="back-btn" target="_blank" rel="noopener" href="' + esc(t.pdf_url) + '">เปิด PDF ใบเสร็จงาน</a>'
+          : "") +
+      "</div>";
+  }
 
   return (
     '<div class="card">' +
@@ -75,7 +82,7 @@ function statusView(t, isSingle) {
         '<div class="card-row"><span class="k">อาการ</span><span class="v">' + esc(t.symptom || "-") + "</span></div>" +
       "</div>" +
       '<div class="card-msg ' + st.cls + '"><span class="strong">' + st.label + "</span> — " + st.msg + "</div>" +
-      (pdfHtml || isSingle ? '<div class="card-actions">' + pdfHtml + "</div>" : "") +
+      cardActions +
     "</div>"
   );
 }
@@ -145,8 +152,53 @@ function renderMyList(tickets) {
 }
 
 backLink.addEventListener("click", function () {
-  window.location.href = LINE_OA_URL;
+  closeWebView();
 });
+
+function closeWebView() {
+  if (window.liff && liff.isLoggedIn() && typeof liff.closeWindow === "function") {
+    liff.closeWindow();
+    return;
+  }
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
+  window.location.href = LINE_OA_URL;
+}
+
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest("[data-copy]");
+  if (!btn) return;
+  var txt = btn.getAttribute("data-copy") || "";
+  if (!txt) return;
+  var done = function () {
+    showToast("คัดลอกหมายเลข " + txt + " แล้ว");
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(done).catch(function () {
+      copyFallback(txt, done);
+    });
+  } else {
+    copyFallback(txt, done);
+  }
+});
+
+function copyFallback(text, ok) {
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    ok();
+  } catch (e) {
+    showToast("คัดลอกไม่สำเร็จ กรุณากดค้างที่หมายเลข");
+  }
+  document.body.removeChild(ta);
+}
 
 function applyCfg(cfg) {
   if (cfg.lineOaUrl) LINE_OA_URL = cfg.lineOaUrl;

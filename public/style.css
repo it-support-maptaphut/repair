@@ -668,6 +668,24 @@ textarea.invalid,
   font-weight: 600;
 }
 
+.copy-btn {
+  display: block;
+  margin: 6px auto 14px;
+  padding: 9px 16px;
+  border: 1.5px solid var(--green-line);
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.copy-btn:active {
+  transform: scale(0.97);
+  background: var(--green-line);
+}
+
 .back-btn.ghost {
   background: #fff;
   color: var(--green);

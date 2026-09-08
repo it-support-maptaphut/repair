@@ -388,6 +388,8 @@ function hideLoading() {
   loadingOverlay.classList.add("hidden");
 }
 
+var copyTicketBtn = document.getElementById("copyTicketBtn");
+
 function showSuccess(ticketNo) {
   ticketNoEl.textContent = ticketNo;
   loadingOverlay.classList.add("hidden");
@@ -399,24 +401,62 @@ function showSuccess(ticketNo) {
   }
 
   var seconds = 5;
-  countdownEl.textContent = "กลับเข้าสู่ Line อัตโนมัติใน " + seconds + " วินาที";
+  countdownEl.textContent = "ปิดหน้าอัตโนมัติใน " + seconds + " วินาที";
 
   var timer = setInterval(function () {
     seconds -= 1;
     if (seconds <= 0) {
       clearInterval(timer);
-      backToLine();
+      closeWebView();
       return;
     }
-    countdownEl.textContent = "กลับเข้าสู่ Line อัตโนมัติใน " + seconds + " วินาที";
+    countdownEl.textContent = "ปิดหน้าอัตโนมัติใน " + seconds + " วินาที";
   }, 1000);
 }
 
-backLink.addEventListener("click", function () {
-  backToLine();
+copyTicketBtn.addEventListener("click", function () {
+  var txt = ticketNoEl.textContent || "";
+  if (!txt) return;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(function () {
+      showToast("คัดลอกหมายเลข " + txt + " แล้ว");
+    }).catch(function () {
+      copyFallback(txt);
+    });
+  } else {
+    copyFallback(txt);
+  }
 });
 
-function backToLine() {
+function copyFallback(text) {
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showToast("คัดลอกหมายเลข " + text + " แล้ว");
+  } catch (e) {
+    showToast("คัดลอกไม่สำเร็จ กรุณากดค้างที่หมายเลข");
+  }
+  document.body.removeChild(ta);
+}
+
+backLink.addEventListener("click", function () {
+  closeWebView();
+});
+
+function closeWebView() {
+  if (window.liff && liff.isLoggedIn() && typeof liff.closeWindow === "function") {
+    liff.closeWindow();
+    return;
+  }
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
   window.location.href = LINE_OA_URL;
 }
 
