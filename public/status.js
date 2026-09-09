@@ -1,14 +1,11 @@
-var LINE_OA_URL = "https://line.me/";
-
 var toastTimer = null;
 
 var statusNo = document.getElementById("statusNo");
 var statusBtn = document.getElementById("statusBtn");
+var statusWrap = document.getElementById("statusWrap");
 var resultEl = document.getElementById("result");
 var myTicketsEl = document.getElementById("myTickets");
 var myListEl = document.getElementById("myList");
-var backLineWrap = document.getElementById("backLineWrap");
-var backLink = document.getElementById("backLine");
 var toastEl = document.getElementById("toast");
 
 var STATUS = {
@@ -87,10 +84,14 @@ function statusView(t, isSingle) {
   );
 }
 
+function setHasResult(on) {
+  if (statusWrap) statusWrap.classList.toggle("has-result", on);
+}
+
 function renderTicket(t) {
   resultEl.innerHTML = statusView(t, true);
   resultEl.classList.remove("hidden");
-  document.getElementById("backLineWrap").classList.remove("hidden");
+  setHasResult(true);
   resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -100,6 +101,7 @@ function renderError(msg) {
       esc(msg) + '<br><button class="btn" type="button" onclick="focusSearch()">ลองใหม่</button>' +
     "</div>";
   resultEl.classList.remove("hidden");
+  setHasResult(true);
   resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -118,6 +120,7 @@ function lookup() {
   statusBtn.innerHTML = '<span class="spinner-sm"></span>';
   resultEl.innerHTML = "";
   resultEl.classList.add("hidden");
+  setHasResult(false);
   fetch("/api/tickets/" + encodeURIComponent(no) + "/status")
     .then(function (r) {
       return r.json().then(function (d) { return { ok: r.ok, d: d }; });
@@ -156,23 +159,6 @@ function renderMyList(tickets) {
   myTicketsEl.classList.remove("hidden");
 }
 
-backLink.addEventListener("click", function (e) {
-  e.preventDefault();
-  closeWebView();
-});
-
-function closeWebView() {
-  if (window.liff && liff.isLoggedIn() && typeof liff.closeWindow === "function") {
-    liff.closeWindow();
-    return;
-  }
-  if (window.history.length > 1) {
-    window.history.back();
-    return;
-  }
-  window.location.href = LINE_OA_URL;
-}
-
 document.addEventListener("click", function (e) {
   var btn = e.target.closest("[data-copy]");
   if (!btn) return;
@@ -207,7 +193,6 @@ function copyFallback(text, ok) {
 }
 
 function applyCfg(cfg) {
-  if (cfg.lineOaUrl) LINE_OA_URL = cfg.lineOaUrl;
   if (cfg.liffId && window.liff) {
     liff
       .init({ liffId: cfg.liffId })

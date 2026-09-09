@@ -13,6 +13,19 @@
 </head>
 <body>
 
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="ticket.html">
+      <svg class="navbar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      <span class="navbar-title">ระบบแจ้งซ่อม IT</span>
+    </a>
+    <div class="navbar-links">
+      <a class="nav-link" href="ticket.html">แจ้งซ่อม</a>
+      <a class="nav-link is-active" href="status.html">ตรวจสอบสถานะ</a>
+    </div>
+  </div>
+</nav>
+
 <header class="app-header">
   <div class="header-inner">
     <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -21,34 +34,31 @@
   </div>
 </header>
 
-<main class="status-wrap">
+<main class="status-wrap" id="statusWrap">
 
-  <section class="status-card">
-    <label class="field-label" for="statusNo">หมายเลขใบแจ้งซ่อม</label>
-    <p class="field-hint">ใส่รหัสที่ได้รับหลังแจ้งซ่อม เช่น HW-00X หรือ SW-0XX</p>
-    <div class="search-row">
-      <input type="text" id="statusNo" class="text-input" inputmode="text" maxlength="12" placeholder="เช่น HW-001" autocomplete="off">
-      <button id="statusBtn" class="action-btn primary" type="button">ตรวจสอบ</button>
-    </div>
-  </section>
-
-  <div id="myTickets" class="my-tickets hidden">
-    <h2 class="sub-heading">งานของคุณ</h2>
-    <div id="myList"></div>
+  <div class="search-col">
+    <section class="status-card">
+      <label class="field-label" for="statusNo">หมายเลขใบแจ้งซ่อม</label>
+      <p class="field-hint">ใส่รหัสที่ได้รับหลังแจ้งซ่อม เช่น HW-00X หรือ SW-0XX</p>
+      <div class="search-row">
+        <input type="text" id="statusNo" class="text-input" inputmode="text" maxlength="12" placeholder="เช่น HW-001" autocomplete="off">
+        <button id="statusBtn" class="action-btn primary" type="button">ตรวจสอบ</button>
+      </div>
+    </section>
   </div>
 
-  <div id="result" class="result hidden"></div>
+  <div class="result-col">
+    <div id="myTickets" class="my-tickets hidden">
+      <h2 class="sub-heading">งานของคุณ</h2>
+      <div id="myList"></div>
+    </div>
+
+    <div id="result" class="result"></div>
+  </div>
 
 </main>
 
 <div id="toast" class="toast hidden"></div>
-
-<div id="backLineWrap" class="back-line hidden">
-  <a id="backLine" class="back-btn" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    ออกจากหน้านี้
-  </a>
-</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="status.js"></script>

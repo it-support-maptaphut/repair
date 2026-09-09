@@ -28,5 +28,16 @@ create table if not exists public.ticket_photos (
   sort_order int default 0
 );
 
+create table if not exists public.user_devices (
+  id bigint generated always as identity primary key,
+  ip text unique not null,
+  name text default '',
+  last_seen_at timestamptz default now(),
+  last_ticket_no text default '',
+  ticket_count int default 0,
+  created_at timestamptz default now()
+);
+
 alter table public.tickets enable row level security;
 alter table public.ticket_photos enable row level security;
+alter table public.user_devices enable row level security;

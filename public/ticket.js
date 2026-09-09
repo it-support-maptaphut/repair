@@ -1,54 +1,54 @@
 var LINE_OA_URL = "https://line.me/";
 
 var MAX_PHOTOS = 10;
-var ZONE_MAX_PHOTOS = 2;
 
 var photos = [];
-var zonePhotos = [];
 var toastTimer = null;
 var currentStep = 1;
+var selectedDevs = [];
+var problems = {};
+var customSeq = 0;
 
 var photoInput = document.getElementById("photoInput");
 var photoBtn = document.getElementById("photoBtn");
 var photoGrid = document.getElementById("photoGrid");
 var photoCount = document.getElementById("photoCount");
-var symptom = document.getElementById("symptom");
 var prevBtn = document.getElementById("prevBtn");
 var nextBtn = document.getElementById("nextBtn");
 var loadingOverlay = document.getElementById("loadingOverlay");
 var successOverlay = document.getElementById("successOverlay");
 var ticketNoEl = document.getElementById("ticketNo");
-var countdownEl = document.getElementById("countdown");
-var backLink = document.getElementById("backLink");
 var toastEl = document.getElementById("toast");
 var form = document.getElementById("ticketForm");
 var actionBar = document.querySelector(".action-bar");
 var reporterName = document.getElementById("reporterName");
 var reporterPhone = document.getElementById("reporterPhone");
 var reporterLineId = document.getElementById("reporterLineId");
-
-var zonePhotoInput = document.getElementById("zonePhotoInput");
-var zonePhotoBtn = document.getElementById("zonePhotoBtn");
-var zonePhotoGrid = document.getElementById("zonePhotoGrid");
-var zonePhotoCount = document.getElementById("zonePhotoCount");
 var positionText = document.getElementById("positionText");
-var positionSection = document.getElementById("positionSection");
+var device = document.getElementById("device");
+var devTypeGroup = document.getElementById("devTypeGroup");
+var hardGrid = document.getElementById("hardGrid");
+var softGrid = document.getElementById("softGrid");
+var devSelectedWrap = document.getElementById("devSelectedWrap");
+var devSelectedList = document.getElementById("devSelectedList");
+var devSelectedCount = document.getElementById("devSelectedCount");
+var problemFields = document.getElementById("problemFields");
+var copyTicketBtn = document.getElementById("copyTicketBtn");
+var successClose = document.getElementById("successClose");
 
-var branchRadios = document.querySelectorAll('#branchGroup input[name="branch"]');
-branchRadios.forEach(function (radio) {
-  radio.addEventListener("change", function () {
-    positionSection.classList.remove("hidden");
-    positionSection.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-});
+var HARDWARE_OPTIONS = [
+  { id: "printer",  label: "เครื่องปริ้น",  icon: '<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>' },
+  { id: "computer", label: "คอมพิวเตอร์",  icon: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>' },
+  { id: "pos",      label: "เครื่อง POS",   icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>' },
+  { id: "cctv",     label: "กล้อง CCTV",   icon: '<circle cx="12" cy="10" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/>' },
+  { id: "server",   label: "เซิร์ฟเวอร์",   icon: '<rect x="3" y="3" width="18" height="6" rx="2"/><rect x="3" y="15" width="18" height="6" rx="2"/><path d="M7 6h.01M7 18h.01"/>' }
+];
 
-positionText.addEventListener("input", function () {
-  positionText.classList.remove("invalid");
-});
-
-reporterPhone.addEventListener("input", function () {
-  reporterPhone.classList.remove("invalid");
-});
+var SOFTWARE_OPTIONS = [
+  { id: "excel", label: "Excel", logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#217346"/><text x="12" y="17.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="14" fill="#fff">X</text>' },
+  { id: "word",  label: "Word",  logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#2B579A"/><text x="12" y="17.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#fff">W</text>' },
+  { id: "ppt",   label: "PowerPoint", logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#D24726"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="15" fill="#fff">P</text>' }
+];
 
 if (window.visualViewport) {
   var shiftBar = function () {
@@ -63,154 +63,231 @@ if (window.visualViewport) {
   shiftBar();
 }
 
-symptom.addEventListener("input", function () {
-  document.getElementById("symptomCount").textContent = symptom.value.length;
-  symptom.classList.remove("invalid");
-});
-
-photoBtn.addEventListener("click", function () {
-  photoInput.click();
-});
-
-photoInput.addEventListener("change", function () {
-  var files = Array.prototype.slice.call(photoInput.files);
-  var remaining = MAX_PHOTOS - photos.length;
-  if (files.length > remaining) {
-    files = files.slice(0, remaining);
-    showToast("รองรับได้สูงสุด " + MAX_PHOTOS + " รูป");
-  }
-  photos = photos.concat(files);
-  photoInput.value = "";
-  renderPhotos();
-});
-
-photoGrid.addEventListener("click", function (e) {
-  var addBtn = e.target.closest(".photo-add");
-  if (addBtn) {
-    photoInput.click();
-    return;
-  }
-  var delBtn = e.target.closest(".photo-del");
-  if (!delBtn) return;
-  var index = parseInt(delBtn.dataset.index, 10);
-  photos.splice(index, 1);
-  renderPhotos();
-});
-
-function renderPhotos() {
-  var empty = photos.length === 0;
-  photoBtn.classList.toggle("hidden", !empty);
-  photoCount.textContent = photos.length + "/" + MAX_PHOTOS;
-
-  photoGrid.innerHTML = "";
-  photos.forEach(function (file, i) {
-    var item = document.createElement("div");
-    item.className = "photo-item";
-
-    var img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
-    img.alt = "รูป-" + (i + 1);
-
-    var index = document.createElement("span");
-    index.className = "photo-index";
-    index.textContent = i + 1;
-
-    var del = document.createElement("button");
-    del.type = "button";
-    del.className = "photo-del";
-    del.dataset.index = i;
-    del.setAttribute("aria-label", "ลบรูป " + (i + 1));
-    del.textContent = "×";
-
-    item.appendChild(img);
-    item.appendChild(index);
-    item.appendChild(del);
-    photoGrid.appendChild(item);
-  });
-
-  if (!empty) {
-    var add = document.createElement("button");
-    add.type = "button";
-    add.className = "photo-add";
-    add.setAttribute("aria-label", "เพิ่มรูป");
-    add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>เพิ่มรูป</span>';
-    photoGrid.appendChild(add);
-  }
+// ---------- อุปกรณ์ (multi-select) ----------
+function devKey(dev) {
+  return dev.type + "·" + dev.label;
 }
 
-zonePhotoBtn.addEventListener("click", function () {
-  zonePhotoInput.click();
-});
-
-zonePhotoInput.addEventListener("change", function () {
-  var files = Array.prototype.slice.call(zonePhotoInput.files);
-  var remaining = ZONE_MAX_PHOTOS - zonePhotos.length;
-  if (files.length > remaining) {
-    files = files.slice(0, remaining);
-    showToast("ถ่ายรูปโซนได้ไม่เกิน " + ZONE_MAX_PHOTOS + " รูป");
-  }
-  zonePhotos = zonePhotos.concat(files);
-  zonePhotoInput.value = "";
-  renderZonePhotos();
-});
-
-zonePhotoGrid.addEventListener("click", function (e) {
-  var addBtn = e.target.closest(".photo-add");
-  if (addBtn) {
-    zonePhotoInput.click();
-    return;
-  }
-  var delBtn = e.target.closest(".photo-del");
-  if (!delBtn) return;
-  var index = parseInt(delBtn.dataset.index, 10);
-  zonePhotos.splice(index, 1);
-  renderZonePhotos();
-});
-
-function renderZonePhotos() {
-  var empty = zonePhotos.length === 0;
-  zonePhotoBtn.classList.toggle("hidden", !empty);
-  zonePhotoCount.textContent = zonePhotos.length + "/" + ZONE_MAX_PHOTOS;
-
-  zonePhotoGrid.innerHTML = "";
-  zonePhotos.forEach(function (file, i) {
-    var item = document.createElement("div");
-    item.className = "photo-item";
-
-    var img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
-    img.alt = "รูปโซน-" + (i + 1);
-
-    var index = document.createElement("span");
-    index.className = "photo-index";
-    index.textContent = i + 1;
-
-    var del = document.createElement("button");
-    del.type = "button";
-    del.className = "photo-del";
-    del.dataset.index = i;
-    del.setAttribute("aria-label", "ลบรูปโซน " + (i + 1));
-    del.textContent = "×";
-
-    item.appendChild(img);
-    item.appendChild(index);
-    item.appendChild(del);
-    zonePhotoGrid.appendChild(item);
-  });
-
-  if (!empty) {
-    var add = document.createElement("button");
-    add.type = "button";
-    add.className = "photo-add";
-    add.setAttribute("aria-label", "เพิ่มรูปโซน");
-    add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>เพิ่มรูป</span>';
-    zonePhotoGrid.appendChild(add);
-  }
+function isSelected(dev) {
+  var k = devKey(dev);
+  return selectedDevs.some(function (d) { return devKey(d) === k; });
 }
 
-function getSelectedDevice() {
-  var checked = document.querySelector('input[name="device"]:checked');
-  return checked ? checked.value : "";
+function buildDeviceGrid(grid, list, type) {
+  grid.innerHTML = "";
+  list.forEach(function (opt) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dev-opt";
+    btn.setAttribute("aria-pressed", "false");
+    var svg = opt.logo
+      ? '<svg class="dev-logo" viewBox="0 0 24 24" aria-hidden="true">' + opt.logo + "</svg>"
+      : '<svg class="dev-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + opt.icon + "</svg>";
+    btn.innerHTML = svg + "<span>" + opt.label + "</span>";
+    btn.addEventListener("click", function () {
+      toggleDev({ type: type, label: opt.label });
+    });
+    grid.appendChild(btn);
+  });
+}
+
+var catTabs = document.querySelectorAll(".cat-tab");
+catTabs.forEach(function (tab) {
+  tab.addEventListener("click", function () {
+    var cat = tab.getAttribute("data-cat");
+    catTabs.forEach(function (t) {
+      t.classList.toggle("is-active", t === tab);
+      t.setAttribute("aria-selected", t === tab ? "true" : "false");
+    });
+    [
+      [document.getElementById("hardPanel"), "Hardware"],
+      [document.getElementById("softPanel"), "Software"]
+    ].forEach(function (p) {
+      p[0].classList.toggle("hidden", cat !== p[1]);
+    });
+  });
+});
+
+(function () {
+  var slot = document.getElementById("catSoftLogos");
+  if (slot) {
+    slot.innerHTML = SOFTWARE_OPTIONS.map(function (o) {
+      return '<span class="cat-logo" title="' + o.label + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + o.logo + "</svg></span>";
+    }).join("");
+  }
+})();
+
+document.querySelectorAll(".cat-custom-toggle").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var type = btn.getAttribute("data-custom-type");
+    var row = null;
+    if (type === "Hardware") {
+      row = document.getElementById("hardCustomWrap");
+    } else {
+      row = document.getElementById("softCustomWrap");
+    }
+    if (!row) return;
+    var on = row.classList.toggle("hidden");
+    btn.classList.toggle("is-open", !on);
+    if (!on) {
+      var input = row.querySelector("input");
+      if (input) return input.focus();
+    }
+  });
+});
+
+function toggleDev(dev) {
+  var k = devKey(dev);
+  var existing = selectedDevs.some(function (d) { return devKey(d) === k; });
+  if (existing) {
+    selectedDevs = selectedDevs.filter(function (d) { return devKey(d) !== k; });
+    delete problems[k];
+  } else {
+    selectedDevs.push({ type: dev.type, label: dev.label });
+  }
+  renderSelection();
+  syncGridState();
+}
+
+function refreshDevSelection() {
+  var all = [].slice.call(document.querySelectorAll(".dev-opt"));
+  all.forEach(function (btn) {
+    var panel = btn.closest(".dev-panel");
+    if (!panel) return;
+    var type = panel.getAttribute("data-type");
+    var label = btn.querySelector("span").textContent;
+    var active = isSelected({ type: type, label: label });
+    btn.classList.toggle("sel", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function syncGridState() {
+  refreshDevSelection();
+}
+
+function renderSelection() {
+  document.querySelectorAll(".dev-opt").forEach(function (btn) {
+    var panel = btn.closest(".dev-panel");
+    if (!panel) return;
+    var type = panel.getAttribute("data-type");
+    var label = btn.querySelector("span").textContent;
+    var active = isSelected({ type: type, label: label });
+    btn.classList.toggle("sel", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+
+  var empty = selectedDevs.length === 0;
+  devSelectedWrap.classList.toggle("hidden", empty);
+  devSelectedCount.textContent = selectedDevs.length;
+  updateDeviceValue();
+
+  devSelectedList.innerHTML = "";
+  selectedDevs.forEach(function (d, i) {
+    var chip = document.createElement("div");
+    chip.className = "dev-chip";
+    chip.innerHTML =
+      '<span class="dev-chip-type">' + escapeHtml(d.type) + "</span>" +
+      '<span class="dev-chip-label">' + escapeHtml(d.label) + "</span>" +
+      '<button type="button" class="dev-chip-del" data-i="' + i + '" aria-label="ลบ ' + escapeHtml(d.label) + '">&times;</button>';
+    devSelectedList.appendChild(chip);
+  });
+
+  renderProblems();
+}
+
+devSelectedList.addEventListener("click", function (e) {
+  var del = e.target.closest(".dev-chip-del");
+  if (!del) return;
+  var i = parseInt(del.dataset.i, 10);
+  var d = selectedDevs[i];
+  if (!d) return;
+  delete problems[devKey(d)];
+  selectedDevs.splice(i, 1);
+  renderSelection();
+});
+
+document.querySelectorAll(".mini-add").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var type = btn.getAttribute("data-custom-type");
+    var inputId = btn.getAttribute("data-input");
+    var input = document.getElementById(inputId);
+    var text = (input.value || "").trim();
+    if (!text) {
+      showToast("กรุณาพิมพ์ชื่ออุปกรณ์ / โปรแกรม");
+      input.focus();
+      return;
+    }
+    var dup = selectedDevs.some(function (d) {
+      return d.type === type && d.label.toLowerCase() === text.toLowerCase();
+    });
+    if (dup) {
+      showToast("รายการนี้ถูกเลือกแล้ว");
+      input.value = "";
+      return;
+    }
+    customSeq++;
+    selectedDevs.push({ type: type, label: text, customSeq: customSeq });
+    input.value = "";
+    renderSelection();
+  });
+});
+
+// ---------- ปัญหา (แยกต่ออุปกรณ์) ----------
+function devFamiliarLogo(dev) {
+  var list = dev.type === "Software" ? SOFTWARE_OPTIONS : [];
+  var match = null;
+  list.forEach(function (o) { if (o.label === dev.label) match = o; });
+  if (match && match.logo) {
+    return '<span class="prob-logo"><svg viewBox="0 0 24 24" aria-hidden="true">' + match.logo + "</svg></span>";
+  }
+  var hw = null;
+  HARDWARE_OPTIONS.forEach(function (o) { if (o.label === dev.label) hw = o; });
+  if (hw && hw.icon) {
+    return '<span class="prob-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + hw.icon + "</svg></span>";
+  }
+  return '<span class="prob-logo prob-generic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8l-5-5-5 5M12 3v13"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span>';
+}
+
+function renderProblems() {
+  problemFields.innerHTML = "";
+  selectedDevs.forEach(function (d) {
+    var k = devKey(d);
+    var field = document.createElement("div");
+    field.className = "field problem-item";
+    field.setAttribute("data-key", k);
+
+    var label = document.createElement("label");
+    label.className = "field-label prob-flex";
+    label.innerHTML = devFamiliarLogo(d) + "<span>" + escapeHtml(d.label) + " — ปัญหาคือ <span class=\"req\">*</span></span>";
+
+    var ta = document.createElement("textarea");
+    ta.rows = 3;
+    ta.maxLength = 500;
+    ta.placeholder = "พิมพ์รายละเอียดปัญหาของ " + d.label + " เช่น เปิดไม่ติด, ค้าง, error เด้ง";
+    ta.value = problems[k] || "";
+    ta.addEventListener("input", function () {
+      problems[k] = this.value;
+      this.classList.remove("invalid");
+      var cnt = field.querySelector(".p-count");
+      if (cnt) cnt.textContent = this.value.length;
+    });
+
+    var count = document.createElement("p");
+    count.className = "char-count";
+    count.innerHTML = '<span class="p-count">' + (problems[k] || "").length + "</span>/500";
+
+    field.appendChild(label);
+    field.appendChild(ta);
+    field.appendChild(count);
+    problemFields.appendChild(field);
+  });
+}
+
+// ---------- อุปกรณ์ / ปัญหา: helpers ----------
+function updateDeviceValue() {
+  var parts = selectedDevs.map(function (d) { return d.type + " · " + d.label; });
+  device.value = parts.join(", ");
 }
 
 function getSelectedBranch() {
@@ -263,27 +340,31 @@ function updateActionBar() {
 
 function validateStep(step) {
   if (step === 1) {
-    if (photos.length === 0) {
-      showToast("กรุณาถ่ายรูปอย่างน้อย 1 รูป");
+    if (!selectedDevs.length) {
+      devTypeGroup.scrollIntoView({ behavior: "smooth", block: "center" });
+      showToast("กรุณาเลือกอุปกรณ์ / โปรแกรมอย่างน้อย 1 รายการ");
       return false;
     }
     return true;
   }
 
   if (step === 2) {
-    if (symptom.value.trim().length === 0) {
-      symptom.classList.add("invalid");
-      symptom.scrollIntoView({ behavior: "smooth", block: "center" });
-      showToast("กรุณากรอกอาการ");
-      return false;
-    }
-
-    var device = getSelectedDevice();
-    if (!device) {
-      document.getElementById("deviceGroup").closest(".field")
-        .scrollIntoView({ behavior: "smooth", block: "center" });
-      showToast("กรุณาเลือกหมวดของปัญหา");
-      return false;
+    for (var i = 0; i < selectedDevs.length; i++) {
+      var d = selectedDevs[i];
+      var k = devKey(d);
+      var val = (problems[k] || "").trim();
+      if (!val) {
+        var field = problemFields.querySelectorAll(".problem-item")[i];
+        var ta = field && field.querySelector("textarea");
+        if (ta) {
+          ta.classList.add("invalid");
+          ta.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          problemFields.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        showToast("กรุณากรอกปัญหาของ " + d.label);
+        return false;
+      }
     }
     return true;
   }
@@ -296,15 +377,7 @@ function validateStep(step) {
       return false;
     }
 
-    if (zonePhotos.length === 0) {
-      positionSection.classList.remove("hidden");
-      zonePhotoBtn.scrollIntoView({ behavior: "smooth", block: "center" });
-      showToast("กรุณาถ่ายรูปโซนอย่างน้อย 1 รูป");
-      return false;
-    }
-
     if (positionText.value.trim().length === 0) {
-      positionSection.classList.remove("hidden");
       positionText.classList.add("invalid");
       positionText.scrollIntoView({ behavior: "smooth", block: "center" });
       showToast("กรุณาพิมพ์ตำแหน่ง / สถานที่");
@@ -338,8 +411,100 @@ prevBtn.addEventListener("click", function () {
   if (currentStep > 1) goTo(currentStep - 1);
 });
 
+positionText.addEventListener("input", function () {
+  positionText.classList.remove("invalid");
+});
+
+reporterPhone.addEventListener("input", function () {
+  reporterPhone.classList.remove("invalid");
+});
+
+// ---------- รูปภาพ ----------
+function renderPhotos() {
+  photoGrid.innerHTML = "";
+  photos.forEach(function (file, i) {
+    var item = document.createElement("div");
+    item.className = "photo-item";
+    item.style.animationDelay = (i * 0.04) + "s";
+
+    var img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.alt = "รูป " + (i + 1);
+
+    var idx = document.createElement("span");
+    idx.className = "photo-index";
+    idx.textContent = i + 1;
+
+    var del = document.createElement("button");
+    del.type = "button";
+    del.className = "photo-del";
+    del.setAttribute("data-index", i);
+    del.setAttribute("aria-label", "ลบรูป " + (i + 1));
+    del.innerHTML = "&times;";
+
+    item.appendChild(img);
+    item.appendChild(idx);
+    item.appendChild(del);
+    photoGrid.appendChild(item);
+  });
+
+  if (!photoGrid.querySelector(".photo-add")) {
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "photo-add";
+    add.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>';
+    photoGrid.appendChild(add);
+  }
+  photoBtn.classList.toggle("hidden", photos.length !== 0);
+  photoCount.textContent = photos.length + "/" + MAX_PHOTOS;
+}
+
+photoBtn.addEventListener("click", function () {
+  photoInput.click();
+});
+
+photoInput.addEventListener("change", function () {
+  var files = Array.prototype.slice.call(photoInput.files || []);
+  var room = MAX_PHOTOS - photos.length;
+  if (files.length > room) {
+    files = files.slice(0, room);
+    showToast("รองรับได้สูงสุด " + MAX_PHOTOS + " รูป");
+  }
+  files.forEach(function (f) {
+    if (/^image\//.test(f.type) || /(png|jpe?g|gif|webp|bmp)$/i.test(f.name)) {
+      photos.push(f);
+    }
+  });
+  photoInput.value = "";
+  renderPhotos();
+});
+
+photoGrid.addEventListener("click", function (e) {
+  if (e.target.closest(".photo-add")) {
+    photoInput.click();
+    return;
+  }
+  var del = e.target.closest(".photo-del");
+  if (!del) return;
+  var index = parseInt(del.dataset.index, 10);
+  photos.splice(index, 1);
+  renderPhotos();
+});
+
+function buildSymptomText() {
+  return selectedDevs.map(function (d) {
+    var k = devKey(d);
+    return d.label + ": " + ((problems[k] || "").trim());
+  }).join("\n");
+}
+
 function submitForm() {
   if (!validateStep(3)) return;
+  if (!device.value.trim()) {
+    showToast("กรุณาเลือกอุปกรณ์");
+    return;
+  }
 
   nextBtn.disabled = true;
   showLoading();
@@ -348,13 +513,10 @@ function submitForm() {
   photos.forEach(function (file) {
     formData.append("photos", file, file.name);
   });
-  zonePhotos.forEach(function (file) {
-    formData.append("photos", file, file.name);
-  });
-  formData.append("symptom", symptom.value.trim());
-  formData.append("device", getSelectedDevice());
+  formData.append("symptom", buildSymptomText());
+  formData.append("device", device.value.trim());
   formData.append("location", getLocation());
-  formData.append("zone_count", String(zonePhotos.length));
+  formData.append("zone_count", "0");
   formData.append("reporter_name", reporterName.value.trim());
   formData.append("reporter_phone", reporterPhone.value.trim());
   formData.append("reporter_line_id", reporterLineId.value.trim());
@@ -388,47 +550,7 @@ function hideLoading() {
   loadingOverlay.classList.add("hidden");
 }
 
-var copyTicketBtn = document.getElementById("copyTicketBtn");
-
-function showSuccess(ticketNo) {
-  ticketNoEl.textContent = ticketNo;
-  loadingOverlay.classList.add("hidden");
-  successOverlay.classList.remove("hidden");
-
-  var statusLink = document.getElementById("statusLink");
-  if (statusLink) {
-    statusLink.href = "status.html?no=" + encodeURIComponent(ticketNo);
-  }
-
-  var seconds = 5;
-  countdownEl.textContent = "ปิดหน้าอัตโนมัติใน " + seconds + " วินาที";
-
-  var timer = setInterval(function () {
-    seconds -= 1;
-    if (seconds <= 0) {
-      clearInterval(timer);
-      closeWebView();
-      return;
-    }
-    countdownEl.textContent = "ปิดหน้าอัตโนมัติใน " + seconds + " วินาที";
-  }, 1000);
-}
-
-copyTicketBtn.addEventListener("click", function () {
-  var txt = ticketNoEl.textContent || "";
-  if (!txt) return;
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(txt).then(function () {
-      showToast("คัดลอกหมายเลข " + txt + " แล้ว");
-    }).catch(function () {
-      copyFallback(txt);
-    });
-  } else {
-    copyFallback(txt);
-  }
-});
-
-function copyFallback(text) {
+function copyFallback(text, ok) {
   var ta = document.createElement("textarea");
   ta.value = text;
   ta.style.position = "fixed";
@@ -437,27 +559,39 @@ function copyFallback(text) {
   ta.select();
   try {
     document.execCommand("copy");
-    showToast("คัดลอกหมายเลข " + text + " แล้ว");
+    ok();
   } catch (e) {
-    showToast("คัดลอกไม่สำเร็จ กรุณากดค้างที่หมายเลข");
+    showToast("คัดลอกไม่สำเร็จ กดค้างที่รหัสได้เลย");
   }
   document.body.removeChild(ta);
 }
 
-backLink.addEventListener("click", function () {
-  closeWebView();
+function copyTicket() {
+  var txt = ticketNoEl.textContent || "";
+  if (!txt) return;
+  var done = function () {
+    showToast("คัดลอกรหัส " + txt + " แล้ว");
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(done).catch(function () {
+      copyFallback(txt, done);
+    });
+  } else {
+    copyFallback(txt, done);
+  }
+}
+
+copyTicketBtn.addEventListener("click", copyTicket);
+successClose.addEventListener("click", function () {
+  successOverlay.classList.add("hidden");
+  nextBtn.disabled = false;
+  window.location.href = "ticket.html";
 });
 
-function closeWebView() {
-  if (window.liff && liff.isLoggedIn() && typeof liff.closeWindow === "function") {
-    liff.closeWindow();
-    return;
-  }
-  if (window.history.length > 1) {
-    window.history.back();
-    return;
-  }
-  window.location.href = LINE_OA_URL;
+function showSuccess(ticketNo) {
+  ticketNoEl.textContent = ticketNo;
+  loadingOverlay.classList.add("hidden");
+  successOverlay.classList.remove("hidden");
 }
 
 function applyReporter(profile) {
@@ -492,7 +626,15 @@ function initLineProfile() {
     .catch(function () {});
 }
 
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+  });
+}
+
 initLineProfile();
+buildDeviceGrid(hardGrid, HARDWARE_OPTIONS, "Hardware");
+buildDeviceGrid(softGrid, SOFTWARE_OPTIONS, "Software");
 
 function showToast(message) {
   toastEl.textContent = message;

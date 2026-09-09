@@ -10,8 +10,20 @@ const archive = require("./archive");
 
 const app = express();
 
+app.set("trust proxy", true);
+
+function clientIp(req) {
+  const xff = req.headers["x-forwarded-for"];
+  if (xff) {
+    const first = String(xff).split(",")[0].trim();
+    if (first) return first;
+  }
+  return (req.socket && req.socket.remoteAddress) || "";
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.get("/", (req, res) => res.redirect("/ticket.html"));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -62,6 +74,7 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
       reporterLineId
     });
     await supab.addPhotos(ticketId, urls);
+    await supab.recordDevice({ ip: clientIp(req), ticketNo });
 
     await line.notifyAdminTicket({ ticketNo, device, symptom, location, urls, name, phone });
     await line.notifyUserSubmitted({ ticketNo, reporterLineId });
@@ -90,6 +103,35 @@ app.get("/api/admin/tickets", async (req, res) => {
     }
     const tickets = await supab.listTickets();
     res.json({ ok: true, tickets });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    if (!supab.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    }
+    const users = await supab.listDevices();
+    res.json({ ok: true, users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/users/:ip", async (req, res) => {
+  try {
+    const ip = String(req.params.ip || "").trim();
+    const name = String((req.body || {}).name || "").trim();
+    if (!ip) return res.status(400).json({ ok: false, message: "ไม่มีรหัส IP" });
+    if (!supab.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    }
+    await supab.setDeviceName(ip, name);
+    res.json({ ok: true, ip, name });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });

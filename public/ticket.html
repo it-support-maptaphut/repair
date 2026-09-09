@@ -12,24 +12,35 @@
 </head>
 <body>
 
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="ticket.html">
+      <svg class="navbar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      <span class="navbar-title">ระบบแจ้งซ่อม IT</span>
+    </a>
+    <div class="navbar-links">
+      <a class="nav-link is-active" href="ticket.html">แจ้งซ่อม</a>
+      <a class="nav-link" href="status.html">ตรวจสอบสถานะ</a>
+    </div>
+  </div>
+</nav>
+
 <header class="app-header">
-    
   <div class="header-inner">
     <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
     <h1 class="header-title"> ร ะ บ บ แ จ้ ง ซ่ อ ม </h1>
-   
   </div>
 </header>
 
 <div class="stepper">
   <div class="step-ind is-active" id="ind1">
     <span class="step-dot">1</span>
-    <span class="step-label">รูปถ่าย</span>
+    <span class="step-label">อุปกรณ์</span>
   </div>
   <span class="step-line" id="line1"></span>
   <div class="step-ind" id="ind2">
     <span class="step-dot">2</span>
-    <span class="step-label">อาการ</span>
+    <span class="step-label">ปัญหา</span>
   </div>
   <span class="step-line" id="line2"></span>
   <div class="step-ind" id="ind3">
@@ -42,51 +53,75 @@
   <form id="ticketForm" novalidate>
 
     <section class="step is-active" data-step="1">
-      <p class="step-heading">ถ่ายรูปสภาพจริงของอุปกรณ์ เพื่อให้ช่างเห็นปัญหาได้ชัดเจน</p>
-      <div class="field">
-        <div class="photo-head">
-          <label class="field-label">รูปถ่าย <span class="req">*</span></label>
-          <span class="photo-count" id="photoCount">0/10</span>
+      <p class="step-heading">เลือกอุปกรณ์ / โปรแกรมที่พบปัญหา <span class="opt-hint">เลือกได้หลายรายการ</span></p>
+
+      <div id="devTypeGroup" class="devtype-panels">
+        <div class="cat-tabs" role="tablist" aria-label="หมวดอุปกรณ์">
+          <button type="button" class="cat-tab" data-cat="Hardware" role="tab" aria-selected="false">
+            <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="12" rx="2"/><path d="M6 20h12M12 16v4"/></svg>
+            <span class="cat-tab-body">
+              <span class="cat-tab-title">อุปกรณ์ Hardware</span>
+              <span class="cat-tab-hint">ปริ้นเตอร์ · คอมพิวเตอร์ · POS · CCTV</span>
+            </span>
+          </button>
+          <button type="button" class="cat-tab" data-cat="Software" role="tab" aria-selected="false">
+            <span class="cat-logos" id="catSoftLogos" aria-hidden="true"></span>
+            <span class="cat-tab-body">
+              <span class="cat-tab-title">โปรแกรม Software</span>
+              <span class="cat-tab-hint">Excel · Word · PowerPoint · อื่น ๆ</span>
+            </span>
+          </button>
         </div>
-        <p class="field-hint">ถ่ายมุมที่พังหรือผิดปกติชัด ๆ ได้หลายรูป ต่างมุมกัน</p>
-        <input type="file" id="photoInput" accept="image/*" capture="environment" multiple hidden>
-        <button id="photoBtn" class="photo-btn" type="button">
-          <svg class="cam-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-          <span class="photo-btn-text">ถ่ายรูปปัญหา</span>
-          <span class="photo-btn-hint">แตะเพื่อเปิดกล้องมือถือ</span>
-        </button>
-        <div id="photoGrid" class="photo-grid"></div>
+
+        <div class="dev-panel hidden" data-type="Hardware" id="hardPanel">
+          <div class="dev-grid" id="hardGrid"></div>
+          <div class="dev-custom">
+            <button type="button" class="cat-custom-toggle" data-custom-type="Hardware">+ อื่น ๆ</button>
+            <div class="dev-custom-row hidden" id="hardCustomWrap">
+              <input type="text" id="hardCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์อุปกรณ์อื่น ๆ เช่น เครื่องอ่านบาร์โค้ด">
+              <button class="mini-add" data-custom-type="Hardware" data-input="hardCustom" type="button">เพิ่ม</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dev-panel hidden" data-type="Software" id="softPanel">
+          <div class="dev-grid" id="softGrid"></div>
+          <div class="dev-custom">
+            <button type="button" class="cat-custom-toggle" data-custom-type="Software">+ อื่น ๆ</button>
+            <div class="dev-custom-row hidden" id="softCustomWrap">
+              <input type="text" id="softCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์โปรแกรมอื่น ๆ เช่น โปรแกรมบัญชี">
+              <button class="mini-add" data-custom-type="Software" data-input="softCustom" type="button">เพิ่ม</button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div id="devSelectedWrap" class="dev-selected hidden">
+        <div class="dev-selected-title">รายการที่เลือก <span id="devSelectedCount">0</span></div>
+        <div id="devSelectedList" class="dev-selected-list"></div>
+      </div>
+
+      <input type="hidden" id="device" value="">
     </section>
 
     <section class="step" data-step="2">
-      <p class="step-heading">บอกรายละเอียดอาการและหมวดของปัญหา เพื่อให้ทีม IT แก้ไขได้เร็ว</p>
-      <div class="field">
-        <label for="symptom" class="field-label">อาการ <span class="req">*</span></label>
-        <p class="field-hint">อธิบายสั้น ๆ ว่าก่อนพังมีอาการหรือเสียงอะไรผิดปกติ</p>
-        <textarea id="symptom" rows="4" maxlength="500" placeholder="เช่น เครื่องเปิดไม่ติด, มีเสียงแปลก ๆ, ปริ้นไม่ขึ้น ฯลฯ"></textarea>
-        <p class="char-count"><span id="symptomCount">0</span>/500</p>
-      </div>
+      <p class="step-heading">กรอกรายละเอียดปัญหาของแต่ละรายการที่เลือก ตามช่องที่ระบบจัดให้</p>
+
+      <div id="problemFields" class="problem-fields"></div>
 
       <div class="field">
-        <label class="field-label">หมวดของปัญหา <span class="req">*</span></label>
-        <p class="field-hint">เลือกให้ตรงที่สุด เพื่อให้ทีม IT รู้ทันทีว่าต้องดูจุดไหน</p>
-        <div class="loc-group" id="deviceGroup">
-          <input type="radio" name="device" id="dev1" value="อุปกรณ์ IT">
-          <label for="dev1" class="loc-option">
-            <span class="loc-text">
-              <span class="loc-title">อุปกรณ์ IT</span>
-              <span class="loc-desc">ฮาร์ดแวร์ เช่น เครื่อง POS, คอมพิวเตอร์, ปริ้นเตอร์</span>
-            </span>
-          </label>
-          <input type="radio" name="device" id="dev2" value="โปรแกรม">
-          <label for="dev2" class="loc-option">
-            <span class="loc-text">
-              <span class="loc-title">โปรแกรม</span>
-              <span class="loc-desc">ซอฟต์แวร์ เช่น Excel, ระบบ POS, แอปพลิเคชัน</span>
-            </span>
-          </label>
+        <div class="photo-head">
+          <label class="field-label">แนบรูปภาพ หรือภาพแคป  <span class="opt-hint">ไม่บังคับ</span></label>
+          <span class="photo-count" id="photoCount">0/10</span>
         </div>
+        <p class="field-hint"> ถ้ามีภาพหน้าจอ error หรือรูปประกอบ ช่วยแนบเพื่อให้ทีมเห็นภาพชัดขึ้น</p>
+        <input type="file" id="photoInput" accept="image/*" multiple hidden>
+        <button id="photoBtn" class="photo-btn" type="button">
+          <svg class="cam-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <span class="photo-btn-text">เพิ่มรูป / ภาพแคป</span>
+          <span class="photo-btn-hint">เลือกไฟล์จากคอมพิวเตอร์หรือมือถือ (ไม่เกิน 10 รูป)</span>
+        </button>
+        <div id="photoGrid" class="photo-grid"></div>
       </div>
     </section>
 
@@ -114,37 +149,18 @@
         </div>
       </div>
 
-      <div id="positionSection" class="sub-section hidden">
-        <h3 class="sub-heading">ตำแหน่งและสถานที่</h3>
+      <div class="field">
+        <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="req">*</span></label>
+        <p class="field-hint">พิมพ์จุดที่อุปกรณ์ตั้งอยู่ เช่น จุดแคชเชียร์, หลังห้องเก็บของ, ชั้นวางสินค้า</p>
+        <input type="text" id="positionText" class="text-input" maxlength="120" placeholder="เช่น จุดแคชเชียร์หน้าแรก / มุมหลังห้องเซิร์ฟเวอร์">
+      </div>
 
-        <div class="field">
-          <div class="photo-head">
-            <label class="field-label">ถ่ายรูปโซน <span class="req">*</span></label>
-            <span class="photo-count" id="zonePhotoCount">0/2</span>
-          </div>
-          <p class="field-hint">ถ่ายรูปบริเวณที่อุปกรณ์ตั้งอยู่ เพื่อให้ช่างหารุ่นและจุดได้เร็ว (ไม่เกิน 2 รูป)</p>
-          <input type="file" id="zonePhotoInput" accept="image/*" capture="environment" multiple hidden>
-          <button id="zonePhotoBtn" class="photo-btn" type="button">
-            <svg class="cam-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-            <span class="photo-btn-text">ถ่ายรูปโซน</span>
-            <span class="photo-btn-hint">แตะเพื่อเปิดกล้องถ่ายโซน (ไม่เกิน 2 รูป)</span>
-          </button>
-          <div id="zonePhotoGrid" class="photo-grid"></div>
-        </div>
-
-        <div class="field">
-          <label for="positionText" class="field-label">พิมพ์ตำแหน่ง / สถานที่ <span class="req">*</span></label>
-          <p class="field-hint">พิมพ์จุดที่อุปกรณ์ตั้งอยู่ให้ชัด เช่น จุดแคชเชียร์, มุมโซนผัก, หลังห้องเก็บของ</p>
-          <input type="text" id="positionText" class="text-input" maxlength="120" placeholder="เช่น จุดแคชเชียร์หน้าแรก / มุมหลังห้องเซิร์ฟเวอร์">
-        </div>
-
-        <div class="field">
-          <label for="reporterPhone" class="field-label">เบอร์โทรติดต่อ <span class="opt-hint">ไม่บังคับ</span></label>
-          <p class="field-hint">ใส่เบอร์โทรให้ทีม IT โทรติดต่อสอบถามได้ (ไม่ต้องกรอกก็ได้)</p>
-          <input type="tel" id="reporterPhone" class="text-input" inputmode="tel" maxlength="10" placeholder="เช่น 0812345678">
-          <input type="hidden" id="reporterName" value="">
-          <input type="hidden" id="reporterLineId" value="">
-        </div>
+      <div class="field">
+        <label for="reporterPhone" class="field-label">เบอร์โทรติดต่อ <span class="opt-hint">ไม่บังคับ</span></label>
+        <p class="field-hint">ใส่เบอร์โทรให้ทีม IT โทรติดต่อสอบถามได้ (ไม่บังคับ)</p>
+        <input type="tel" id="reporterPhone" class="text-input" inputmode="tel" maxlength="10" placeholder="เช่น 0812345678">
+        <input type="hidden" id="reporterName" value="">
+        <input type="hidden" id="reporterLineId" value="">
       </div>
     </section>
 
@@ -162,18 +178,30 @@
 </div>
 
 <div id="successOverlay" class="overlay hidden">
-  <div class="success-box">
-    <div class="success-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+  <div class="success-box done-box">
+    <button id="successClose" class="modal-close" type="button" aria-label="ปิด">&times;</button>
+
+    <div class="done-mascot done-it-logo" aria-hidden="true">
+      <span class="itl" data-c="I" style="--i:0">I</span>
+      <span class="itl" data-c="T" style="--i:1">T</span>
+      <span class="itl gap" style="--i:2"></span>
+      <span class="itl" data-c="S" style="--i:3">S</span>
+      <span class="itl" data-c="U" style="--i:4">U</span>
+      <span class="itl" data-c="P" style="--i:5">P</span>
+      <span class="itl" data-c="P" style="--i:6">P</span>
+      <span class="itl" data-c="O" style="--i:7">O</span>
+      <span class="itl" data-c="R" style="--i:8">R</span>
+      <span class="itl" data-c="T" style="--i:9">T</span>
     </div>
-    <h2>แจ้งซ่อมสำเร็จ</h2>
-    <p class="ticket-no-label">หมายเลขใบแจ้ง</p>
-    <p id="ticketNo" class="ticket-no">IT-000000-000</p>
-    <button id="copyTicketBtn" class="copy-btn" type="button">คัดลอกรหัสซ่อม</button>
-    <p class="success-msg">ฝ่าย IT จะติดต่อกลับผ่านทาง Line ของคุณ</p>
-    <a id="statusLink" class="back-btn ghost" href="#">ตรวจสอบสถานะงาน</a>
-    <button id="backLink" class="back-btn" type="button">กลับเข้าสู่ Line</button>
-    <p id="countdown" class="countdown"></p>
+
+    <h2 class="done-title">แจ้งซ่อมเสร็จสิ้น</h2>
+    <p class="done-desc">ทีม IT ได้รับแจ้งงานของคุณแล้ว จะติดต่อกลับโดยเร็ว</p>
+    <p class="done-ticket-label">รหัสแจ้งซ่อมของคุณ</p>
+    <div class="done-code-row">
+      <p id="ticketNo" class="ticket-no">IT-000000-000</p>
+      <button id="copyTicketBtn" class="copy-btn" type="button">คัดลอกรหัสซ่อม</button>
+    </div>
+    <a class="back-btn" href="ticket.html">แจ้งซ่อมอีกครั้ง</a>
   </div>
 </div>
 

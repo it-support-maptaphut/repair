@@ -35,10 +35,124 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 20px 16px 60px;
     }
 
-    .page { max-width: 1080px; margin: 0 auto; }
+    .layout {
+      display: flex;
+      align-items: stretch;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* ---------- SIDEBAR ---------- */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      flex: 0 0 250px;
+      align-self: flex-start;
+      height: 100vh;
+      background: #fff;
+      border-right: 1px solid var(--line);
+      box-shadow: 2px 0 14px rgba(11, 61, 37, 0.05);
+      padding: 20px 14px 16px;
+      overflow-y: auto;
+    }
+
+    .side-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 6px 8px 16px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 12px;
+    }
+
+    .side-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--green-dark), #145c37);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .side-title {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--green-dark);
+    }
+
+    .side-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    .side-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .side-btn {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
+      text-align: left;
+    }
+
+    .side-btn svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    .side-btn:hover {
+      background: #f3f8f5;
+      color: var(--green-dark);
+    }
+
+    .side-btn:active {
+      transform: scale(0.97);
+    }
+
+    .side-btn.is-active {
+      background: var(--green);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 6px 16px rgba(14, 107, 58, 0.28);
+    }
+
+    .side-foot {
+      margin-top: 16px;
+      padding: 14px 10px 4px;
+      border-top: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 22px 26px 46px;
+      display: flex;
+      flex-direction: column;
+    }
 
     .app-header {
       display: flex;
@@ -46,10 +160,10 @@
       gap: 14px;
       background: linear-gradient(135deg, var(--green-dark), #145c37);
       color: #fff;
-      padding: 18px 22px;
+      padding: 20px 28px;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       flex-wrap: wrap;
     }
 
@@ -136,7 +250,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 900px;
+      min-width: 100%;
       font-size: 14px;
     }
 
@@ -163,10 +277,92 @@
     .tno { font-weight: 600; color: var(--green-dark); white-space: nowrap; }
     .t-date { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
     .cell-trunc {
-      max-width: 180px;
+      max-width: 260px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    /* หมวด / อาการ : แสดงเป็นหมวดหมู่ */
+    .dev-tags {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      max-width: 100%;
+    }
+
+    .dev-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      border: 1px solid var(--green-line);
+      white-space: nowrap;
+    }
+
+    .dev-tag .dev-tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .dev-tag.soft {
+      background: #ecf2fb;
+      color: #1a5fb4;
+      border-color: #cfe0f5;
+    }
+
+    .dev-tag.soft .dev-tag-dot { background: #1a5fb4; }
+
+    .dev-tag-type { font-size: 10.5px; opacity: 0.75; font-weight: 400; }
+
+    .symp-list {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 100%;
+    }
+
+    .symp-item {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .symp-label {
+      flex: 0 0 auto;
+      font-weight: 600;
+      color: var(--green-dark);
+      background: var(--green-soft);
+      border: 1px solid var(--green-line);
+      border-radius: 6px;
+      padding: 1px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .symp-text {
+      flex: 1;
+      min-width: 0;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    #ticketsBody tr.ticket-card td[data-c="symptom"] {
+      white-space: normal;
+      line-height: 1.6;
+    }
+
+    #ticketsBody tr.ticket-card td[data-c="symptom"] .cell-trunc {
+      white-space: normal;
+      max-width: 320px;
     }
     .cell-user { font-size: 12.5px; }
     .cell-user .uline { color: var(--muted); font-size: 11.5px; }
@@ -280,7 +476,7 @@
     .det-item.full { grid-column: 1 / -1; }
     .det-k { font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
     .det-v { font-size: 14px; font-weight: 500; word-break: break-word; }
-    .det-v.symptom { font-weight: 400; line-height: 1.5; }
+    .det-v.symptom { font-weight: 400; line-height: 1.5; white-space: pre-line; word-break: break-word; }
 
     .ph-grid {
       display: grid;
@@ -380,6 +576,349 @@
       transition: 0.15s;
     }
     .pdf-chip:hover { background: #10b981; color: #fff; }
+
+    /* ---------- SIDEBAR MOBILE ---------- */
+    @media (max-width: 860px) {
+      .layout {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        flex: none;
+        align-self: stretch;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        padding: 10px;
+        z-index: 30;
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+      .main {
+        padding: 14px 14px 46px;
+      }
+      .side-brand {
+        display: none;
+      }
+      .side-nav {
+        flex-direction: row;
+        justify-content: stretch;
+        gap: 6px;
+      }
+      .side-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 11px 6px;
+        font-size: 13px;
+        text-align: center;
+      }
+      .side-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .side-foot {
+        display: none;
+      }
+    }
+
+    /* ---------- ANALYTICS ---------- */
+    .ana-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .ana-head h3 {
+      font-size: 18px;
+      color: var(--green-dark);
+      font-weight: 600;
+    }
+
+    .ana-head p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.5;
+    }
+
+    .ana-refresh {
+      background: #e8f3ee;
+      border: 1px solid var(--line);
+      color: var(--green-dark);
+    }
+
+    .ana-refresh:hover { background: #dceee5; }
+
+    .ana-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .ana-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .ana-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green-dark);
+      margin-bottom: 8px;
+    }
+
+    .ana-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ana-total {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green-dark);
+      background: var(--green-soft);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 14px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .ana-total::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .ana-chart-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 290px;
+    }
+
+    .ana-chart-wrap svg {
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+    }
+
+    .ana-no-data {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 10px;
+      font-size: 14px;
+    }
+
+    .ana-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background: #f8fbf9;
+      border: 1px solid var(--line);
+      animation: anaIn 0.35s ease both;
+    }
+
+    @keyframes anaIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      box-shadow: 0 1px 3px rgba(23, 36, 28, 0.2);
+    }
+
+    .legend-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 13.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .legend-bar {
+      width: 110px;
+      height: 8px;
+      border-radius: 999px;
+      background: #e6efe9;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .legend-bar i {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .legend-pct {
+      flex: 0 0 auto;
+      width: 46px;
+      text-align: right;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green-dark);
+    }
+
+    .legend-pct small {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    @media (max-width: 1080px) {
+      .ana-grid {
+        grid-template-columns: 1fr;
+      }
+      .ana-card {
+        min-height: auto;
+      }
+    }
+
+    /* ---------- USERS TABLE ---------- */
+    .ip-toggle-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ip-copy {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 7px;
+      background: #f1f5f3;
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+
+    .ip-copy:hover { background: var(--green-soft); color: var(--green); }
+
+    .ip-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 11.5px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: 0.15s;
+      white-space: nowrap;
+    }
+
+    .ip-toggle:hover { color: var(--blue); border-color: #b9cff3; }
+
+    .ip-full {
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+      margin-top: 4px;
+      font-family: Consolas, monospace;
+      background: #f6faf7;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .name-editor {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .name-input {
+      border: 1px solid var(--line);
+      background: #fbfdfc;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      width: 150px;
+      outline: none;
+      transition: border 0.15s;
+    }
+
+    .name-input:focus { border-color: var(--green); }
+
+    .name-save {
+      flex: 0 0 auto;
+      height: 32px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--green);
+      color: #fff;
+      font-family: inherit;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .name-save:hover { background: #0d5e32; }
+
+    .name-save.saved { background: var(--green-soft); color: var(--green); }
+
+    .u-ip { font-family: Consolas, monospace; font-size: 13px; }
+    .u-mono { font-family: Consolas, monospace; font-size: 12.5px; }
+    .u-count { font-weight: 600; color: var(--green-dark); }
+    .chip-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: #f1f5f3;
+      color: var(--muted);
+    }
+    .chip-badge.has-name { background: var(--green-soft); color: var(--green); }
+
+    .users-empty-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13.5px;
+      padding: 8px 0;
+    }
 
     .archive-box { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .archive-size {
@@ -671,27 +1210,62 @@
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="app-header">
-      <div class="app-logo">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
-          <circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>
-        </svg>
-      </div>
-      <div>
-        <div class="app-title">แดชบอร์ดงานแจ้งซ่อม IT</div>
-        <div class="app-sub">จัดการใบแจ้งงานทั้งหมด</div>
-      </div>
-      <div class="header-right">
-        <button class="btn-refresh" onclick="fetchTickets()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="side-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+            <circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>
           </svg>
-          <span class="label-text">รีเฟรช</span>
-        </button>
+        </div>
+        <div class="side-brand-text">
+          <div class="side-title">ระบบแจ้งซ่อม IT</div>
+          <div class="side-sub">แผงผู้ดูแล</div>
+        </div>
       </div>
-    </header>
+
+      <nav class="side-nav" id="adminTabs" aria-label="เมนูหลัก">
+        <button class="side-btn is-active" data-tab="tickets" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <span>การแจ้งซ่อม</span>
+        </button>
+        <button class="side-btn" data-tab="devices" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>ผู้ใช้งาน</span>
+        </button>
+        <button class="side-btn" data-tab="analytics" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          <span>วิเคราะห์การแจ้งซ่อม</span>
+        </button>
+      </nav>
+
+      <div class="side-foot">v2.0 · แดชบอร์ด IT</div>
+    </aside>
+
+    <div class="main">
+      <header class="app-header">
+        <div class="app-logo">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+            <circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="app-title" id="headTitle">แดชบอร์ดงานแจ้งซ่อม IT</div>
+          <div class="app-sub" id="headSub">จัดการใบแจ้งงานทั้งหมด</div>
+        </div>
+        <div class="header-right">
+          <button class="btn-refresh" onclick="fetchTickets()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/>
+            </svg>
+            <span class="label-text">รีเฟรช</span>
+          </button>
+        </div>
+      </header>
+
+    <section id="ticketsView">
 
     <section class="stats">
       <div class="stat-card stat-new">
@@ -742,6 +1316,60 @@
         <p>ยังไม่มีใบแจ้งงาน</p>
       </div>
     </main>
+    </section>
+
+    <section id="devicesView" hidden>
+      <div class="table-wrap">
+        <table id="devicesTable">
+          <thead>
+            <tr>
+              <th>ชื่อผู้ใช้</th>
+              <th>IP</th>
+              <th>แจ้งซ่อมครั้งล่าสุด</th>
+              <th>จำนวนครั้ง</th>
+              <th>เห็นครั้งล่าสุด</th>
+              <th style="text-align:right">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="devicesBody"></tbody>
+        </table>
+      </div>
+      <div id="devicesEmpty" class="empty hidden">
+        <p class="users-empty-hint">ยังไม่มีผู้ใช้งาน — เมื่อพนักงานส่งใบแจ้งซ่อม ระบบจะจดจำ IP ของเครื่องนั้นโดยอัตโนมัติ</p>
+      </div>
+    </section>
+
+    <section id="analyticsView" hidden>
+      <section class="ana-head">
+        <div>
+          <h3>วิเคราะห์การแจ้งซ่อม</h3>
+          <p>สัดส่วนปัญหาตามหมวดอุปกรณ์ / โปรแกรม และสัดส่วน IP เครื่องที่แจ้งซ่อม คิดเป็น % จาก 100%</p>
+        </div>
+        <button class="btn-refresh ana-refresh" onclick="renderAnalytics()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+          <span>รีเฟรชกราฟ</span>
+        </button>
+      </section>
+
+      <div class="ana-grid">
+        <div class="ana-card chart-card">
+          <div class="ana-card-head">
+            <div class="ana-card-title">ปัญหาตามหมวดอุปกรณ์ / โปรแกรม</div>
+            <div class="ana-total" id="anaTotalLabel" title="จำนวนงานทั้งหมด">0 งาน</div>
+          </div>
+          <div class="ana-chart-wrap">
+            <svg id="anaDonut" viewBox="0 0 340 300" role="img" aria-label="กราฟวงกลม 3 มิติ สัดส่วนปัญหาตามหมวด"></svg>
+          </div>
+          <div class="ana-no-data hidden" id="anaNoData">ยังไม่มีข้อมูลใบแจ้งซ่อมให้วิเคราะห์</div>
+        </div>
+
+        <div class="ana-card legend-card">
+          <div class="ana-card-title">รายละเอียดสัดส่วน (%)</div>
+          <div class="ana-legend" id="anaLegend"></div>
+        </div>
+      </div>
+    </section>
+    </div>
   </div>
 
   <!-- MODAL -->
@@ -823,11 +1451,8 @@
           <h3 class="modal-title">แก้ไขใบแจ้งซ่อม</h3>
           <div class="modal-no"><span class="tno" id="editNo"></span></div>
           <div class="form-field">
-            <label>หมวด</label>
-            <select id="editDevice">
-              <option value="อุปกรณ์ IT">อุปกรณ์ IT</option>
-              <option value="โปรแกรม">โปรแกรม</option>
-            </select>
+            <label>หมวด / อุปกรณ์</label>
+            <input id="editDevice" placeholder="เช่น Hardware · เครื่องปริ้น">
           </div>
           <div class="form-field">
             <label>อาการเสีย</label>
@@ -889,9 +1514,9 @@
           </p>
         </div>
 
+</div>
       </div>
     </div>
-  </div>
 
   <div class="pdf-card" id="pdfCard"></div>
   <div class="toast" id="toast"></div>
@@ -939,6 +1564,7 @@
           tickets = data.tickets || [];
           renderStats();
           renderTable();
+          if (!document.getElementById("analyticsView").hidden) renderAnalytics();
         })
         .catch(function () {
           document.getElementById("ticketsBody").innerHTML =
@@ -947,6 +1573,324 @@
     }
 
     window.fetchTickets = loadTickets;
+
+    // ---------- TABS ----------
+    var deviceUsers = [];
+
+    document.getElementById("adminTabs").addEventListener("click", function (e) {
+      var btn = e.target.closest(".side-btn");
+      if (!btn) return;
+      var tab = btn.getAttribute("data-tab");
+      document.querySelectorAll("#adminTabs .side-btn").forEach(function (b) {
+        b.classList.toggle("is-active", b === btn);
+      });
+      document.getElementById("ticketsView").hidden = tab !== "tickets";
+      document.getElementById("devicesView").hidden = tab !== "devices";
+      document.getElementById("analyticsView").hidden = tab !== "analytics";
+      var titles = {
+        tickets: ["แดชบอร์ดงานแจ้งซ่อม IT", "จัดการใบแจ้งงานทั้งหมด"],
+        devices: ["ผู้ใช้งาน", "รายชื่อเครื่องคอมพิวเตอร์จาก IP ที่แจ้งซ่อม"],
+        analytics: ["วิเคราะห์การแจ้งซ่อม", "ภาพรวมปัญหาบริษัท คิดเป็นเปอร์เซ็นต์"]
+      };
+      document.getElementById("headTitle").textContent = titles[tab][0];
+      document.getElementById("headSub").textContent = titles[tab][1];
+      if (tab === "devices" && !deviceUsers.length) loadDevices();
+      if (tab === "analytics") renderAnalytics();
+    });
+
+    function loadDevices() {
+      var body = document.getElementById("devicesBody");
+      var empty = document.getElementById("devicesEmpty");
+      body.innerHTML =
+        '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      empty.classList.add("hidden");
+      return fetch("/api/admin/users")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          deviceUsers = data.users || [];
+          renderDevices();
+        })
+        .catch(function () {
+          body.innerHTML =
+            '<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ตรวจสอบว่าตั้งค่าตาราง user_devices ใน Supabase แล้ว)</td></tr>';
+        });
+    }
+
+    window.fetchDevices = loadDevices;
+
+    // ---------- ANALYTICS (3D donut) ----------
+    var ANA_PALETTE = ["#0e6b3a", "#2ea465", "#ffb020", "#ed6a5a", "#2b6cb0", "#8e5bd4", "#0f9d8e", "#d97706", "#64748b", "#14b8a6"];
+    var ANA_NS = "http://www.w3.org/2000/svg";
+    var ANA_COLOR_RE = /^#([0-9a-f]{6})$/i;
+
+    function anaShade(hex, f) {
+      var m = ANA_COLOR_RE.exec(hex);
+      if (!m) return hex;
+      var n = parseInt(m[1], 16);
+      var r = Math.min(255, Math.round(((n >> 16) & 255) * f));
+      var g = Math.min(255, Math.round(((n >> 8) & 255) * f));
+      var b = Math.min(255, Math.round((n & 255) * f));
+      return "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+    }
+
+    function anaEsc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+      });
+    }
+
+    function parseDeviceParts(device) {
+      return String(device || "")
+        .split(",")
+        .map(function (p) { return p.trim(); })
+        .filter(Boolean);
+    }
+
+    function deviceType(p) {
+      var i = p.indexOf("·");
+      if (i > -1) return p.slice(0, i).trim();
+      return /Software|Excel|Word|PowerPoint/i.test(p) ? "Software" : "Hardware";
+    }
+
+    function deviceLabel(p) {
+      var i = p.indexOf("·");
+      return i > -1 ? p.slice(i + 1).trim() : p.trim();
+    }
+
+    function fmtDevices(device) {
+      var parts = parseDeviceParts(device);
+      if (!parts.length) return "-";
+      var h = '<span class="dev-tags">';
+      parts.forEach(function (p) {
+        var t = deviceType(p);
+        var soft = /software|excel|word|powerpoint/i.test(t);
+        h +=
+          '<span class="dev-tag' + (soft ? " soft" : "") + '">' +
+          '<i class="dev-tag-dot"></i>' +
+          '<span class="dev-tag-label">' + esc(deviceLabel(p)) + "</span>" +
+          '<span class="dev-tag-type">' + esc(t) + "</span>" +
+          "</span>";
+      });
+      return h + "</span>";
+    }
+
+    function symptomLines(symptom) {
+      return String(symptom || "")
+        .split("\n")
+        .map(function (l) { return l.trim(); })
+        .filter(Boolean);
+    }
+
+    function fmtSymptoms(symptom) {
+      var lines = symptomLines(symptom);
+      if (!lines.length) return "-";
+      var h = '<span class="symp-list">';
+      lines.forEach(function (l) {
+        var i = l.indexOf(":");
+        var label = i > -1 ? l.slice(0, i).trim() : "";
+        var body = i > -1 ? l.slice(i + 1).trim() : l;
+        h +=
+          '<span class="symp-item">' +
+          (label ? '<span class="symp-label">' + esc(label) + "</span>" : "") +
+          '<span class="symp-text">' + esc(body) + "</span>" +
+          "</span>";
+      });
+      return h + "</span>";
+    }
+
+    function collectAnaData() {
+      var map = {};
+      var total = 0;
+      tickets.forEach(function (t) {
+        var parts = parseDeviceParts(t.device);
+        if (!parts.length) {
+          map["ไม่ระบุ"] = (map["ไม่ระบุ"] || 0) + 1;
+          total++;
+          return;
+        }
+        parts.forEach(function (p) {
+          var label = p.split("·").pop().trim() || p;
+          map[label] = (map[label] || 0) + 1;
+          total++;
+        });
+      });
+      var arr = Object.keys(map).map(function (k) { return { label: k, count: map[k] }; });
+      arr.sort(function (a, b) { return b.count - a.count; });
+      return { list: arr, total: total };
+    }
+
+    function annulusPath(cx, cy, R, r, a0, a1) {
+      var s0 = [cx + R * Math.cos(a0), cy + R * Math.sin(a0)];
+      var s1 = [cx + R * Math.cos(a1), cy + R * Math.sin(a1)];
+      var i1 = [cx + r * Math.cos(a1), cy + r * Math.sin(a1)];
+      var i0 = [cx + r * Math.cos(a0), cy + r * Math.sin(a0)];
+      var large = (a1 - a0) > Math.PI ? 1 : 0;
+      return "M" + s0[0].toFixed(2) + " " + s0[1].toFixed(2) +
+        "A" + R + " " + R + " 0 " + large + " 1 " + s1[0].toFixed(2) + " " + s1[1].toFixed(2) +
+        "L" + i1[0].toFixed(2) + " " + i1[1].toFixed(2) +
+        "A" + r + " " + r + " 0 " + large + " 0 " + i0[0].toFixed(2) + " " + i0[1].toFixed(2) + "Z";
+    }
+
+    function renderAnalytics() {
+      var data = collectAnaData();
+      var list = data.list;
+      var total = data.total;
+      var svgWrap = document.getElementById("anaDonut");
+      var noData = document.getElementById("anaNoData");
+      var legend = document.getElementById("anaLegend");
+      var center = document.getElementById("anaTotalLabel");
+
+      if (!total) {
+        noData.classList.remove("hidden");
+        svgWrap.innerHTML = "";
+        legend.innerHTML = "";
+        center.textContent = "0 งาน";
+        return;
+      }
+      noData.classList.add("hidden");
+
+      var top = list.slice(0, 8);
+      var rest = list.slice(8);
+      var restSum = rest.reduce(function (s, o) { return s + o.count; }, 0);
+      if (restSum > 0) top.push({ label: "อื่น ๆ", count: restSum });
+
+      var start = -Math.PI / 2;
+      var OUTER = 118, INNER = 62, DEPTH = 26;
+
+      var defs = [];
+      var bottom = [];
+      var topG = [];
+      var idxs = [];
+
+      top.forEach(function (o, i) {
+        var pct = Math.round((o.count / total) * 10000) / 100;
+        var sweep = (o.count / total) * Math.PI * 2;
+        var a1 = start + sweep;
+        var col = ANA_PALETTE[i % ANA_PALETTE.length];
+        var dark = anaShade(col, 0.55);
+        var d = annulusPath(0, 0, OUTER, INNER, start + 0.004, a1 - 0.004);
+
+        var gid = "anag" + i;
+        defs.push(
+          '<linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="' + anaShade(col, 1.18) + '"/>' +
+          '<stop offset="100%" stop-color="' + anaShade(col, 0.88) + '"/></linearGradient>'
+        );
+
+        bottom.push('<path d="' + d + '" fill="' + dark + '"/>');
+        topG.push('<path d="' + d + '" fill="url(#' + gid + ')">' +
+          '<title>' + anaEsc(o.label) + ' (' + pct + '%)</title></path>');
+
+        var barPct = Math.round((o.count / total) * 100);
+        idxs.push(
+          '<div class="legend-item" style="animation-delay:' + (i * 0.05) + 's">' +
+          '<span class="legend-dot" style="background:' + col + '"></span>' +
+          '<span class="legend-name" title="' + anaEsc(o.label) + '">' + anaEsc(o.label) + " (" + o.count + ")</span>" +
+          '<span class="legend-bar"><i style="width:' + Math.max(4, barPct) + '%;background:' + col + '"></i></span>' +
+          '<span class="legend-pct">' + pct.toFixed(1).replace(/\.0$/, "") + '<small>%</small></span>' +
+          "</div>"
+        );
+
+        start = a1;
+      });
+
+      svgWrap.innerHTML =
+        '<defs>' + defs.join("") + "</defs>" +
+        '<g transform="translate(168,178)">' +
+        '<g transform="scale(1,0.62)">' +
+        '<g transform="translate(0,' + DEPTH + ')">' + bottom.join("") + "</g>" +
+        '<g>' + topG.join("") + "</g>" +
+        "</g></g>";
+      center.textContent = total + " งาน";
+      legend.innerHTML = idxs.join("");
+    }
+
+    window.renderAnalytics = renderAnalytics;
+
+    function copyToClipboard(txt) {
+      var done = function () { toast("คัดลอก IP แล้ว: " + txt); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(txt).then(done).catch(function () { done(); });
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = txt;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    }
+
+    function renderDevices() {
+      var body = document.getElementById("devicesBody");
+      var empty = document.getElementById("devicesEmpty");
+      if (!deviceUsers.length) {
+        body.innerHTML = "";
+        empty.classList.remove("hidden");
+        return;
+      }
+      empty.classList.add("hidden");
+      body.innerHTML = deviceUsers.map(function (u, i) {
+        var hasName = !!(u.name && u.name.trim());
+        return (
+          '<tr class="device-row" data-ip="' + esc(u.ip) + '">' +
+          '<td><div class="chip-badge' + (hasName ? " has-name" : "") + '">' +
+            (hasName ? esc(u.name) : "ยังไม่ตั้งชื่อ") +
+          "</div></td>" +
+          '<td class="u-ip">' +
+            '<div class="ip-toggle-wrap">' +
+              '<button class="ip-toggle" type="button" onclick="toggleIpFull(this)">' + esc(u.ip) + "</button>" +
+              '<button class="ip-copy" type="button" title="คัดลอก IP" onclick="copyToClipboard(\'' + esc(u.ip).replace(/'/g, "\\'") + '\')">' +
+                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+              "</button>" +
+            "</div>" +
+            '<div class="ip-full hidden" style="word-break:break-all">' + esc(u.ip) + "</div>" +
+          "</td>" +
+          '<td class="u-mono">' + esc(u.last_ticket_no || "-") + "</td>" +
+          '<td class="u-count">' + (u.ticket_count || 0) + " ครั้ง</td>" +
+          '<td class="t-date">' + esc(fmtDate(u.last_seen_at)) + "</td>" +
+          '<td style="text-align:right">' +
+            '<div class="name-editor">' +
+            '<input class="name-input" value="' + esc(u.name || "") + '" placeholder="ตั้งชื่อเครื่อง" data-ip="' + esc(u.ip) + '">' +
+            '<button class="name-save" type="button" onclick="saveDeviceName(this)">บันทึก</button>' +
+            "</div>" +
+          "</td>" +
+          "</tr>"
+        );
+      }).join("");
+    }
+
+    window.toggleIpFull = function (btn) {
+      var full = btn.parentElement.nextElementSibling;
+      if (!full) return;
+      full.classList.toggle("hidden");
+      btn.textContent = full.classList.contains("hidden")
+        ? btn.getAttribute("data-short") || ""
+        : "ซ่อน IP";
+    };
+
+    function saveDeviceName(btn) {
+      var row = btn.closest(".device-row");
+      var input = row.querySelector(".name-input");
+      var ip = input.getAttribute("data-ip");
+      var name = input.value.trim();
+      fetch("/api/admin/users/" + encodeURIComponent(ip), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "บันทึกไม่สำเร็จ");
+          toast("บันทึกชื่อผู้ใช้แล้ว");
+          loadDevices();
+        })
+        .catch(function (e) { toast(e.message); });
+    }
+
+    window.saveDeviceName = saveDeviceName;
 
     function renderStats() {
       var n = 0, w = 0, d = 0;
@@ -995,8 +1939,8 @@
           '<tr class="ticket-card" data-no="' + esc(t.ticket_no) + '">' +
           '<td data-c="no" data-label="เลขที่ซ่อม"><span class="tno">' + esc(t.ticket_no) + "</span></td>" +
           '<td data-c="date" data-label="เวลา / วันที่"><span class="t-date">' + esc(fmtDate(t.created_at)) + "</span></td>" +
-          '<td data-c="device" data-label="หมวด">' + esc(t.device || "-") + "</td>" +
-          '<td data-c="symptom" data-label="อาการ"><span class="cell-trunc" data-full="' + esc(t.symptom) + '">' + esc(t.symptom || "-") + "</span></td>" +
+          '<td data-c="device" data-label="หมวด">' + fmtDevices(t.device) + "</td>" +
+          '<td data-c="symptom" data-label="อาการ"><span class="cell-trunc" title="' + esc(t.symptom) + '">' + fmtSymptoms(t.symptom) + "</span></td>" +
           '<td data-c="loc" data-label="สถานที่"><span class="cell-loc" data-label="สถานที่">' + esc(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</span></td>" +
           '<td data-c="user" data-label="บัญชี Line" class="cell-user">' + esc(t.reporter_line_id || "-") + "</td>" +
           '<td data-c="status" data-label="สถานะ">' +
@@ -1112,12 +2056,12 @@
       badge.textContent = st.label;
       var loc = parseLocation(row.location);
       document.getElementById("detDate").textContent = fmtDate(row.created_at);
-      document.getElementById("detDevice").textContent = row.device || "-";
+      document.getElementById("detDevice").innerHTML = fmtDevices(row.device) || "-";
       document.getElementById("detBranch").textContent = loc.branch;
       document.getElementById("detPosition").textContent = loc.position;
       document.getElementById("detPhone").textContent = row.reporter_phone || "-";
       document.getElementById("detLineId").textContent = row.reporter_line_id || "-";
-      document.getElementById("detSymptom").textContent = row.symptom || "-";
+      document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
 
       var groups = splitPhotos(row.ticket_photos);
       fillPhotoGrid("detPhotos", groups.problem);
@@ -1167,7 +2111,7 @@
       currentRow = row;
       openDetail(row);
       document.getElementById("editNo").textContent = row.ticket_no;
-      document.getElementById("editDevice").value = row.device || "อุปกรณ์ IT";
+      document.getElementById("editDevice").value = row.device || "";
       document.getElementById("editSymptom").value = row.symptom || "";
       document.getElementById("editLocation").value = row.location || "";
       document.getElementById("editLineId").value = row.reporter_line_id || "";
@@ -1261,13 +2205,13 @@
         '<div class="pdf-frag"><div class="pdf-info-pad">' +
           '<div class="pdf-section-h">รายละเอียดการแจ้งซ่อม</div>' +
           '<table class="pdf-meta">' +
-            "<tr><th>หมวด</th><td>" + esc(row.device || "-") + "</td></tr>" +
+            "<tr><th>หมวด</th><td>" + fmtDevices(row.device) + "</td></tr>" +
             "<tr><th>วัน / เวลา</th><td>" + esc(fmtDate(row.created_at)) + "</td></tr>" +
             "<tr><th>สาขา</th><td>" + esc(loc.branch) + "</td></tr>" +
             "<tr><th>ตำแหน่ง / สถานที่</th><td>" + esc(loc.position) + "</td></tr>" +
             "<tr><th>เบอร์โทรติดต่อ</th><td>" + esc(row.reporter_phone || "-") + "</td></tr>" +
             "<tr><th>บัญชี Line (ผู้แจ้ง)</th><td>" + esc(row.reporter_line_id || "-") + "</td></tr>" +
-            "<tr><th>อาการเสีย</th><td>" + esc(row.symptom || "-") + "</td></tr>" +
+            "<tr><th>อาการเสีย</th><td>" + fmtSymptoms(row.symptom) + "</td></tr>" +
           "</table>" +
         "</div></div>" +
         photosBlocksHtml("รูปภาพ · สภาพอุปกรณ์", groups.problem) +

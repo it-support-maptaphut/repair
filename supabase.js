@@ -34,7 +34,8 @@ ensurePhotosBucket();
 
 function devicePrefix(device) {
   const d = String(device || "").toLowerCase();
-  if (d === "โปรแกรม" || d.includes("software") || d.includes("soft") || d === "sw") return "SW-";
+  if (d.includes("hardware")) return "HW-";
+  if (d.includes("software") || d.includes("soft") || d === "sw") return "SW-";
   return "HW-";
 }
 
@@ -118,4 +119,53 @@ async function listTickets(limit = 500) {
   return fallback;
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets };
+async function recordDevice({ ip, ticketNo }) {
+  if (!ready || !ip) return;
+  try {
+    const { data: existing } = await supabase
+      .from("user_devices")
+      .select("id, ticket_count, name")
+      .eq("ip", ip)
+      .maybeSingle();
+    const count = existing && existing.ticket_count ? existing.ticket_count + 1 : 1;
+    const insert = await supabase
+      .from("user_devices")
+      .upsert(
+        {
+          ip,
+          name: existing && existing.name ? existing.name : "",
+          last_seen_at: new Date().toISOString(),
+          last_ticket_no: ticketNo,
+          ticket_count: count
+        },
+        { onConflict: "ip" }
+      )
+      .select("id");
+    if (insert.error) throw insert.error;
+  } catch (err) {
+    console.warn("[Devices] บันทึกข้อมูลผู้ใช้ไม่สำเร็จ (ต้องรัน SQL ตาราง user_devices):", err.message);
+  }
+}
+
+async function listDevices(limit = 200) {
+  const { data, error } = await supabase
+    .from("user_devices")
+    .select("*")
+    .order("last_seen_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function setDeviceName(ip, name) {
+  const { data, error } = await supabase
+    .from("user_devices")
+    .update({ name })
+    .eq("ip", ip)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, recordDevice, listDevices, setDeviceName };
