@@ -24,6 +24,7 @@ var actionBar = document.querySelector(".action-bar");
 var reporterName = document.getElementById("reporterName");
 var reporterPhone = document.getElementById("reporterPhone");
 var reporterLineId = document.getElementById("reporterLineId");
+var lineIdText = document.getElementById("lineIdText");
 var positionText = document.getElementById("positionText");
 var device = document.getElementById("device");
 var devTypeGroup = document.getElementById("devTypeGroup");
@@ -45,9 +46,9 @@ var HARDWARE_OPTIONS = [
 ];
 
 var SOFTWARE_OPTIONS = [
-  { id: "excel", label: "Excel", logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#217346"/><text x="12" y="17.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="14" fill="#fff">X</text>' },
-  { id: "word",  label: "Word",  logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#2B579A"/><text x="12" y="17.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#fff">W</text>' },
-  { id: "ppt",   label: "PowerPoint", logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#D24726"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="15" fill="#fff">P</text>' }
+  { id: "excel", label: "Excel", img: "logo-ms/excel.webp" },
+  { id: "word",  label: "Word",  img: "logo-ms/word.webp" },
+  { id: "ppt",   label: "PowerPoint", img: "logo-ms/ppt.webp" }
 ];
 
 if (window.visualViewport) {
@@ -80,9 +81,11 @@ function buildDeviceGrid(grid, list, type) {
     btn.type = "button";
     btn.className = "dev-opt";
     btn.setAttribute("aria-pressed", "false");
-    var svg = opt.logo
-      ? '<svg class="dev-logo" viewBox="0 0 24 24" aria-hidden="true">' + opt.logo + "</svg>"
-      : '<svg class="dev-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + opt.icon + "</svg>";
+    var svg = opt.img
+      ? '<img class="dev-logo" src="' + opt.img + '" alt="' + opt.label + '" aria-hidden="true" loading="lazy">'
+      : opt.logo
+        ? '<svg class="dev-logo" viewBox="0 0 24 24" aria-hidden="true">' + opt.logo + "</svg>"
+        : '<svg class="dev-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + opt.icon + "</svg>";
     btn.innerHTML = svg + "<span>" + opt.label + "</span>";
     btn.addEventListener("click", function () {
       toggleDev({ type: type, label: opt.label });
@@ -112,7 +115,9 @@ catTabs.forEach(function (tab) {
   var slot = document.getElementById("catSoftLogos");
   if (slot) {
     slot.innerHTML = SOFTWARE_OPTIONS.map(function (o) {
-      return '<span class="cat-logo" title="' + o.label + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + o.logo + "</svg></span>";
+      return '<span class="cat-logo" title="' + o.label + '">' +
+        (o.img ? '<img src="' + o.img + '" alt="' + o.label + '" aria-hidden="true" loading="lazy">' : '<svg viewBox="0 0 24 24" aria-hidden="true">' + o.logo + "</svg>") +
+        "</span>";
     }).join("");
   }
 })();
@@ -238,6 +243,9 @@ function devFamiliarLogo(dev) {
   var list = dev.type === "Software" ? SOFTWARE_OPTIONS : [];
   var match = null;
   list.forEach(function (o) { if (o.label === dev.label) match = o; });
+  if (match && match.img) {
+    return '<span class="prob-logo"><img src="' + match.img + '" alt="' + match.label + '" aria-hidden="true" loading="lazy"></span>';
+  }
   if (match && match.logo) {
     return '<span class="prob-logo"><svg viewBox="0 0 24 24" aria-hidden="true">' + match.logo + "</svg></span>";
   }
@@ -301,6 +309,79 @@ function getLocation() {
   if (!branch) return "";
   return pos ? branch + " · " + pos : branch;
 }
+
+// ---------- แผนผังร้าน (แสดงรูปภาพตามสาขา) ----------
+function MAP_IMAGE(branchVal) {
+  return branchVal.indexOf("สาขา 4") > -1 ? "maps/branch4.png" : "";
+}
+
+function renderMap(branchVal) {
+  var holder = document.getElementById("isoPlaceholder");
+  var img = document.getElementById("branchMapImg");
+  if (!holder || !img) return;
+  if (!branchVal) {
+    holder.textContent = "โปรดเลือกสาขาด้านบนก่อน";
+    holder.classList.remove("hidden");
+    img.classList.add("hidden");
+    img.removeAttribute("src");
+    return;
+  }
+  var src = MAP_IMAGE(branchVal);
+  if (!src) {
+    holder.textContent = "สาขานี้ยังไม่มีแผนผังร้าน — โปรดแจ้งทีม IT (หรือพิมพ์ตำแหน่งเองด้านล่าง)";
+    holder.classList.remove("hidden");
+    img.classList.add("hidden");
+    img.removeAttribute("src");
+    return;
+  }
+  img.onload = function () {
+    holder.classList.add("hidden");
+    img.classList.remove("hidden");
+  };
+  img.onerror = function () {
+    holder.textContent = "โหลดแผนผังร้านไม่สำเร็จ";
+    holder.classList.remove("hidden");
+    img.classList.add("hidden");
+  };
+  img.src = src;
+}
+
+// ---------- ขยายภาพผังร้าน (lightbox) ----------
+function initMapLightbox() {
+  var box = document.getElementById("mapLightbox");
+  var boxImg = document.getElementById("mapLightboxImg");
+  var closeBtn = document.getElementById("mapLightboxClose");
+  if (!box || !boxImg || !closeBtn) return;
+
+  var img = document.getElementById("branchMapImg");
+  if (img) {
+    img.addEventListener("click", function () {
+      if (img.classList.contains("hidden") || !img.getAttribute("src")) return;
+      boxImg.src = img.src;
+      box.classList.remove("hidden");
+    });
+  }
+
+  function close() {
+    box.classList.add("hidden");
+    boxImg.removeAttribute("src");
+  }
+  closeBtn.addEventListener("click", close);
+  box.addEventListener("click", function (e) {
+    if (e.target === box) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !box.classList.contains("hidden")) close();
+  });
+}
+
+initMapLightbox();
+
+document.querySelectorAll('input[name="branch"]').forEach(function (radio) {
+  radio.addEventListener("change", function () {
+    renderMap(radio.value);
+  });
+});
 
 function goTo(step) {
   var direction = step > currentStep ? "next" : "prev";
@@ -519,7 +600,7 @@ function submitForm() {
   formData.append("zone_count", "0");
   formData.append("reporter_name", reporterName.value.trim());
   formData.append("reporter_phone", reporterPhone.value.trim());
-  formData.append("reporter_line_id", reporterLineId.value.trim());
+  formData.append("reporter_line_id", lineIdText.value.trim() || reporterLineId.value.trim());
 
   fetch("/api/tickets", { method: "POST", body: formData })
     .then(function (res) {

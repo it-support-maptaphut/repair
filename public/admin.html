@@ -1207,6 +1207,7 @@
       .btn-refresh .label-text { display: none; }
       .ticket-card-head .tno { font-size: 16px; }
     }
+
   </style>
 </head>
 <body>
@@ -1312,9 +1313,6 @@
           <tbody id="ticketsBody"></tbody>
         </table>
       </div>
-      <div id="emptyBox" class="empty hidden">
-        <p>ยังไม่มีใบแจ้งงาน</p>
-      </div>
     </main>
     </section>
 
@@ -1369,6 +1367,7 @@
         </div>
       </div>
     </section>
+
     </div>
   </div>
 
@@ -1925,13 +1924,10 @@
 
     function renderTable() {
       var body = document.getElementById("ticketsBody");
-      var empty = document.getElementById("emptyBox");
       if (!tickets.length) {
         body.innerHTML = "";
-        empty.classList.remove("hidden");
         return;
       }
-      empty.classList.add("hidden");
       body.innerHTML = tickets.map(function (t, i) {
         var st = statusInfo(t);
         var loc = parseLocation(t.location);
@@ -2381,6 +2377,7 @@
     document.getElementById("modalMask").addEventListener("click", function (e) {
       if (e.target === this) closeModal();
     });
+
 
     loadTickets();
   </script>

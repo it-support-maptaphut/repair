@@ -138,6 +138,7 @@ app.put("/api/admin/users/:ip", async (req, res) => {
   }
 });
 
+
 app.get("/status", (req, res) => res.redirect("/status.html"));
 
 app.get("/api/tickets/:ticketNo/status", async (req, res) => {

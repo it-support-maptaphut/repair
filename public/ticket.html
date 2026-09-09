@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="ticket-page">
 
 <nav class="navbar">
   <div class="navbar-inner">
@@ -21,16 +21,12 @@
     <div class="navbar-links">
       <a class="nav-link is-active" href="ticket.html">แจ้งซ่อม</a>
       <a class="nav-link" href="status.html">ตรวจสอบสถานะ</a>
+      <a class="nav-link" href="contact.html">ติดต่อฝ่าย IT SUPPORT</a>
     </div>
   </div>
 </nav>
 
-<header class="app-header">
-  <div class="header-inner">
-    <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-    <h1 class="header-title"> ร ะ บ บ แ จ้ ง ซ่ อ ม </h1>
-  </div>
-</header>
+
 
 <div class="stepper">
   <div class="step-ind is-active" id="ind1">
@@ -45,7 +41,7 @@
   <span class="step-line" id="line2"></span>
   <div class="step-ind" id="ind3">
     <span class="step-dot">3</span>
-    <span class="step-label">สถานที่</span>
+    <span class="step-label">สถานที่/ข้อมูลติดต่อ</span>
   </div>
 </div>
 
@@ -109,7 +105,7 @@
 
       <div id="problemFields" class="problem-fields"></div>
 
-      <div class="field">
+      <div class="field" id="photoField">
         <div class="photo-head">
           <label class="field-label">แนบรูปภาพ หรือภาพแคป  <span class="opt-hint">ไม่บังคับ</span></label>
           <span class="photo-count" id="photoCount">0/10</span>
@@ -126,9 +122,9 @@
     </section>
 
     <section class="step" data-step="3">
-      <p class="step-heading">เลือกสาขา และระบุตำแหน่ง / สถานที่ของอุปกรณ์</p>
+      <p class="step-heading">เลือกสาขา ระบุตำแหน่ง/สถานที่ และข้อมูลติดต่อ</p>
 
-      <div class="field">
+      <div class="field" id="branchField">
         <label class="field-label">สาขา <span class="req">*</span></label>
         <p class="field-hint">เลือกร้านวรรณสาขาที่อุปกรณ์นี้ตั้งอยู่</p>
         <div class="loc-group" id="branchGroup">
@@ -149,18 +145,33 @@
         </div>
       </div>
 
-      <div class="field">
+      <div class="field" id="mapField">
+        <label class="field-label">แผนผังร้าน <span class="opt-hint">ดูประกอบการระบุตำแหน่ง</span></label>
+        <p class="field-hint">เลือกสาขาด้านบนก่อน แล้วดูผังด้านล่างเพื่อระบุจุดที่อุปกรณ์ตั้งอยู่ (หรือพิมพ์ตำแหน่งเองด้านล่าง)</p>
+        <div class="iso-wrap">
+          <p class="iso-placeholder" id="isoPlaceholder">โปรดเลือกสาขาด้านบนก่อน</p>
+          <img id="branchMapImg" class="branch-map-img hidden" alt="แผนผังร้าน" title="ขยายภาพ">
+        </div>
+      </div>
+
+      <div class="field" id="positionField">
         <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="req">*</span></label>
         <p class="field-hint">พิมพ์จุดที่อุปกรณ์ตั้งอยู่ เช่น จุดแคชเชียร์, หลังห้องเก็บของ, ชั้นวางสินค้า</p>
         <input type="text" id="positionText" class="text-input" maxlength="120" placeholder="เช่น จุดแคชเชียร์หน้าแรก / มุมหลังห้องเซิร์ฟเวอร์">
       </div>
 
-      <div class="field">
+      <div class="field" id="phoneField">
         <label for="reporterPhone" class="field-label">เบอร์โทรติดต่อ <span class="opt-hint">ไม่บังคับ</span></label>
         <p class="field-hint">ใส่เบอร์โทรให้ทีม IT โทรติดต่อสอบถามได้ (ไม่บังคับ)</p>
         <input type="tel" id="reporterPhone" class="text-input" inputmode="tel" maxlength="10" placeholder="เช่น 0812345678">
         <input type="hidden" id="reporterName" value="">
         <input type="hidden" id="reporterLineId" value="">
+      </div>
+
+      <div class="field" id="lineIdField">
+        <label for="lineIdText" class="field-label">ID LINE <span class="opt-hint">ไม่บังคับ</span></label>
+        <p class="field-hint">ใส่ ID LINE (ชื่อผู้ใช้ LINE) เพื่อให้ทีม IT หาข้อมูลผู้แจ้งได้ง่ายขึ้น</p>
+        <input type="text" id="lineIdText" class="text-input" maxlength="50" placeholder="เช่น itsupport123" autocomplete="off">
       </div>
     </section>
 
@@ -206,6 +217,11 @@
 </div>
 
 <div id="toast" class="toast hidden"></div>
+
+<div id="mapLightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="แผนผังร้าน">
+  <button id="mapLightboxClose" class="lightbox-close" type="button" aria-label="ปิด">&times;</button>
+  <img id="mapLightboxImg" class="lightbox-img" alt="แผนผังร้าน">
+</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="ticket.js"></script>
