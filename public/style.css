@@ -2254,3 +2254,113 @@ textarea.invalid,
   .draft-banner-actions { width: 100%; }
   .draft-banner-actions .draft-btn { flex: 1; }
 }
+
+/* ---------- TICKET : smooth hover ---------- */
+.ticket-page button {
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s ease,
+              background-color 0.25s ease,
+              border-color 0.25s ease,
+              color 0.25s ease,
+              opacity 0.25s ease;
+}
+
+.ticket-page .loc-option {
+  transition: border-color 0.25s ease,
+              background-color 0.25s ease,
+              box-shadow 0.25s ease,
+              transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .ticket-page .action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(10, 107, 59, 0.35);
+  }
+
+  .ticket-page .action-btn.secondary:hover {
+    border-color: var(--green);
+    background: var(--green-soft);
+    color: var(--green-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(23, 36, 28, 0.1);
+  }
+
+  .ticket-page .photo-btn:hover {
+    background: var(--green-soft);
+    border-color: var(--green);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 107, 59, 0.15);
+  }
+
+  .ticket-page .photo-add:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-soft);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(10, 107, 59, 0.14);
+  }
+
+  .ticket-page .photo-del:hover {
+    background: #b3261e;
+    transform: scale(1.12);
+  }
+
+  .ticket-page .cat-custom-toggle:hover {
+    border-color: var(--green);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(10, 107, 59, 0.14);
+  }
+
+  .ticket-page .mini-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(10, 107, 59, 0.28);
+  }
+
+  .ticket-page .dev-chip-del:hover {
+    background: #b3261e;
+    transform: scale(1.15);
+  }
+
+  .ticket-page .loc-option:hover {
+    border-color: var(--green-line);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(23, 36, 28, 0.08);
+  }
+
+  .ticket-page .draft-btn.restore:hover {
+    background: var(--green-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(10, 107, 59, 0.32);
+  }
+
+  .ticket-page .draft-btn.discard:hover {
+    transform: translateY(-1px);
+  }
+
+  .ticket-page .back-btn:hover {
+    background: var(--green-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(10, 107, 59, 0.3);
+  }
+
+  .ticket-page .back-btn.ghost:hover {
+    background: var(--green-soft);
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+
+  .ticket-page .copy-btn:hover {
+    background: #ddf0e5;
+    transform: translateY(-1px);
+  }
+
+  .ticket-page .modal-close:hover {
+    color: var(--green-dark);
+    transform: rotate(90deg) scale(1.1);
+  }
+
+  .ticket-page .nav-trigger:hover {
+    transform: scale(1.08);
+  }
+}

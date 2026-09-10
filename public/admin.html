@@ -937,6 +937,27 @@
     .legend-item { cursor: default; }
     .chart-card path { cursor: default; }
 
+    .ana-cat-grid svg path[data-name],
+    #anaBranch path[data-name] {
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .ana-cat-grid svg path[data-name]:hover,
+    #anaBranch path[data-name]:hover {
+      transform: translate(var(--ox, 0px), var(--oy, 0px));
+    }
+
+    #anaBranch {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+    }
+
+    #anaBranchLegend {
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
     /* ---------- FILTERED STATS ---------- */
     .ana-filtered-stats {
       display: grid;
@@ -990,12 +1011,16 @@
       font-size: 12px;
       color: var(--muted);
     }
-    .ana-trend-legend i {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 0;
-    }
+.ana-trend-legend i {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 0;
+      }
+    .ana-trend-legend i.ana-line-key {
+        width: 14px;
+        height: 3px;
+      }
 
     /* ---------- GRID MODS ---------- */
     .ana-grid-3 {
@@ -1854,12 +1879,13 @@
             <span><i style="background:#ffb020"></i>งานใหม่</span>
             <span><i style="background:#2b6cb0"></i>กำลังดำเนินการ</span>
             <span><i style="background:#0e6b3a"></i>เสร็จสิ้น</span>
+            <span><i class="ana-line-key" style="background:#e14d2a"></i>งานรวมต่อวัน</span>
           </div>
         </div>
         <div class="ana-chart-wrap ana-trend-wrap">
           <svg id="anaTrend" viewBox="0 0 780 240"></svg>
         </div>
-        <div class="ana-chart-note">แท่งแนวตั้ง = จำนวนงาน (เคส) ในแต่ละวัน · สีตามสถานะ (ดู legend ด้านบน)</div>
+        <div class="ana-chart-note">แท่งแนวตั้ง = จำนวนงาน (เคส) ในแต่ละวัน · สีตามสถานะ · เส้นแดง + จุด = งานรวมต่อวัน</div>
         <div class="ana-no-data hidden" id="anaTrendNoData">ไม่มีข้อมูลในช่วงที่เลือก</div>
       </div>
 
@@ -1871,7 +1897,10 @@
         </div>
         <div class="ana-card">
           <div class="ana-card-title">เปรียบเทียบสาขา</div>
-          <div class="ana-branch" id="anaBranch"></div>
+          <div class="ana-chart-wrap">
+            <svg id="anaBranch" viewBox="0 0 300 300" role="img" aria-label="กราฟวงกลมเปรียบเทียบสาขา"></svg>
+          </div>
+          <div class="ana-legend" id="anaBranchLegend"></div>
           <div class="ana-no-data hidden" id="anaBranchNoData">ไม่มีข้อมูลสาขา</div>
         </div>
         <div class="ana-card">
@@ -2347,6 +2376,12 @@
       return "อื่น";
     }
 
+    function branchFull(b) {
+      if (b === "สาขา 4") return "สาขา 4 มาบตาพุด";
+      if (b === "สาขา 5") return "สาขา 5 บ้านฉาง";
+      return b;
+    }
+
     function fmtHours(h) {
       if (h < 1) return Math.round(h * 60) + " นาที";
       if (h < 24) return h.toFixed(1) + " ชม.";
@@ -2389,12 +2424,13 @@
       var days = Object.keys(dayMap).sort();
       if (days.length > 30) days = days.slice(days.length - 30);
       var W = 780, H = 240, PL = 46, PB = 36, PT = 8;
-      var gap = (W - PL) / days.length;
+      var gap = (W - 12 - PL) / days.length;
       var barW = Math.max(4, Math.floor(gap) - 2);
+      var D3 = 8;
       var maxV = 1;
       days.forEach(function (k) { var s = dayMap[k].n + dayMap[k].w + dayMap[k].d; if (s > maxV) maxV = s; });
       var sc = (H - PT - PB) / maxV;
-      var bars = [], lbls = [], yl = [];
+      var bars = [], lbls = [], yl = [], linePts = [], lineDots = [];
       yl.push('<text x="13" y="' + (PT + (H - PT - PB) / 2) + '" text-anchor="middle" font-size="8.5" fill="#888" transform="rotate(-90 13 ' + (PT + (H - PT - PB) / 2) + ')">จำนวนงาน (เคส)</text>');
       for (var yv = 0; yv <= maxV; yv += Math.max(1, Math.ceil(maxV / 4))) {
         var yy = H - PB - yv * sc;
@@ -2403,15 +2439,32 @@
       }
       days.forEach(function (k, i) {
         var dm = dayMap[k], x = PL + i * gap, y0 = H - PB;
-        var h1 = dm.d * sc, h2 = dm.w * sc, h3 = dm.n * sc;
-        if (h1) bars.push('<rect x="' + x + '" y="' + (y0 - h1) + '" width="' + barW + '" height="' + h1 + '" fill="#0e6b3a"><title>' + k + ' เสร็จ: ' + dm.d + '</title></rect>');
-        if (h2) bars.push('<rect x="' + x + '" y="' + (y0 - h1 - h2) + '" width="' + barW + '" height="' + h2 + '" fill="#2b6cb0"><title>' + k + ' ดำเนินการ: ' + dm.w + '</title></rect>');
-        if (h3) bars.push('<rect x="' + x + '" y="' + (y0 - h1 - h2 - h3) + '" width="' + barW + '" height="' + h3 + '" fill="#ffb020"><title>' + k + ' ใหม่: ' + dm.n + '</title></rect>');
+        var segs = [
+          { c: "#0e6b3a", n: dm.d, t: "เสร็จ" },
+          { c: "#2b6cb0", n: dm.w, t: "ดำเนินการ" },
+          { c: "#ffb020", n: dm.n, t: "ใหม่" }
+        ];
+        var part = "", yCur = y0;
+        segs.forEach(function (s) {
+          var h = s.n * sc;
+          if (h <= 0) return;
+          var yt = yCur - h;
+          part += '<path d="M' + x + ',' + yCur + ' L' + (x + barW) + ',' + yCur + ' L' + (x + barW + D3) + ',' + (yCur - D3) + ' L' + (x + D3) + ',' + (yCur - D3) + ' Z" fill="' + anaShade(s.c, 1.28) + '"></path>';
+          part += '<path d="M' + (x + barW) + ',' + yCur + ' L' + (x + barW + D3) + ',' + (yCur - D3) + ' L' + (x + barW + D3) + ',' + (yt - D3) + ' L' + (x + barW) + ',' + yt + ' Z" fill="' + anaShade(s.c, 0.55) + '"></path>';
+          part += '<rect x="' + x + '" y="' + yt + '" width="' + barW + '" height="' + h + '" fill="' + s.c + '"><title>' + k + ' ' + s.t + ': ' + s.n + '</title></rect>';
+          yCur = yt;
+        });
+        bars.push(part);
+        var total = dm.n + dm.w + dm.d;
+        var cx = x + barW / 2, cy = y0 - total * sc;
+        linePts.push(cx + "," + cy);
+        lineDots.push('<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="#e14d2a" stroke="#fff" stroke-width="1"><title>' + anaThaiDate(k) + ' · งานรวม: ' + total + '</title></circle>');
         if (i % Math.max(1, Math.floor(days.length / 6)) === 0 || i === days.length - 1)
           lbls.push('<text x="' + (x + barW / 2) + '" y="' + (H - 13) + '" text-anchor="middle" font-size="7" fill="#777">' + anaThaiDate(k) + '</text>');
       });
       lbls.push('<text x="' + (PL + (W - PL) / 2) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="8.5" fill="#888">วันที่ (วัน/เดือน/พ.ศ.)</text>');
-      svg.innerHTML = yl.join("") + bars.join("") + lbls.join("");
+      var lineMarkup = '<path d="M' + linePts.join("L") + '" fill="none" stroke="#e14d2a" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><title>งานรวมต่อวัน</title></path>' + lineDots.join("");
+      svg.innerHTML = yl.join("") + bars.join("") + lineMarkup + lbls.join("");
     }
 
     // ---------- RENDER: SLA ----------
@@ -2455,33 +2508,58 @@
 
     // ---------- RENDER: BRANCH COMPARISON ----------
     function renderBranchComparison(f) {
-      var wrap = document.getElementById("anaBranch");
+      var svg = document.getElementById("anaBranch");
+      var legendEl = document.getElementById("anaBranchLegend");
       var noData = document.getElementById("anaBranchNoData");
-      var br = {};
+      var br = {}, total = 0;
       f.forEach(function (t) {
         var b = branchOf(t);
-        if (!br[b]) br[b] = { t: 0, d: 0, ch: [], cm: {} };
-        br[b].t++;
-        if (t.status === "done") { br[b].d++; if (t.approved_at) br[b].ch.push(anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime())); }
-        parseDeviceParts(t.device).forEach(function (p) { var cat = deviceType(p); br[b].cm[cat] = (br[b].cm[cat] || 0) + 1; });
+        br[b] = (br[b] || 0) + 1;
+        total++;
       });
-      var names = Object.keys(br).sort();
-      if (!names.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      var names = Object.keys(br);
+      if (!names.length) { svg.innerHTML = ""; legendEl.innerHTML = ""; noData.classList.remove("hidden"); return; }
       noData.classList.add("hidden");
-      var h = '<div class="ana-branch-row">';
-      names.forEach(function (name) {
-        var b = br[name];
-        var avgC = b.ch.length ? b.ch.reduce(function (s, v) { return s + v; }, 0) / b.ch.length : 0;
-        var rate = b.t ? Math.round(b.d / b.t * 100) : 0;
-        var topC = Object.keys(b.cm).sort(function (a, x) { return b.cm[x] - b.cm[a]; })[0] || "-";
-        h += '<div class="ana-branch-card"><div class="ana-branch-name">' + anaEsc(name) + '</div>';
-        h += '<div class="ana-branch-stat"><span class="k">งานทั้งหมด</span><span class="v">' + b.t + '</span></div>';
-        h += '<div class="ana-branch-stat"><span class="k">เสร็จสิ้น</span><span class="v">' + b.d + ' (' + rate + '%)</span></div>';
-        h += '<div class="ana-branch-stat"><span class="k">เวลาเฉลี่ยแก้ไข</span><span class="v">' + fmtHours(avgC) + '</span></div>';
-        h += '<div class="ana-branch-stat"><span class="k">ปัญหาบ่อยสุด</span><span class="v">' + anaEsc(topC) + '</span></div></div>';
+      var arr = names.map(function (b) { return { label: b, count: br[b] }; });
+      arr.sort(function (a, c) { return c.count - a.count; });
+
+      var OUTER = 105, INNER = 0, DEPTH = 24;
+      var start = -Math.PI / 2, defs = [], bottom = [], topG = [], idxs = [];
+      arr.forEach(function (o, i) {
+        var pct = Math.round((o.count / total) * 10000) / 100;
+        var sweep = (o.count / total) * Math.PI * 2;
+        var a1 = start + sweep;
+        var col = ANA_PALETTE[i % ANA_PALETTE.length];
+        var label = branchFull(o.label);
+        var d = annulusPath(0, 0, OUTER, INNER, start + 0.004, a1 - 0.004);
+        var gid = "anab" + i;
+        defs.push(
+          '<linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="' + anaShade(col, 1.18) + '"/>' +
+          '<stop offset="100%" stop-color="' + anaShade(col, 0.88) + '"/></linearGradient>'
+        );
+        bottom.push('<path d="' + d + '" fill="' + anaShade(col, 0.5) + '"/>');
+        var mid = start + sweep / 2;
+        var cx = Math.cos(mid) * 14, cy = Math.sin(mid) * 14 * (1 / 0.62);
+        topG.push('<path d="' + d + '" fill="url(#' + gid + ')" data-name="' + anaEsc(label) + '" data-count="' + o.count + '" data-pct="' + pct.toFixed(1).replace(/\.0$/, "") + '" style="--ox:' + cx.toFixed(2) + 'px;--oy:' + cy.toFixed(2) + 'px"/>');
+        var barPct = Math.round((o.count / total) * 100);
+        idxs.push(
+          '<div class="legend-item">' +
+          '<span class="legend-dot" style="background:' + col + '"></span>' +
+          '<span class="legend-name" title="' + anaEsc(label) + '">' + anaEsc(label) + " (" + o.count + ")</span>" +
+          '<span class="legend-bar"><i style="width:' + Math.max(4, barPct) + '%;background:' + col + '"></i></span>' +
+          '<span class="legend-pct">' + pct.toFixed(1).replace(/\.0$/, "") + '<small>%</small></span></div>'
+        );
+        start = a1;
       });
-      h += '</div>';
-      wrap.innerHTML = h;
+      svg.innerHTML =
+        '<defs>' + defs.join("") + "</defs>" +
+        '<g transform="translate(150,160)">' +
+        '<g transform="scale(1,0.62)">' +
+        '<g transform="translate(0,' + DEPTH + ')">' + bottom.join("") + "</g>" +
+        '<g>' + topG.join("") + "</g>" +
+        "</g></g>";
+      legendEl.innerHTML = idxs.join("");
     }
 
     // ---------- RENDER: PEAK HOURS ----------
@@ -2493,10 +2571,26 @@
       var maxV = Math.max.apply(null, hrs);
       if (!maxV) { svg.innerHTML = ""; noData.classList.remove("hidden"); return; }
       noData.classList.add("hidden");
+
       var W = 300, H = 168, PL = 26, PB = 20, PT = 4;
-      var gap = (W - PL) / 24, barW = Math.max(3, Math.floor(gap) - 1);
+      var gap = (W - 12 - PL) / 24;
       var sc = (H - PT - PB) / maxV;
-      var bars = [], lbls = [], yl = [];
+      var y0 = H - PB, D3 = 8, TY = (H - PB) - 0.62 * (H - PB);
+      var RED = "#e14d2a";
+
+      var pts = [];
+      for (var i = 0; i < 24; i++) {
+        var x = PL + i * gap;
+        pts.push([x, y0 - hrs[i] * sc]);
+      }
+      var off = pts.map(function (p) { return [p[0] + D3, p[1] + D3]; });
+
+      var areaStr = "M" + pts[0][0] + "," + y0 + " L" + pts.map(function (p) { return p[0] + "," + p[1]; }).join(" L") + " L" + pts[23][0] + "," + y0 + " Z";
+      var areaOff = "M" + off[0][0] + "," + (y0 + D3) + " L" + off.map(function (p) { return p[0] + "," + p[1]; }).join(" L") + " L" + off[23][0] + "," + (y0 + D3) + " Z";
+      var baseStrip = "M" + pts[0][0] + "," + y0 + " L" + pts[23][0] + "," + y0 + " L" + off[23][0] + "," + (y0 + D3) + " L" + off[0][0] + "," + (y0 + D3) + " Z";
+      var rightEnd = "M" + pts[23][0] + "," + y0 + " L" + off[23][0] + "," + (y0 + D3) + " L" + off[23][0] + "," + pts[23][1] + " L" + pts[23][0] + "," + pts[23][1] + " Z";
+
+      var lines = [], lbls = [], yl = [], dots = [];
       var step = Math.max(1, Math.ceil(maxV / 3));
       for (var yv = 0; yv <= maxV; yv += step) {
         var yy = H - PB - yv * sc;
@@ -2504,12 +2598,25 @@
         yl.push('<text x="' + (PL - 3) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="8" fill="#999">' + yv + '</text>');
       }
       for (var i = 0; i < 24; i++) {
-        var x = PL + i * gap, bh = hrs[i] * sc, y = H - PB - bh;
-        var col = hrs[i] >= maxV * 0.8 ? "#b91c1c" : (hrs[i] >= maxV * 0.5 ? "#ffb020" : "#0e6b3a");
-        bars.push('<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + bh + '" fill="' + col + '"><title>' + i + ':00 — ' + hrs[i] + ' งาน</title></rect>');
-        if (i % 3 === 0) lbls.push('<text x="' + (x + barW / 2) + '" y="' + (H - 3) + '" text-anchor="middle" font-size="7" fill="#666">' + i + '</text>');
+        if (i % 3 === 0) lbls.push('<text x="' + pts[i][0] + '" y="' + (H - 3) + '" text-anchor="middle" font-size="7" fill="#666">' + i + '</text>');
+        dots.push('<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="3" fill="' + RED + '" stroke="#fff" stroke-width="1"><title>' + i + ':00 — ' + hrs[i] + ' งาน</title></circle>');
       }
-      svg.innerHTML = yl.join("") + bars.join("") + lbls.join("");
+      lines.push('<polyline points="' + pts.map(function (p) { return p[0] + "," + p[1]; }).join(" ") + '" fill="none" stroke="' + RED + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><polyline points="' + off.map(function (p) { return p[0] + "," + p[1]; }).join(" ") + '" fill="none" stroke="' + anaShade(RED, 0.45) + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>');
+
+      svg.innerHTML =
+        yl.join("") +
+        '<defs><linearGradient id="anapk" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + anaShade(RED, 1.18) + '"/>' +
+        '<stop offset="100%" stop-color="' + anaShade(RED, 0.75) + '"/></linearGradient></defs>' +
+        '<g transform="translate(0,' + TY + ') scale(1,0.62)">' +
+        '<path d="' + areaOff + '" fill="' + anaShade(RED, 0.45) + '"></path>' +
+        '<path d="' + baseStrip + '" fill="' + anaShade(RED, 0.85) + '"></path>' +
+        '<path d="' + rightEnd + '" fill="' + anaShade(RED, 0.6) + '"></path>' +
+        '<path d="' + areaStr + '" fill="url(#anapk)"></path>' +
+        lines.join("") +
+        dots.join("") +
+        "</g>" +
+        lbls.join("");
     }
 
     // ---------- RENDER: REPEATED PROBLEMS ----------
@@ -2673,7 +2780,12 @@
         );
 
         bottom.push('<path d="' + d + '" fill="' + dark + '"/>');
-        topG.push('<path d="' + d + '" fill="url(#' + gid + ')" data-name="' + anaEsc(o.label) + '" data-count="' + o.count + '" data-pct="' + pct + '"/>');
+
+        var mid = start + sweep / 2;
+        var popPx = 13;
+        var cx = Math.cos(mid) * popPx;
+        var cy = Math.sin(mid) * popPx * (1 / 0.62);
+        topG.push('<path d="' + d + '" fill="url(#' + gid + ')" data-name="' + anaEsc(o.label) + '" data-count="' + o.count + '" data-pct="' + pct + '" style="--ox:' + cx.toFixed(2) + 'px;--oy:' + cy.toFixed(2) + 'px"/>');
 
         var barPct = Math.round((o.count / total) * 100);
         idxs.push(
