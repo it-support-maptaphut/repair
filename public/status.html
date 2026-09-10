@@ -5,20 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#06c755">
 <title>ตรวจสอบสถานะงาน</title>
+<link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="status.css">
 </head>
-<body>
+<body class="app-nav">
 
-<nav class="navbar">
+<nav class="navbar" id="topNav">
   <div class="navbar-inner">
     <a class="navbar-brand" href="ticket.html">
       <svg class="navbar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
       <span class="navbar-title">ระบบแจ้งซ่อม IT</span>
     </a>
+    <button class="nav-trigger" type="button" aria-label="เปิดเมนู" onclick="toggleTicketNav(event)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
     <div class="navbar-links">
       <a class="nav-link" href="ticket.html">แจ้งซ่อม</a>
       <a class="nav-link is-active" href="status.html">ตรวจสอบสถานะ</a>
@@ -27,19 +31,19 @@
   </div>
 </nav>
 
-<header class="app-header">
+<!-- <header class="app-header">
   <div class="header-inner">
     <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <h1 class="header-title">ตรวจสอบสถานะงาน</h1>
     
   </div>
-</header>
+</header> -->
 
 <main class="status-wrap" id="statusWrap">
 
   <div class="search-col">
     <section class="status-card">
-      <label class="field-label" for="statusNo">หมายเลขใบแจ้งซ่อม</label>
+      <label class="field-label" for="statusNo">หมายเลขแจ้งซ่อม</label>
       <p class="field-hint">ใส่รหัสที่ได้รับหลังแจ้งซ่อม เช่น HW-00X หรือ SW-0XX</p>
       <div class="search-row">
         <input type="text" id="statusNo" class="text-input" inputmode="text" maxlength="12" placeholder="เช่น HW-001" autocomplete="off">
@@ -63,5 +67,18 @@
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="status.js"></script>
+<script>
+function toggleTicketNav(event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  document.getElementById("topNav").classList.toggle("is-open");
+}
+function closeTicketNav() {
+  document.getElementById("topNav").classList.remove("is-open");
+}
+document.addEventListener("click", function (e) {
+  var nav = document.getElementById("topNav");
+  if (nav && !nav.contains(e.target)) closeTicketNav();
+});
+</script>
 </body>
 </html>

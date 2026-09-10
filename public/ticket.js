@@ -8,6 +8,7 @@ var currentStep = 1;
 var selectedDevs = [];
 var problems = {};
 var customSeq = 0;
+var submitted = false;
 
 var photoInput = document.getElementById("photoInput");
 var photoBtn = document.getElementById("photoBtn");
@@ -30,6 +31,7 @@ var device = document.getElementById("device");
 var devTypeGroup = document.getElementById("devTypeGroup");
 var hardGrid = document.getElementById("hardGrid");
 var softGrid = document.getElementById("softGrid");
+var diskGrid = document.getElementById("diskGrid");
 var devSelectedWrap = document.getElementById("devSelectedWrap");
 var devSelectedList = document.getElementById("devSelectedList");
 var devSelectedCount = document.getElementById("devSelectedCount");
@@ -49,6 +51,14 @@ var SOFTWARE_OPTIONS = [
   { id: "excel", label: "Excel", img: "logo-ms/excel.webp" },
   { id: "word",  label: "Word",  img: "logo-ms/word.webp" },
   { id: "ppt",   label: "PowerPoint", img: "logo-ms/ppt.webp" }
+];
+
+var DISK_OPTIONS = [
+  { id: "disk-access",  label: "เข้าถึงดิสไม่ได้", icon: '<path d="M3 7v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5"/>' },
+  { id: "disk-perm",    label: "ไม่มีสิทธิ์เข้าใช้งาน", icon: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>' },
+  { id: "disk-visible", label: "โฟลเดอร์แชร์ไม่ขึ้น", icon: '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/>' },
+  { id: "disk-slow",    label: "โอนไฟล์ช้า/ค้าง", icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
+  { id: "disk-full",    label: "ดิสเต็ม/เซฟไม่ได้", icon: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/>' }
 ];
 
 if (window.visualViewport) {
@@ -104,7 +114,8 @@ catTabs.forEach(function (tab) {
     });
     [
       [document.getElementById("hardPanel"), "Hardware"],
-      [document.getElementById("softPanel"), "Software"]
+      [document.getElementById("softPanel"), "Software"],
+      [document.getElementById("diskPanel"), "Disk"]
     ].forEach(function (p) {
       p[0].classList.toggle("hidden", cat !== p[1]);
     });
@@ -125,12 +136,12 @@ catTabs.forEach(function (tab) {
 document.querySelectorAll(".cat-custom-toggle").forEach(function (btn) {
   btn.addEventListener("click", function () {
     var type = btn.getAttribute("data-custom-type");
-    var row = null;
-    if (type === "Hardware") {
-      row = document.getElementById("hardCustomWrap");
-    } else {
-      row = document.getElementById("softCustomWrap");
-    }
+    var rows = {
+      Hardware: "hardCustomWrap",
+      Software: "softCustomWrap",
+      Disk: "diskCustomWrap"
+    };
+    var row = document.getElementById(rows[type]);
     if (!row) return;
     var on = row.classList.toggle("hidden");
     btn.classList.toggle("is-open", !on);
@@ -150,8 +161,9 @@ function toggleDev(dev) {
   } else {
     selectedDevs.push({ type: dev.type, label: dev.label });
   }
-  renderSelection();
+renderSelection();
   syncGridState();
+  saveDraftSoon();
 }
 
 function refreshDevSelection() {
@@ -207,9 +219,10 @@ devSelectedList.addEventListener("click", function (e) {
   var i = parseInt(del.dataset.i, 10);
   var d = selectedDevs[i];
   if (!d) return;
-  delete problems[devKey(d)];
+delete problems[devKey(d)];
   selectedDevs.splice(i, 1);
   renderSelection();
+  saveDraftSoon();
 });
 
 document.querySelectorAll(".mini-add").forEach(function (btn) {
@@ -232,9 +245,10 @@ document.querySelectorAll(".mini-add").forEach(function (btn) {
       return;
     }
     customSeq++;
-    selectedDevs.push({ type: type, label: text, customSeq: customSeq });
+selectedDevs.push({ type: type, label: text, customSeq: customSeq });
     input.value = "";
     renderSelection();
+    saveDraftSoon();
   });
 });
 
@@ -253,6 +267,11 @@ function devFamiliarLogo(dev) {
   HARDWARE_OPTIONS.forEach(function (o) { if (o.label === dev.label) hw = o; });
   if (hw && hw.icon) {
     return '<span class="prob-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + hw.icon + "</svg></span>";
+  }
+  var ds = null;
+  DISK_OPTIONS.forEach(function (o) { if (o.label === dev.label) ds = o; });
+  if (ds && ds.icon) {
+    return '<span class="prob-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ds.icon + "</svg></span>";
   }
   return '<span class="prob-logo prob-generic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8l-5-5-5 5M12 3v13"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span>';
 }
@@ -274,11 +293,12 @@ function renderProblems() {
     ta.maxLength = 500;
     ta.placeholder = "พิมพ์รายละเอียดปัญหาของ " + d.label + " เช่น เปิดไม่ติด, ค้าง, error เด้ง";
     ta.value = problems[k] || "";
-    ta.addEventListener("input", function () {
+ta.addEventListener("input", function () {
       problems[k] = this.value;
       this.classList.remove("invalid");
       var cnt = field.querySelector(".p-count");
       if (cnt) cnt.textContent = this.value.length;
+      saveDraftSoon();
     });
 
     var count = document.createElement("p");
@@ -318,12 +338,14 @@ function MAP_IMAGE(branchVal) {
 function renderMap(branchVal) {
   var holder = document.getElementById("isoPlaceholder");
   var img = document.getElementById("branchMapImg");
+  var zoomBtn = document.getElementById("mapZoomBtn");
   if (!holder || !img) return;
   if (!branchVal) {
     holder.textContent = "โปรดเลือกสาขาด้านบนก่อน";
     holder.classList.remove("hidden");
     img.classList.add("hidden");
     img.removeAttribute("src");
+    if (zoomBtn) zoomBtn.classList.add("hidden");
     return;
   }
   var src = MAP_IMAGE(branchVal);
@@ -332,16 +354,19 @@ function renderMap(branchVal) {
     holder.classList.remove("hidden");
     img.classList.add("hidden");
     img.removeAttribute("src");
+    if (zoomBtn) zoomBtn.classList.add("hidden");
     return;
   }
   img.onload = function () {
     holder.classList.add("hidden");
     img.classList.remove("hidden");
+    if (zoomBtn) zoomBtn.classList.remove("hidden");
   };
   img.onerror = function () {
     holder.textContent = "โหลดแผนผังร้านไม่สำเร็จ";
     holder.classList.remove("hidden");
     img.classList.add("hidden");
+    if (zoomBtn) zoomBtn.classList.add("hidden");
   };
   img.src = src;
 }
@@ -351,16 +376,18 @@ function initMapLightbox() {
   var box = document.getElementById("mapLightbox");
   var boxImg = document.getElementById("mapLightboxImg");
   var closeBtn = document.getElementById("mapLightboxClose");
+  var img = document.getElementById("branchMapImg");
+  var zoomBtn = document.getElementById("mapZoomBtn");
   if (!box || !boxImg || !closeBtn) return;
 
-  var img = document.getElementById("branchMapImg");
-  if (img) {
-    img.addEventListener("click", function () {
-      if (img.classList.contains("hidden") || !img.getAttribute("src")) return;
-      boxImg.src = img.src;
-      box.classList.remove("hidden");
-    });
+  function open() {
+    var src = img.getAttribute("src");
+    if (!src) return;
+    boxImg.src = src;
+    box.classList.remove("hidden");
   }
+  if (img) img.addEventListener("click", open);
+  if (zoomBtn) zoomBtn.addEventListener("click", open);
 
   function close() {
     box.classList.add("hidden");
@@ -378,10 +405,39 @@ function initMapLightbox() {
 initMapLightbox();
 
 document.querySelectorAll('input[name="branch"]').forEach(function (radio) {
-  radio.addEventListener("change", function () {
+radio.addEventListener("change", function () {
     renderMap(radio.value);
+    saveDraftSoon();
   });
 });
+
+function sparkleBurst(x, y, n) {
+  if (!document.body) return;
+  for (var i = 0; i < n; i++) {
+    var s = document.createElement("span");
+    s.className = "sparkle" + (i % 3 === 0 ? " alt" : "");
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    var ang = Math.random() * Math.PI * 2;
+    var dist = 46 + Math.random() * 80;
+    s.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(1) + "px");
+    s.style.setProperty("--dy", (Math.sin(ang) * dist - 16).toFixed(1) + "px");
+    s.style.setProperty("--rot", (Math.random() * 280 - 140).toFixed(1) + "deg");
+    s.addEventListener("animationend", function (ev) {
+      if (ev.target && ev.target.parentNode) ev.target.parentNode.removeChild(ev.target);
+    });
+    document.body.appendChild(s);
+  }
+}
+
+function sparkleFromButton(direction) {
+  if (!nextBtn || !nextBtn.getBoundingClientRect) return;
+  var r = nextBtn.getBoundingClientRect();
+  if (!r || (!r.width && !r.height)) return;
+  var x = r.left + r.width / 2;
+  var y = r.top + r.height / 2;
+  sparkleBurst(x, y, direction === "next" ? 12 : 6);
+}
 
 function goTo(step) {
   var direction = step > currentStep ? "next" : "prev";
@@ -397,9 +453,15 @@ function goTo(step) {
     }
   });
 
+  nextBtn.classList.remove("bounce");
+  void nextBtn.offsetWidth;
+  nextBtn.classList.add("bounce");
+  sparkleFromButton(direction);
+
   updateStepper();
   updateActionBar();
   window.scrollTo({ top: 0, behavior: "smooth" });
+  saveDraftSoon();
 }
 
 function updateStepper() {
@@ -494,10 +556,16 @@ prevBtn.addEventListener("click", function () {
 
 positionText.addEventListener("input", function () {
   positionText.classList.remove("invalid");
+  saveDraftSoon();
 });
 
 reporterPhone.addEventListener("input", function () {
   reporterPhone.classList.remove("invalid");
+  saveDraftSoon();
+});
+
+lineIdText.addEventListener("input", function () {
+  saveDraftSoon();
 });
 
 // ---------- รูปภาพ ----------
@@ -607,9 +675,16 @@ function submitForm() {
       if (!res.ok) throw new Error("server");
       return res.json();
     })
-    .then(function (data) {
+.then(function (data) {
       hideLoading();
-      showSuccess(data.ticketNo);
+      submitted = true;
+      clearDraft();
+      showSuccess(data.ticketNo, {
+        device: device.value.trim(),
+        location: getLocation(),
+        phone: reporterPhone.value.trim(),
+        photos: photos.length
+      });
     })
     .catch(function () {
       hideLoading();
@@ -669,8 +744,14 @@ successClose.addEventListener("click", function () {
   window.location.href = "ticket.html";
 });
 
-function showSuccess(ticketNo) {
+function showSuccess(ticketNo, info) {
   ticketNoEl.textContent = ticketNo;
+  info = info || {};
+  var devParts = String(info.device || "").split("·");
+  document.getElementById("sDevice").textContent = devParts.length > 1 ? devParts[1].trim() : (info.device || "-");
+  document.getElementById("sLocation").textContent = info.location || "-";
+  document.getElementById("sPhone").textContent = info.phone || "-";
+  document.getElementById("sPhotos").textContent = info.photos ? info.photos + " รูป" : "ไม่มีรูป";
   loadingOverlay.classList.add("hidden");
   successOverlay.classList.remove("hidden");
 }
@@ -716,6 +797,148 @@ function escapeHtml(s) {
 initLineProfile();
 buildDeviceGrid(hardGrid, HARDWARE_OPTIONS, "Hardware");
 buildDeviceGrid(softGrid, SOFTWARE_OPTIONS, "Software");
+buildDeviceGrid(diskGrid, DISK_OPTIONS, "Disk");
+
+// ---------- ฉบับร่าง (draft) ----------
+var DRAFT_KEY = "wan_ticket_draft";
+var draftTimer = null;
+
+function activeCat() {
+  var tab = document.querySelector(".cat-tab.is-active");
+  return tab ? tab.getAttribute("data-cat") : "Hardware";
+}
+
+function saveDraftSoon() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveDraft, 400);
+}
+
+function collectDraft() {
+  return {
+    v: 1,
+    selectedDevs: selectedDevs.map(function (d) {
+      return { type: d.type, label: d.label, customSeq: d.customSeq };
+    }),
+    problems: problems,
+    branch: getSelectedBranch(),
+    position: positionText.value,
+    phone: reporterPhone.value,
+    lineId: lineIdText.value,
+    activeCat: activeCat(),
+    step: currentStep,
+    savedAt: Date.now()
+  };
+}
+
+function saveDraft() {
+  var hasText =
+    positionText.value.trim() ||
+    reporterPhone.value.trim() ||
+    lineIdText.value.trim();
+  if (!selectedDevs.length && !hasText) return;
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft()));
+  } catch (e) {}
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+function hasDraft() {
+  try { return !!localStorage.getItem(DRAFT_KEY); } catch (e) { return false; }
+}
+
+function restoreDraft() {
+  var raw = "";
+  try { raw = localStorage.getItem(DRAFT_KEY) || ""; } catch (e) {}
+  if (!raw) return false;
+  var d = null;
+  try { d = JSON.parse(raw); } catch (e) { return false; }
+  if (!d || !d.v) return false;
+
+  var hasData = !!(d.selectedDevs && d.selectedDevs.length) ||
+    !!(d.position && String(d.position).trim()) ||
+    !!(d.phone && String(d.phone).trim()) ||
+    !!(d.lineId && String(d.lineId).trim());
+  if (!hasData) return false;
+
+  selectedDevs = (d.selectedDevs || []).map(function (x) {
+    return { type: x.type, label: x.label, customSeq: x.customSeq };
+  });
+  problems = d.problems || {};
+
+  var br = d.branch || "";
+  if (br) {
+    var radios = document.querySelectorAll('input[name="branch"]');
+    [].slice.call(radios).forEach(function (r) {
+      r.checked = r.value === br;
+    });
+  }
+
+  positionText.value = d.position || "";
+  reporterPhone.value = d.phone || "";
+  lineIdText.value = d.lineId || "";
+
+  renderSelection();
+  renderMap(br);
+
+  var cat = d.activeCat || "Hardware";
+  [].slice.call(document.querySelectorAll(".cat-tab")).forEach(function (tab) {
+    var on = tab.getAttribute("data-cat") === cat;
+    tab.classList.toggle("is-active", on);
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  [
+    ["hardPanel", "Hardware"],
+    ["softPanel", "Software"],
+    ["diskPanel", "Disk"]
+  ].forEach(function (p) {
+    document.getElementById(p[0]).classList.toggle("hidden", cat !== p[1]);
+  });
+
+  var step = d.step || 1;
+  if (step > 1 && step <= 3) {
+    currentStep = 1;
+    goTo(step);
+  }
+  return true;
+}
+
+function showDraftPrompt() {
+  var banner = document.getElementById("draftBanner");
+  if (!banner) return;
+  banner.classList.remove("hidden");
+  var btnRestore = document.getElementById("draftRestoreBtn");
+  var btnDiscard = document.getElementById("draftDiscardBtn");
+  var btnClose = document.getElementById("draftClose");
+  if (btnRestore) {
+    btnRestore.addEventListener("click", function () {
+      var ok = restoreDraft();
+      banner.classList.add("hidden");
+      showToast(ok ? "กู้ข้อมูลฉบับร่างกลับมาแล้ว" : "ไม่พบข้อมูลฉบับร่าง");
+    });
+  }
+  if (btnDiscard) {
+    btnDiscard.addEventListener("click", function () {
+      clearDraft();
+      banner.classList.add("hidden");
+      showToast("ลบข้อมูลฉบับร่างแล้ว");
+    });
+  }
+  if (btnClose) {
+    btnClose.addEventListener("click", function () {
+      banner.classList.add("hidden");
+    });
+  }
+}
+
+if (hasDraft()) showDraftPrompt();
+
+window.addEventListener("beforeunload", function () {
+  if (submitted) return;
+  saveDraft();
+});
 
 function showToast(message) {
   toastEl.textContent = message;
@@ -725,3 +948,22 @@ function showToast(message) {
     toastEl.classList.add("hidden");
   }, 2600);
 }
+function toggleTicketNav(event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  var nav = document.getElementById("topNav");
+  if (nav) nav.classList.toggle("is-open");
+}
+
+function closeTicketNav() {
+  var nav = document.getElementById("topNav");
+  if (nav) nav.classList.remove("is-open");
+}
+
+document.addEventListener("click", function (e) {
+  var nav = document.getElementById("topNav");
+  if (!nav) return;
+  if (!nav.contains(e.target)) closeTicketNav();
+});
+
+window.toggleTicketNav = toggleTicketNav;
+window.closeTicketNav = closeTicketNav;

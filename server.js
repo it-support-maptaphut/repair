@@ -138,6 +138,24 @@ app.put("/api/admin/users/:ip", async (req, res) => {
   }
 });
 
+app.delete("/api/admin/users/:ip", async (req, res) => {
+  try {
+    const ip = String(req.params.ip || "").trim();
+    if (!ip) return res.status(400).json({ ok: false, message: "ไม่มีรหัส IP" });
+    if (!supab.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    }
+    const data = await supab.removeDevice(ip);
+    if (!data || !data.length) {
+      return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+    }
+    res.json({ ok: true, ip });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 
 app.get("/status", (req, res) => res.redirect("/status.html"));
 

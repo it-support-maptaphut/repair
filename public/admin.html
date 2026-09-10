@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบแจ้งซ่อม IT — จัดการงาน</title>
+  <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
+    .hidden { display: none !important; }
+
     :root {
       --bg: #eef3f0;
       --card: #ffffff;
@@ -31,7 +34,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: "Prompt", sans-serif;
+      font-family: "Sarabun", sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -70,7 +73,7 @@
     .side-logo {
       width: 42px;
       height: 42px;
-      border-radius: 11px;
+      border-radius: 0;
       background: linear-gradient(135deg, var(--green-dark), #145c37);
       display: flex;
       align-items: center;
@@ -104,7 +107,7 @@
       width: 100%;
       padding: 12px 14px;
       border: none;
-      border-radius: 11px;
+      border-radius: 0;
       background: transparent;
       color: var(--muted);
       font-family: inherit;
@@ -161,7 +164,7 @@
       background: linear-gradient(135deg, var(--green-dark), #145c37);
       color: #fff;
       padding: 20px 28px;
-      border-radius: var(--radius);
+      border-radius: 0;
       box-shadow: var(--shadow);
       margin-bottom: 22px;
       flex-wrap: wrap;
@@ -170,7 +173,7 @@
     .app-logo {
       width: 46px;
       height: 46px;
-      border-radius: 12px;
+      border-radius: 0;
       background: rgba(255, 255, 255, 0.14);
       display: flex;
       align-items: center;
@@ -196,7 +199,7 @@
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.25);
       padding: 9px 16px;
-      border-radius: 10px;
+      border-radius: 0;
       font-family: inherit;
       font-size: 14px;
       cursor: pointer;
@@ -214,7 +217,7 @@
 
     .stat-card {
       background: var(--card);
-      border-radius: 12px;
+      border-radius: 0;
       padding: 14px 16px;
       box-shadow: var(--shadow);
       display: flex;
@@ -225,7 +228,7 @@
     .stat-icon {
       width: 42px;
       height: 42px;
-      border-radius: 10px;
+      border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -242,7 +245,7 @@
 
     .table-wrap {
       background: var(--card);
-      border-radius: var(--radius);
+      border-radius: 0;
       box-shadow: var(--shadow);
       overflow: auto;
     }
@@ -296,7 +299,7 @@
       align-items: center;
       gap: 5px;
       padding: 3px 9px;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 12px;
       font-weight: 500;
       background: var(--green-soft);
@@ -308,7 +311,7 @@
     .dev-tag .dev-tag-dot {
       width: 6px;
       height: 6px;
-      border-radius: 50%;
+      border-radius: 0;
       background: var(--green);
       flex-shrink: 0;
     }
@@ -342,7 +345,7 @@
       color: var(--green-dark);
       background: var(--green-soft);
       border: 1px solid var(--green-line);
-      border-radius: 6px;
+      border-radius: 0;
       padding: 1px 8px;
       font-size: 12px;
       white-space: nowrap;
@@ -372,12 +375,12 @@
       align-items: center;
       gap: 5px;
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 12px;
       font-weight: 500;
       white-space: nowrap;
     }
-    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 0; background: currentColor; }
     .b-new { background: var(--yellow-soft); color: #92600a; }
     .b-working { background: var(--blue-soft); color: var(--blue); }
     .b-done { background: var(--green-soft); color: var(--green); }
@@ -387,7 +390,7 @@
     .icon-btn {
       width: 33px;
       height: 33px;
-      border-radius: 9px;
+      border-radius: 0;
       border: 1px solid var(--line);
       background: #fff;
       color: var(--muted);
@@ -404,7 +407,7 @@
 
     .empty {
       background: var(--card);
-      border-radius: var(--radius);
+      border-radius: 0;
       box-shadow: var(--shadow);
       padding: 44px 20px;
       text-align: center;
@@ -429,7 +432,7 @@
 
     .modal {
       background: #fff;
-      border-radius: 16px;
+      border-radius: 0;
       width: 100%;
       max-width: 560px;
       max-height: 88vh;
@@ -455,7 +458,7 @@
       border: none;
       background: #f1f5f3;
       color: var(--muted);
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 17px;
       cursor: pointer;
       line-height: 1;
@@ -472,7 +475,7 @@
       gap: 10px;
       margin-bottom: 14px;
     }
-    .det-item { background: #f6faf7; border-radius: 10px; padding: 10px 12px; }
+    .det-item { background: #f6faf7; border-radius: 0; padding: 10px 12px; }
     .det-item.full { grid-column: 1 / -1; }
     .det-k { font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
     .det-v { font-size: 14px; font-weight: 500; word-break: break-word; }
@@ -484,7 +487,7 @@
       gap: 8px;
       margin-top: 6px;
     }
-    .ph-grid a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+    .ph-grid a { display: block; border-radius: 0; overflow: hidden; border: 1px solid var(--line); }
     .ph-grid img {
       width: 100%;
       height: 92px;
@@ -500,7 +503,7 @@
       font-size: 13px;
       padding: 14px;
       background: #f6faf7;
-      border-radius: 10px;
+      border-radius: 0;
     }
 
     .modal-actions {
@@ -518,7 +521,7 @@
       justify-content: center;
       gap: 8px;
       padding: 11px 14px;
-      border-radius: 10px;
+      border-radius: 0;
       border: none;
       font-family: inherit;
       font-size: 14px;
@@ -550,7 +553,7 @@
       font-family: inherit;
       font-size: 11px;
       padding: 4px 9px;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid var(--line);
       background: #fff;
       cursor: pointer;
@@ -571,7 +574,7 @@
       background: #ecfdf7;
       border: 1px solid #b8e6db;
       padding: 4px 10px;
-      border-radius: 8px;
+      border-radius: 0;
       text-decoration: none;
       transition: 0.15s;
     }
@@ -661,9 +664,27 @@
       align-items: stretch;
     }
 
+    .ana-cat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .ana-cat-grid .chart-card .ana-chart-wrap {
+      min-height: 220px;
+    }
+
+    .ana-cat-grid .chart-card .ana-chart-wrap svg {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+    }
+
     .ana-card {
       background: var(--card);
-      border-radius: var(--radius);
+      border-radius: 0;
       box-shadow: var(--shadow);
       padding: 20px;
     }
@@ -690,7 +711,7 @@
       color: var(--green-dark);
       background: var(--green-soft);
       border: 1px solid var(--line);
-      border-radius: 999px;
+      border-radius: 0;
       padding: 5px 14px;
       white-space: nowrap;
       display: inline-flex;
@@ -702,7 +723,7 @@
       content: "";
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: 0;
       background: var(--green);
     }
 
@@ -717,6 +738,43 @@
       width: 100%;
       max-width: 420px;
       height: auto;
+    }
+
+    .ana-chart-note {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 8px;
+      padding: 0 2px;
+    }
+
+    .ana-tip {
+      position: fixed;
+      z-index: 60;
+      pointer-events: none;
+      background: #10241a;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 8px 12px;
+      min-width: 150px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .ana-tip-name {
+      font-weight: 600;
+      font-size: 12.5px;
+      margin-bottom: 4px;
+    }
+
+    .ana-tip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .ana-tip-row b {
+      font-weight: 600;
     }
 
     .ana-no-data {
@@ -740,7 +798,7 @@
       align-items: center;
       gap: 10px;
       padding: 9px 10px;
-      border-radius: 10px;
+      border-radius: 0;
       background: #f8fbf9;
       border: 1px solid var(--line);
       animation: anaIn 0.35s ease both;
@@ -754,7 +812,7 @@
     .legend-dot {
       width: 14px;
       height: 14px;
-      border-radius: 50%;
+      border-radius: 0;
       flex: 0 0 auto;
       box-shadow: 0 1px 3px rgba(23, 36, 28, 0.2);
     }
@@ -772,7 +830,7 @@
     .legend-bar {
       width: 110px;
       height: 8px;
-      border-radius: 999px;
+      border-radius: 0;
       background: #e6efe9;
       overflow: hidden;
       flex: 0 0 auto;
@@ -781,7 +839,7 @@
     .legend-bar i {
       display: block;
       height: 100%;
-      border-radius: 999px;
+      border-radius: 0;
       transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -804,9 +862,313 @@
       .ana-grid {
         grid-template-columns: 1fr;
       }
+      .ana-cat-grid {
+        grid-template-columns: 1fr;
+      }
       .ana-card {
         min-height: auto;
       }
+      .ana-grid-3 { grid-template-columns: 1fr; }
+      .ana-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ---------- FILTER ---------- */
+    .ana-filter {
+      background: var(--card);
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+    .ana-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .ana-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ana-filter-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green-dark);
+      white-space: nowrap;
+    }
+    .ana-sel {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: #fff;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .ana-date-input {
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .ana-date-sep {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ana-filter-reset { margin-left: auto; padding: 7px 14px; border: 1px solid var(--line); border-radius: 0; background: #f5f5f5; color: var(--muted); font-size: 12px; cursor: pointer; }
+    .ana-filter-reset:hover { background: #eee; color: var(--text); }
+    .ana-device-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid var(--green-line);
+      border-radius: 0;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ana-device-chip .x { font-weight: 700; }
+    .ana-device-chip:hover { background: var(--green); color: #fff; }
+    .legend-item { cursor: default; }
+    .chart-card path { cursor: default; }
+
+    /* ---------- FILTERED STATS ---------- */
+    .ana-filtered-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .ana-filtered-stats .stat-card { padding: 12px 14px; }
+
+    /* ---------- EXPORT ---------- */
+    .ana-export-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .ana-export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--green-line);
+      border-radius: 0;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ana-export-btn:hover { background: var(--green); color: #fff; }
+
+    /* ---------- TREND ---------- */
+    .ana-trend {
+      margin-bottom: 16px;
+    }
+    .ana-trend-wrap {
+      min-height: 200px;
+    }
+    .ana-trend-wrap svg {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+    .ana-trend-legend {
+      display: flex;
+      gap: 14px;
+    }
+    .ana-trend-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ana-trend-legend i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 0;
+    }
+
+    /* ---------- GRID MODS ---------- */
+    .ana-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .ana-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .ana-peak-wrap {
+      min-height: 160px;
+    }
+    .ana-peak-wrap svg {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ---------- SLA ---------- */
+    .ana-sla-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .ana-sla-row:last-child { border-bottom: none; }
+    .ana-sla-label {
+      font-size: 13px;
+      color: var(--muted);
+      min-width: 120px;
+    }
+    .ana-sla-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green-dark);
+    }
+    .ana-sla-unit {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ana-sla-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .ana-sla-card {
+      padding: 12px;
+      background: #f7faf8;
+      border: 1px solid var(--line);
+      text-align: center;
+    }
+    .ana-sla-card .val {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--green-dark);
+      line-height: 1.2;
+    }
+    .ana-sla-card .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ---------- BRANCH ---------- */
+    .ana-branch-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .ana-branch-card {
+      flex: 1;
+      padding: 14px;
+      background: #f7faf8;
+      border: 1px solid var(--line);
+    }
+    .ana-branch-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green-dark);
+      margin-bottom: 10px;
+    }
+    .ana-branch-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(226,236,230,0.6);
+    }
+    .ana-branch-stat:last-child { border-bottom: none; }
+    .ana-branch-stat .k { color: var(--muted); }
+    .ana-branch-stat .v { font-weight: 600; color: var(--text); }
+
+    /* ---------- REPEATED ---------- */
+    .ana-rep-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .ana-rep-item:last-child { border-bottom: none; }
+    .ana-rep-rank {
+      width: 26px;
+      height: 26px;
+      background: var(--green-soft);
+      border: 1px solid var(--green-line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green-dark);
+      flex-shrink: 0;
+    }
+    .ana-rep-label {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ana-rep-count {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green-dark);
+    }
+    .ana-rep-bar {
+      width: 80px;
+      height: 6px;
+      background: #e6efe9;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .ana-rep-bar i {
+      display: block;
+      height: 100%;
+      background: var(--green);
+    }
+
+    /* ---------- STALE ---------- */
+    .ana-stale-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .ana-stale-item:last-child { border-bottom: none; }
+    .ana-stale-tno {
+      font-weight: 700;
+      color: var(--green-dark);
+      min-width: 120px;
+    }
+    .ana-stale-dev {
+      flex: 1;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ana-stale-days {
+      font-weight: 700;
+      color: #b91c1c;
+      white-space: nowrap;
     }
 
     /* ---------- USERS TABLE ---------- */
@@ -820,7 +1182,7 @@
       width: 26px;
       height: 26px;
       border: none;
-      border-radius: 7px;
+      border-radius: 0;
       background: #f1f5f3;
       color: var(--muted);
       cursor: pointer;
@@ -838,7 +1200,7 @@
       gap: 5px;
       padding: 3px 10px;
       border: 1px solid var(--line);
-      border-radius: 999px;
+      border-radius: 0;
       background: #fff;
       font-size: 11.5px;
       color: var(--muted);
@@ -857,7 +1219,7 @@
       font-family: Consolas, monospace;
       background: #f6faf7;
       border: 1px dashed var(--line);
-      border-radius: 8px;
+      border-radius: 0;
       padding: 8px 10px;
     }
 
@@ -870,7 +1232,7 @@
     .name-input {
       border: 1px solid var(--line);
       background: #fbfdfc;
-      border-radius: 8px;
+      border-radius: 0;
       padding: 7px 10px;
       font-family: inherit;
       font-size: 13px;
@@ -886,7 +1248,7 @@
       height: 32px;
       padding: 0 12px;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       background: var(--green);
       color: #fff;
       font-family: inherit;
@@ -897,7 +1259,61 @@
 
     .name-save:hover { background: #0d5e32; }
 
-    .name-save.saved { background: var(--green-soft); color: var(--green); }
+    .name-save.is-disabled {
+      background: #cdd6d1;
+      color: #fff;
+      cursor: not-allowed;
+    }
+
+    .name-save.is-disabled:hover { background: #cdd6d1; }
+
+    .name-edit {
+      flex: 0 0 auto;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: #fff;
+      color: var(--green-dark);
+      font-family: inherit;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .name-edit:hover { border-color: var(--green); color: var(--green); background: var(--green-soft); }
+
+    .name-edit.is-on {
+      background: var(--green-soft);
+      border-color: var(--green);
+      color: var(--green);
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .name-input.is-readonly {
+      background: #f4f7f6;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .name-input.is-readonly:focus { border-color: var(--line); }
+
+    .name-del {
+      flex: 0 0 auto;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #f6caca;
+      border-radius: 0;
+      background: var(--red-soft);
+      color: var(--red);
+      font-family: inherit;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .name-del:hover { background: var(--red); color: #fff; }
 
     .u-ip { font-family: Consolas, monospace; font-size: 13px; }
     .u-mono { font-family: Consolas, monospace; font-size: 12.5px; }
@@ -905,7 +1321,7 @@
     .chip-badge {
       display: inline-block;
       padding: 3px 10px;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 11px;
       font-weight: 500;
       background: #f1f5f3;
@@ -927,7 +1343,7 @@
       background: #f0f5f2;
       border: 1px dashed #c9dcd1;
       padding: 5px 10px;
-      border-radius: 8px;
+      border-radius: 0;
     }
 
     .form-field { margin-bottom: 12px; }
@@ -938,7 +1354,7 @@
       width: 100%;
       border: 1px solid var(--line);
       background: #fbfdfc;
-      border-radius: 9px;
+      border-radius: 0;
       padding: 10px 12px;
       font-family: inherit;
       font-size: 14px;
@@ -954,7 +1370,7 @@
 
     .confirm-icon {
       width: 52px; height: 52px;
-      border-radius: 14px;
+      border-radius: 0;
       background: var(--red-soft);
       color: var(--red);
       display: flex; align-items: center; justify-content: center;
@@ -974,7 +1390,7 @@
       opacity: 0;
       pointer-events: none;
       z-index: 2;
-      font-family: "Prompt", sans-serif;
+      font-family: "Sarabun", sans-serif;
     }
     .pdf-hero {
       background: linear-gradient(135deg, #0b3d25, #145c37);
@@ -998,7 +1414,7 @@
       display: inline-block;
       margin-top: 12px;
       padding: 6px 16px;
-      border-radius: 999px;
+      border-radius: 0;
       background: rgba(255, 255, 255, 0.16);
       border: 1px solid rgba(255, 255, 255, 0.35);
       font-size: 13px;
@@ -1045,7 +1461,7 @@
       width: 276px;
       height: 207px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e6eeea;
     }
     .pdf-photo-row img.sm {
@@ -1066,7 +1482,7 @@
       background: var(--green-dark);
       color: #fff;
       padding: 11px 18px;
-      border-radius: 10px;
+      border-radius: 0;
       font-size: 14px;
       box-shadow: var(--shadow);
       z-index: 99;
@@ -1079,6 +1495,7 @@
     /* ---------- RESPONSIVE ---------- */
     @media (max-width: 900px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
+      .ana-filtered-stats { grid-template-columns: repeat(2, 1fr); }
       .det-grid { grid-template-columns: 1fr; }
       .form-row { grid-template-columns: 1fr; }
     }
@@ -1120,7 +1537,7 @@
         grid-template-columns: 1fr;
         position: relative;
         background: var(--card);
-        border-radius: var(--radius);
+        border-radius: 0;
         box-shadow: var(--shadow);
         margin-bottom: 12px;
         overflow: hidden;
@@ -1325,7 +1742,6 @@
               <th>IP</th>
               <th>แจ้งซ่อมครั้งล่าสุด</th>
               <th>จำนวนครั้ง</th>
-              <th>เห็นครั้งล่าสุด</th>
               <th style="text-align:right">จัดการ</th>
             </tr>
           </thead>
@@ -1338,34 +1754,148 @@
     </section>
 
     <section id="analyticsView" hidden>
-      <section class="ana-head">
-        <div>
-          <h3>วิเคราะห์การแจ้งซ่อม</h3>
-          <p>สัดส่วนปัญหาตามหมวดอุปกรณ์ / โปรแกรม และสัดส่วน IP เครื่องที่แจ้งซ่อม คิดเป็น % จาก 100%</p>
-        </div>
-        <button class="btn-refresh ana-refresh" onclick="renderAnalytics()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
-          <span>รีเฟรชกราฟ</span>
-        </button>
-      </section>
 
-      <div class="ana-grid">
-        <div class="ana-card chart-card">
-          <div class="ana-card-head">
-            <div class="ana-card-title">ปัญหาตามหมวดอุปกรณ์ / โปรแกรม</div>
-            <div class="ana-total" id="anaTotalLabel" title="จำนวนงานทั้งหมด">0 งาน</div>
+      <div class="ana-filter" id="anaFilterBar">
+        <div class="ana-filter-row">
+          <div class="ana-filter-group">
+            <label class="ana-filter-label">ช่วงเวลา</label>
+            <select id="anaRange" class="ana-sel" onchange="onAnaRangeChange()">
+              <option value="all">ทั้งหมด</option>
+              <option value="7">7 วันล่าสุด</option>
+              <option value="30">30 วันล่าสุด</option>
+              <option value="90">90 วันล่าสุด</option>
+              <option value="custom">กำหนดเอง</option>
+            </select>
+            <input type="date" id="anaFrom" class="ana-date-input hidden" onchange="onAnaFilterChange()">
+            <span id="anaSep" class="ana-date-sep hidden">ถึง</span>
+            <input type="date" id="anaTo" class="ana-date-input hidden" onchange="onAnaFilterChange()">
           </div>
-          <div class="ana-chart-wrap">
-            <svg id="anaDonut" viewBox="0 0 340 300" role="img" aria-label="กราฟวงกลม 3 มิติ สัดส่วนปัญหาตามหมวด"></svg>
+          <div class="ana-filter-group">
+            <label class="ana-filter-label">สถานะ</label>
+            <select id="anaStatusSel" class="ana-sel" onchange="onAnaFilterChange()">
+              <option value="all">ทั้งหมด</option>
+              <option value="new">งานใหม่</option>
+              <option value="working">กำลังดำเนินการ</option>
+              <option value="done">เสร็จสิ้น</option>
+            </select>
           </div>
-          <div class="ana-no-data hidden" id="anaNoData">ยังไม่มีข้อมูลใบแจ้งซ่อมให้วิเคราะห์</div>
-        </div>
-
-        <div class="ana-card legend-card">
-          <div class="ana-card-title">รายละเอียดสัดส่วน (%)</div>
-          <div class="ana-legend" id="anaLegend"></div>
+          <button class="ana-filter-reset" id="anaFilterReset" onclick="resetAnaFilter()" style="display:none">ล้างตัวกรอง</button>
+          <span class="ana-device-chip hidden" id="anaDeviceChip"></span>
         </div>
       </div>
+
+      <div class="ana-filtered-stats" id="anaFilteredStats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+          <div><div class="stat-num" id="aStatAll">0</div><div class="stat-label">งานในช่วงที่เลือก</div></div>
+        </div>
+        <div class="stat-card stat-new">
+          <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg></div>
+          <div><div class="stat-num" id="aStatNew">0</div><div class="stat-label">งานใหม่</div></div>
+        </div>
+        <div class="stat-card stat-working">
+          <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><div class="stat-num" id="aStatWorking">0</div><div class="stat-label">กำลังดำเนินการ</div></div>
+        </div>
+        <div class="stat-card stat-done">
+          <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div><div class="stat-num" id="aStatDone">0</div><div class="stat-label">เสร็จสิ้น</div></div>
+        </div>
+      </div>
+
+      <div class="ana-export-row">
+        <button class="ana-export-btn" onclick="exportAnalyticsCSV()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          ส่งออกรายงาน CSV
+        </button>
+      </div>
+
+      <div class="ana-cat-grid">
+        <div class="ana-card chart-card">
+          <div class="ana-card-head">
+            <div class="ana-card-title">ปัญหาอุปกรณ์ Hardware</div>
+            <div class="ana-total" id="anaTotalHw" title="จำนวนงาน Hardware">0 งาน</div>
+          </div>
+          <div class="ana-chart-wrap">
+            <svg id="anaDonutHw" viewBox="0 0 340 300" role="img" aria-label="กราฟวงกลม ปัญหาอุปกรณ์ Hardware"></svg>
+          </div>
+          <div class="ana-legend" id="anaLegendHw"></div>
+          <div class="ana-no-data hidden" id="anaNoDataHw">ไม่มีข้อมูล Hardware</div>
+        </div>
+        <div class="ana-card chart-card">
+          <div class="ana-card-head">
+            <div class="ana-card-title">ปัญหาอุปกรณ์ Software</div>
+            <div class="ana-total" id="anaTotalSw" title="จำนวนงาน Software">0 งาน</div>
+          </div>
+          <div class="ana-chart-wrap">
+            <svg id="anaDonutSw" viewBox="0 0 340 300" role="img" aria-label="กราฟวงกลม ปัญหาอุปกรณ์ Software"></svg>
+          </div>
+          <div class="ana-legend" id="anaLegendSw"></div>
+          <div class="ana-no-data hidden" id="anaNoDataSw">ไม่มีข้อมูล Software</div>
+        </div>
+        <div class="ana-card chart-card">
+          <div class="ana-card-head">
+            <div class="ana-card-title">ปัญหาอุปกรณ์ Disk</div>
+            <div class="ana-total" id="anaTotalDk" title="จำนวนงาน Disk">0 งาน</div>
+          </div>
+          <div class="ana-chart-wrap">
+            <svg id="anaDonutDk" viewBox="0 0 340 300" role="img" aria-label="กราฟวงกลม ปัญหาอุปกรณ์ Disk"></svg>
+          </div>
+          <div class="ana-legend" id="anaLegendDk"></div>
+          <div class="ana-no-data hidden" id="anaNoDataDk">ไม่มีข้อมูล Disk</div>
+        </div>
+      </div>
+      <div class="ana-tip hidden" id="anaTip" role="tooltip"></div>
+
+      <div class="ana-card ana-trend">
+        <div class="ana-card-head">
+          <div class="ana-card-title">แนวโน้มงานรายวัน</div>
+          <div class="ana-trend-legend">
+            <span><i style="background:#ffb020"></i>งานใหม่</span>
+            <span><i style="background:#2b6cb0"></i>กำลังดำเนินการ</span>
+            <span><i style="background:#0e6b3a"></i>เสร็จสิ้น</span>
+          </div>
+        </div>
+        <div class="ana-chart-wrap ana-trend-wrap">
+          <svg id="anaTrend" viewBox="0 0 780 240"></svg>
+        </div>
+        <div class="ana-chart-note">แท่งแนวตั้ง = จำนวนงาน (เคส) ในแต่ละวัน · สีตามสถานะ (ดู legend ด้านบน)</div>
+        <div class="ana-no-data hidden" id="anaTrendNoData">ไม่มีข้อมูลในช่วงที่เลือก</div>
+      </div>
+
+      <div class="ana-grid-3">
+        <div class="ana-card">
+          <div class="ana-card-title">เวลาให้บริการ (SLA)</div>
+          <div class="ana-sla" id="anaSla"></div>
+          <div class="ana-no-data hidden" id="anaSlaNoData">ยังไม่มีข้อมูล SLA</div>
+        </div>
+        <div class="ana-card">
+          <div class="ana-card-title">เปรียบเทียบสาขา</div>
+          <div class="ana-branch" id="anaBranch"></div>
+          <div class="ana-no-data hidden" id="anaBranchNoData">ไม่มีข้อมูลสาขา</div>
+        </div>
+        <div class="ana-card">
+          <div class="ana-card-title">ช่วงเวลาเร่งด่วน (ชั่วโมง)</div>
+          <div class="ana-chart-wrap ana-peak-wrap">
+            <svg id="anaPeak" viewBox="0 0 300 180"></svg>
+          </div>
+          <div class="ana-no-data hidden" id="anaPeakNoData">ไม่มีข้อมูล</div>
+        </div>
+      </div>
+
+      <div class="ana-grid-2">
+        <div class="ana-card">
+          <div class="ana-card-title">ปัญหาที่เกิดซ้ำบ่อยสุด (TOP 5)</div>
+          <div class="ana-repeated" id="anaRepeated"></div>
+          <div class="ana-no-data hidden" id="anaRepeatedNoData">ไม่มีข้อมูล</div>
+        </div>
+        <div class="ana-card">
+          <div class="ana-card-title">งานค้างเก่า (ใหม่/ดำเนินการ &gt; 3 วัน)</div>
+          <div class="ana-stale" id="anaStale"></div>
+          <div class="ana-no-data hidden" id="anaStaleNoData">ไม่มีงานค้าง</div>
+        </div>
+      </div>
+
     </section>
 
     </div>
@@ -1487,6 +2017,20 @@
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
             <button class="btn btn-danger" onclick="doDelete()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+        <!-- ยืนยันลบผู้ใช้ -->
+        <div id="confirmUserView" hidden>
+          <div class="confirm-icon" style="background:#fdf1f1;color:#d64545">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">ยืนยันการลบผู้ใช้</h3>
+          <p class="confirm-no" id="confirmUserIp"></p>
+          <p class="confirm-text">จะลบผู้ใช้และเครื่องนี้ (รวมข้อมูล IP และสถิติการแจ้งซ่อม) ออกจากระบบทันที ไม่สามารถกู้คืนได้</p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="doDeleteUser()">ยืนยันลบ</button>
           </div>
         </div>
 
@@ -1697,10 +2241,350 @@
       return h + "</span>";
     }
 
-    function collectAnaData() {
+    // ---------- ANALYTICS FILTER STATE ----------
+    var anaFilter = { range: "all", from: null, to: null, status: "all", device: null };
+
+    function onAnaRangeChange() {
+      var sel = document.getElementById("anaRange").value;
+      var fromEl = document.getElementById("anaFrom");
+      var toEl = document.getElementById("anaTo");
+      var sep = document.getElementById("anaSep");
+      if (sel === "custom") {
+        fromEl.classList.remove("hidden");
+        toEl.classList.remove("hidden");
+        sep.classList.remove("hidden");
+      } else {
+        fromEl.classList.add("hidden");
+        toEl.classList.add("hidden");
+        sep.classList.add("hidden");
+        anaFilter.range = sel;
+        anaFilter.from = null;
+        anaFilter.to = null;
+        onAnaFilterChange();
+      }
+    }
+
+    function onAnaFilterChange() {
+      var rangeSel = document.getElementById("anaRange").value;
+      var statusSel = document.getElementById("anaStatusSel").value;
+      var now = Date.now();
+      var DAY = 86400000;
+      anaFilter.status = statusSel;
+      if (rangeSel === "custom") {
+        var f = document.getElementById("anaFrom").value;
+        var t = document.getElementById("anaTo").value;
+        anaFilter.from = f ? new Date(f + "T00:00:00").getTime() : null;
+        anaFilter.to = t ? new Date(t + "T23:59:59").getTime() : null;
+      } else {
+        anaFilter.range = rangeSel;
+        var days = parseInt(rangeSel, 10);
+        anaFilter.from = days ? now - days * DAY : 0;
+        anaFilter.to = now;
+      }
+      var resetBtn = document.getElementById("anaFilterReset");
+      var isDefault = anaFilter.range === "all" && anaFilter.status === "all";
+      resetBtn.style.display = isDefault ? "none" : "";
+      renderAnalytics();
+    }
+
+    function resetAnaFilter() {
+      document.getElementById("anaRange").value = "all";
+      document.getElementById("anaStatusSel").value = "all";
+      document.getElementById("anaFrom").classList.add("hidden");
+      document.getElementById("anaTo").classList.add("hidden");
+      document.getElementById("anaSep").classList.add("hidden");
+      anaFilter = { range: "all", from: null, to: null, status: "all", device: null };
+      document.getElementById("anaFilterReset").style.display = "none";
+      var chip = document.getElementById("anaDeviceChip");
+      chip.classList.add("hidden");
+      chip.innerHTML = "";
+      renderAnalytics();
+    }
+
+    function getFilteredTickets() {
+      return tickets.filter(function (t) {
+        if (anaFilter.status !== "all" && t.status !== anaFilter.status) return false;
+        if (anaFilter.from !== null) {
+          var ts = new Date(t.created_at).getTime();
+          if (isNaN(ts) || ts < anaFilter.from) return false;
+        }
+        if (anaFilter.to !== null) {
+          var ts2 = new Date(t.created_at).getTime();
+          if (isNaN(ts2) || ts2 > anaFilter.to) return false;
+        }
+        if (anaFilter.device) {
+          var match = false;
+          parseDeviceParts(t.device).forEach(function (p) {
+            if ((p.split("·").pop().trim() || p) === anaFilter.device) match = true;
+          });
+          if (!match) return false;
+        }
+        return true;
+      });
+    }
+
+    // ---------- DRILL-DOWN: FILTER BY DEVICE ----------
+    function setAnaDevice(device) {
+      anaFilter.device = device || null;
+      var chip = document.getElementById("anaDeviceChip");
+      if (anaFilter.device) {
+        chip.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' + anaEsc(device) + ' <span class="x">&times;</span>';
+        chip.classList.remove("hidden");
+      } else {
+        chip.classList.add("hidden");
+        chip.innerHTML = "";
+      }
+      renderAnalytics();
+    }
+    window.setAnaDevice = setAnaDevice;
+
+    function anaHoursDiff(a, b) { return (b - a) / 3600000; }
+
+    function branchOf(t) {
+      var loc = String(t.location || "");
+      if (/สาขา\s*4|มาบตาพุด/.test(loc)) return "สาขา 4";
+      if (/สาขา\s*5|บ้านฉาง/.test(loc)) return "สาขา 5";
+      return "อื่น";
+    }
+
+    function fmtHours(h) {
+      if (h < 1) return Math.round(h * 60) + " นาที";
+      if (h < 24) return h.toFixed(1) + " ชม.";
+      return (h / 24).toFixed(1) + " วัน";
+    }
+
+    // ---------- RENDER: FILTERED STATS ----------
+    function renderAnaStats(f) {
+      var n = 0, w = 0, d = 0;
+      f.forEach(function (t) {
+        if (t.status === "new") n++; else if (t.status === "working") w++; else if (t.status === "done") d++;
+      });
+      document.getElementById("aStatAll").textContent = f.length;
+      document.getElementById("aStatNew").textContent = n;
+      document.getElementById("aStatWorking").textContent = w;
+      document.getElementById("aStatDone").textContent = d;
+    }
+
+    // ---------- RENDER: TREND CHART ----------
+    function anaThaiDate(k) {
+      var y = +k.slice(0, 4), m = +k.slice(5, 7), d = +k.slice(8, 10);
+      return (d < 10 ? "0" + d : "" + d) + "/" + (m < 10 ? "0" + m : "" + m) + "/" + (y + 543);
+    }
+
+    function renderTrendChart(f) {
+      var svg = document.getElementById("anaTrend");
+      var noData = document.getElementById("anaTrendNoData");
+      if (!f.length) { svg.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      noData.classList.add("hidden");
+      var dayMap = {};
+      f.forEach(function (t) {
+        var d = new Date(t.created_at);
+        if (isNaN(d)) return;
+        var key = d.toISOString().slice(0, 10);
+        if (!dayMap[key]) dayMap[key] = { n: 0, w: 0, d: 0 };
+        if (t.status === "new") dayMap[key].n++;
+        else if (t.status === "working") dayMap[key].w++;
+        else if (t.status === "done") dayMap[key].d++;
+      });
+      var days = Object.keys(dayMap).sort();
+      if (days.length > 30) days = days.slice(days.length - 30);
+      var W = 780, H = 240, PL = 46, PB = 36, PT = 8;
+      var gap = (W - PL) / days.length;
+      var barW = Math.max(4, Math.floor(gap) - 2);
+      var maxV = 1;
+      days.forEach(function (k) { var s = dayMap[k].n + dayMap[k].w + dayMap[k].d; if (s > maxV) maxV = s; });
+      var sc = (H - PT - PB) / maxV;
+      var bars = [], lbls = [], yl = [];
+      yl.push('<text x="13" y="' + (PT + (H - PT - PB) / 2) + '" text-anchor="middle" font-size="8.5" fill="#888" transform="rotate(-90 13 ' + (PT + (H - PT - PB) / 2) + ')">จำนวนงาน (เคส)</text>');
+      for (var yv = 0; yv <= maxV; yv += Math.max(1, Math.ceil(maxV / 4))) {
+        var yy = H - PB - yv * sc;
+        yl.push('<line x1="' + PL + '" y1="' + yy + '" x2="' + W + '" y2="' + yy + '" stroke="#e2ece6"/>');
+        yl.push('<text x="' + (PL - 5) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="9" fill="#999">' + yv + '</text>');
+      }
+      days.forEach(function (k, i) {
+        var dm = dayMap[k], x = PL + i * gap, y0 = H - PB;
+        var h1 = dm.d * sc, h2 = dm.w * sc, h3 = dm.n * sc;
+        if (h1) bars.push('<rect x="' + x + '" y="' + (y0 - h1) + '" width="' + barW + '" height="' + h1 + '" fill="#0e6b3a"><title>' + k + ' เสร็จ: ' + dm.d + '</title></rect>');
+        if (h2) bars.push('<rect x="' + x + '" y="' + (y0 - h1 - h2) + '" width="' + barW + '" height="' + h2 + '" fill="#2b6cb0"><title>' + k + ' ดำเนินการ: ' + dm.w + '</title></rect>');
+        if (h3) bars.push('<rect x="' + x + '" y="' + (y0 - h1 - h2 - h3) + '" width="' + barW + '" height="' + h3 + '" fill="#ffb020"><title>' + k + ' ใหม่: ' + dm.n + '</title></rect>');
+        if (i % Math.max(1, Math.floor(days.length / 6)) === 0 || i === days.length - 1)
+          lbls.push('<text x="' + (x + barW / 2) + '" y="' + (H - 13) + '" text-anchor="middle" font-size="7" fill="#777">' + anaThaiDate(k) + '</text>');
+      });
+      lbls.push('<text x="' + (PL + (W - PL) / 2) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="8.5" fill="#888">วันที่ (วัน/เดือน/พ.ศ.)</text>');
+      svg.innerHTML = yl.join("") + bars.join("") + lbls.join("");
+    }
+
+    // ---------- RENDER: SLA ----------
+    function renderSLA(f) {
+      var wrap = document.getElementById("anaSla");
+      var noData = document.getElementById("anaSlaNoData");
+      if (!f.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      noData.classList.add("hidden");
+      var done = f.filter(function (t) { return t.status === "done" && t.approved_at; });
+      var working = f.filter(function (t) { return t.status === "working"; });
+      var sumCycle = 0, sumResp = 0;
+      done.forEach(function (t) { sumCycle += anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime()); });
+      var now = Date.now();
+      working.forEach(function (t) { sumResp += anaHoursDiff(new Date(t.created_at).getTime(), now); });
+      var avgCycle = done.length ? sumCycle / done.length : 0;
+      var avgResp = working.length ? sumResp / working.length : 0;
+      var catMap = {};
+      f.forEach(function (t) {
+        parseDeviceParts(t.device).forEach(function (p) {
+          var cat = deviceType(p);
+          if (!catMap[cat]) catMap[cat] = { c: 0, ch: [] };
+          catMap[cat].c++;
+          if (t.approved_at) catMap[cat].ch.push(anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime()));
+        });
+      });
+      var h = '<div class="ana-sla-cards">';
+      h += '<div class="ana-sla-card"><div class="val">' + fmtHours(avgCycle) + '</div><div class="lbl">เฉลี่ยแก้ไขเสร็จ (' + done.length + ' เคส)</div></div>';
+      h += '<div class="ana-sla-card"><div class="val">' + fmtHours(avgResp) + '</div><div class="lbl">เฉลี่ยดำเนินการ (' + working.length + ' เคส)</div></div>';
+      h += '</div>';
+      var cats = Object.keys(catMap).sort(function (a, b) { return catMap[b].c - catMap[a].c; });
+      if (cats.length) {
+        h += '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">แยกตามหมวด</div>';
+        cats.forEach(function (cat) {
+          var c = catMap[cat];
+          var avg = c.ch.length ? c.ch.reduce(function (s, v) { return s + v; }, 0) / c.ch.length : 0;
+          h += '<div class="ana-sla-row"><span class="ana-sla-label">' + anaEsc(cat) + '</span><span class="ana-sla-val">' + fmtHours(avg) + '</span><span class="ana-sla-unit"> (' + c.c + ')</span></div>';
+        });
+      }
+      wrap.innerHTML = h;
+    }
+
+    // ---------- RENDER: BRANCH COMPARISON ----------
+    function renderBranchComparison(f) {
+      var wrap = document.getElementById("anaBranch");
+      var noData = document.getElementById("anaBranchNoData");
+      var br = {};
+      f.forEach(function (t) {
+        var b = branchOf(t);
+        if (!br[b]) br[b] = { t: 0, d: 0, ch: [], cm: {} };
+        br[b].t++;
+        if (t.status === "done") { br[b].d++; if (t.approved_at) br[b].ch.push(anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime())); }
+        parseDeviceParts(t.device).forEach(function (p) { var cat = deviceType(p); br[b].cm[cat] = (br[b].cm[cat] || 0) + 1; });
+      });
+      var names = Object.keys(br).sort();
+      if (!names.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      noData.classList.add("hidden");
+      var h = '<div class="ana-branch-row">';
+      names.forEach(function (name) {
+        var b = br[name];
+        var avgC = b.ch.length ? b.ch.reduce(function (s, v) { return s + v; }, 0) / b.ch.length : 0;
+        var rate = b.t ? Math.round(b.d / b.t * 100) : 0;
+        var topC = Object.keys(b.cm).sort(function (a, x) { return b.cm[x] - b.cm[a]; })[0] || "-";
+        h += '<div class="ana-branch-card"><div class="ana-branch-name">' + anaEsc(name) + '</div>';
+        h += '<div class="ana-branch-stat"><span class="k">งานทั้งหมด</span><span class="v">' + b.t + '</span></div>';
+        h += '<div class="ana-branch-stat"><span class="k">เสร็จสิ้น</span><span class="v">' + b.d + ' (' + rate + '%)</span></div>';
+        h += '<div class="ana-branch-stat"><span class="k">เวลาเฉลี่ยแก้ไข</span><span class="v">' + fmtHours(avgC) + '</span></div>';
+        h += '<div class="ana-branch-stat"><span class="k">ปัญหาบ่อยสุด</span><span class="v">' + anaEsc(topC) + '</span></div></div>';
+      });
+      h += '</div>';
+      wrap.innerHTML = h;
+    }
+
+    // ---------- RENDER: PEAK HOURS ----------
+    function renderPeakHours(f) {
+      var svg = document.getElementById("anaPeak");
+      var noData = document.getElementById("anaPeakNoData");
+      var hrs = new Array(24).fill(0);
+      f.forEach(function (t) { var d = new Date(t.created_at); if (!isNaN(d)) hrs[d.getHours()]++; });
+      var maxV = Math.max.apply(null, hrs);
+      if (!maxV) { svg.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      noData.classList.add("hidden");
+      var W = 300, H = 168, PL = 26, PB = 20, PT = 4;
+      var gap = (W - PL) / 24, barW = Math.max(3, Math.floor(gap) - 1);
+      var sc = (H - PT - PB) / maxV;
+      var bars = [], lbls = [], yl = [];
+      var step = Math.max(1, Math.ceil(maxV / 3));
+      for (var yv = 0; yv <= maxV; yv += step) {
+        var yy = H - PB - yv * sc;
+        yl.push('<line x1="' + PL + '" y1="' + yy + '" x2="' + W + '" y2="' + yy + '" stroke="#e2ece6"/>');
+        yl.push('<text x="' + (PL - 3) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="8" fill="#999">' + yv + '</text>');
+      }
+      for (var i = 0; i < 24; i++) {
+        var x = PL + i * gap, bh = hrs[i] * sc, y = H - PB - bh;
+        var col = hrs[i] >= maxV * 0.8 ? "#b91c1c" : (hrs[i] >= maxV * 0.5 ? "#ffb020" : "#0e6b3a");
+        bars.push('<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + bh + '" fill="' + col + '"><title>' + i + ':00 — ' + hrs[i] + ' งาน</title></rect>');
+        if (i % 3 === 0) lbls.push('<text x="' + (x + barW / 2) + '" y="' + (H - 3) + '" text-anchor="middle" font-size="7" fill="#666">' + i + '</text>');
+      }
+      svg.innerHTML = yl.join("") + bars.join("") + lbls.join("");
+    }
+
+    // ---------- RENDER: REPEATED PROBLEMS ----------
+    function renderRepeatedProblems(f) {
+      var wrap = document.getElementById("anaRepeated");
+      var noData = document.getElementById("anaRepeatedNoData");
+      var map = {};
+      f.forEach(function (t) {
+        parseDeviceParts(t.device).forEach(function (p) {
+          var label = p.split("·").pop().trim() || p;
+          map[label] = (map[label] || 0) + 1;
+        });
+      });
+      var items = Object.keys(map).map(function (k) { return { label: k, count: map[k] }; });
+      items.sort(function (a, b) { return b.count - a.count; });
+      items = items.slice(0, 5);
+      if (!items.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      noData.classList.add("hidden");
+      var maxC = items[0].count || 1;
+      var h = "";
+      items.forEach(function (item, i) {
+        var pct = Math.round(item.count / maxC * 100);
+        h += '<div class="ana-rep-item"><span class="ana-rep-rank">' + (i + 1) + '</span><span class="ana-rep-label">' + anaEsc(item.label) + '</span><span class="ana-rep-count">' + item.count + '</span><span class="ana-rep-bar"><i style="width:' + pct + '%"></i></span></div>';
+      });
+      wrap.innerHTML = h;
+    }
+
+    // ---------- RENDER: STALE TICKETS ----------
+    function renderStaleTickets(f) {
+      var wrap = document.getElementById("anaStale");
+      var noData = document.getElementById("anaStaleNoData");
+      var now = Date.now(), THREE = 3 * 86400000;
+      var stale = f.filter(function (t) {
+        if (t.status !== "new" && t.status !== "working") return false;
+        var c = new Date(t.created_at).getTime();
+        return !isNaN(c) && (now - c) > THREE;
+      });
+      stale.sort(function (a, b) { return new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); });
+      if (!stale.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
+      noData.classList.add("hidden");
+      var h = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">พบ ' + stale.length + ' งานค้างเก่า</div>';
+      stale.slice(0, 10).forEach(function (t) {
+        var days = Math.round((now - new Date(t.created_at).getTime()) / 86400000);
+        var label = t.device.split("·").pop().trim() || t.device;
+        h += '<div class="ana-stale-item"><span class="ana-stale-tno">' + anaEsc(t.ticket_no) + '</span><span class="ana-stale-dev">' + anaEsc(label) + '</span><span class="ana-stale-days">' + days + ' วัน</span></div>';
+      });
+      wrap.innerHTML = h;
+    }
+
+    // ---------- RENDER: EXPORT CSV ----------
+    function exportAnalyticsCSV() {
+      var f = getFilteredTickets();
+      if (!f.length) { toast("ไม่มีข้อมูลให้ส่งออก"); return; }
+      var rows = [["เลขที่ซ่อม","สถานะ","หมวด","อุปกรณ์","อาการ","สถานที่","สาขา","วันที่แจ้ง","วันที่เสร็จ","ชม.(แก้ไข)","ผู้แจ้ง","เบอร์โทร","Line ID"]];
+      f.forEach(function (t) {
+        var created = t.created_at ? new Date(t.created_at).toLocaleString("th-TH") : "";
+        var approved = t.approved_at ? new Date(t.approved_at).toLocaleString("th-TH") : "";
+        var hours = t.approved_at ? anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime()).toFixed(1) : "";
+        var parts = parseDeviceParts(t.device);
+        var labels = parts.map(function (p) { return p.split("·").pop().trim(); }).join(", ");
+        rows.push([t.ticket_no, STATUS[t.status] ? STATUS[t.status].label : t.status, deviceType(parts[0] || ""), labels, String(t.symptom || "").replace(/"/g, '""').replace(/\n/g, " | "), t.location || "", branchOf(t), created, approved, hours, t.reporter_name || "", t.reporter_phone || "", t.reporter_line_id || ""]);
+      });
+      var csv = "\uFEFF" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c) + '"'; }).join(","); }).join("\n");
+      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8;" }), "report_" + new Date().toISOString().slice(0, 10) + ".csv");
+      toast("ส่งออก CSV แล้ว");
+    }
+
+    window.exportAnalyticsCSV = exportAnalyticsCSV;
+
+    // ---------- collectAnaData (with optional filter) ----------
+    function collectAnaData(filtered) {
+      var list = filtered || tickets;
       var map = {};
       var total = 0;
-      tickets.forEach(function (t) {
+      list.forEach(function (t) {
         var parts = parseDeviceParts(t.device);
         if (!parts.length) {
           map["ไม่ระบุ"] = (map["ไม่ระบุ"] || 0) + 1;
@@ -1730,26 +2614,38 @@
         "A" + r + " " + r + " 0 " + large + " 0 " + i0[0].toFixed(2) + " " + i0[1].toFixed(2) + "Z";
     }
 
-    function renderAnalytics() {
-      var data = collectAnaData();
-      var list = data.list;
-      var total = data.total;
-      var svgWrap = document.getElementById("anaDonut");
-      var noData = document.getElementById("anaNoData");
-      var legend = document.getElementById("anaLegend");
-      var center = document.getElementById("anaTotalLabel");
+    function renderCatDonut(cat, filtered, ids) {
+      var svgWrap = document.getElementById(ids.svg);
+      var legendEl = document.getElementById(ids.legend);
+      var center = document.getElementById(ids.total);
+      var noData = document.getElementById(ids.noData);
+
+      var map = {};
+      var total = 0;
+      filtered.forEach(function (t) {
+        var parts = parseDeviceParts(t.device);
+        parts.forEach(function (p) {
+          if (deviceType(p) !== cat) return;
+          var label = deviceLabel(p) || "ไม่ระบุ";
+          map[label] = (map[label] || 0) + 1;
+          total++;
+        });
+      });
 
       if (!total) {
         noData.classList.remove("hidden");
         svgWrap.innerHTML = "";
-        legend.innerHTML = "";
+        legendEl.innerHTML = "";
         center.textContent = "0 งาน";
         return;
       }
       noData.classList.add("hidden");
 
-      var top = list.slice(0, 8);
-      var rest = list.slice(8);
+      var arr = Object.keys(map).map(function (k) { return { label: k, count: map[k] }; });
+      arr.sort(function (a, b) { return b.count - a.count; });
+
+      var top = arr.slice(0, 8);
+      var rest = arr.slice(8);
       var restSum = rest.reduce(function (s, o) { return s + o.count; }, 0);
       if (restSum > 0) top.push({ label: "อื่น ๆ", count: restSum });
 
@@ -1769,7 +2665,7 @@
         var dark = anaShade(col, 0.55);
         var d = annulusPath(0, 0, OUTER, INNER, start + 0.004, a1 - 0.004);
 
-        var gid = "anag" + i;
+        var gid = "anag" + cat + i;
         defs.push(
           '<linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
           '<stop offset="0%" stop-color="' + anaShade(col, 1.18) + '"/>' +
@@ -1777,8 +2673,7 @@
         );
 
         bottom.push('<path d="' + d + '" fill="' + dark + '"/>');
-        topG.push('<path d="' + d + '" fill="url(#' + gid + ')">' +
-          '<title>' + anaEsc(o.label) + ' (' + pct + '%)</title></path>');
+        topG.push('<path d="' + d + '" fill="url(#' + gid + ')" data-name="' + anaEsc(o.label) + '" data-count="' + o.count + '" data-pct="' + pct + '"/>');
 
         var barPct = Math.round((o.count / total) * 100);
         idxs.push(
@@ -1801,10 +2696,65 @@
         '<g>' + topG.join("") + "</g>" +
         "</g></g>";
       center.textContent = total + " งาน";
-      legend.innerHTML = idxs.join("");
+      legendEl.innerHTML = idxs.join("");
+    }
+
+    function renderAnalytics() {
+      var filtered = getFilteredTickets();
+      renderAnaStats(filtered);
+      renderTrendChart(filtered);
+      renderSLA(filtered);
+      renderBranchComparison(filtered);
+      renderPeakHours(filtered);
+      renderRepeatedProblems(filtered);
+      renderStaleTickets(filtered);
+
+      renderCatDonut("Hardware", filtered, { svg: "anaDonutHw", legend: "anaLegendHw", total: "anaTotalHw", noData: "anaNoDataHw" });
+      renderCatDonut("Software", filtered, { svg: "anaDonutSw", legend: "anaLegendSw", total: "anaTotalSw", noData: "anaNoDataSw" });
+      renderCatDonut("Disk", filtered, { svg: "anaDonutDk", legend: "anaLegendDk", total: "anaTotalDk", noData: "anaNoDataDk" });
     }
 
     window.renderAnalytics = renderAnalytics;
+
+    function hideAnaTip() {
+      var tip = document.getElementById("anaTip");
+      if (tip) tip.classList.add("hidden");
+    }
+
+    function bindDonutTip(svgId) {
+      var svgEl = document.getElementById(svgId);
+      if (!svgEl) return;
+      svgEl.addEventListener("mousemove", function (e) {
+        var target = e.target;
+        var path = target && target.closest ? target.closest("path[data-name]") : null;
+        var tip = document.getElementById("anaTip");
+        if (!path || !tip) return;
+        tip.innerHTML =
+          '<div class="ana-tip-name">' + anaEsc(path.getAttribute("data-name")) + "</div>" +
+          '<div class="ana-tip-row"><span>สัดส่วน</span><b>' + path.getAttribute("data-pct") + "%</b></div>" +
+          '<div class="ana-tip-row"><span>จำนวนงาน</span><b>' + path.getAttribute("data-count") + "</b></div>";
+        tip.classList.remove("hidden");
+        var pad = 14;
+        var left = e.clientX + pad;
+        var top = e.clientY + pad;
+        var tw = tip.offsetWidth || 170;
+        var th = tip.offsetHeight || 64;
+        if (left + tw + 10 > window.innerWidth) left = e.clientX - tw - pad;
+        if (top + th + 10 > window.innerHeight) top = e.clientY - th - pad;
+        tip.style.left = left + "px";
+        tip.style.top = top + "px";
+      });
+      svgEl.addEventListener("mouseleave", hideAnaTip);
+    }
+
+    bindDonutTip("anaDonutHw");
+    bindDonutTip("anaDonutSw");
+    bindDonutTip("anaDonutDk");
+
+    document.getElementById("anaDeviceChip").addEventListener("click", function () {
+      setAnaDevice(null);
+    });
+    window.setAnaDevice = setAnaDevice;
 
     function copyToClipboard(txt) {
       var done = function () { toast("คัดลอก IP แล้ว: " + txt); };
@@ -1836,7 +2786,7 @@
         return (
           '<tr class="device-row" data-ip="' + esc(u.ip) + '">' +
           '<td><div class="chip-badge' + (hasName ? " has-name" : "") + '">' +
-            (hasName ? esc(u.name) : "ยังไม่ตั้งชื่อ") +
+            (hasName ? esc(u.name) : "ผู้ใช้ " + esc(u.ip)) +
           "</div></td>" +
           '<td class="u-ip">' +
             '<div class="ip-toggle-wrap">' +
@@ -1847,13 +2797,17 @@
             "</div>" +
             '<div class="ip-full hidden" style="word-break:break-all">' + esc(u.ip) + "</div>" +
           "</td>" +
-          '<td class="u-mono">' + esc(u.last_ticket_no || "-") + "</td>" +
+          '<td class="u-repair">' +
+            '<div class="t-date">' + esc(fmtDate(u.last_seen_at)) + "</div>" +
+            '<div class="u-mono">' + esc(u.last_ticket_no || "-") + "</div>" +
+          "</td>" +
           '<td class="u-count">' + (u.ticket_count || 0) + " ครั้ง</td>" +
-          '<td class="t-date">' + esc(fmtDate(u.last_seen_at)) + "</td>" +
           '<td style="text-align:right">' +
             '<div class="name-editor">' +
-            '<input class="name-input" value="' + esc(u.name || "") + '" placeholder="ตั้งชื่อเครื่อง" data-ip="' + esc(u.ip) + '">' +
-            '<button class="name-save" type="button" onclick="saveDeviceName(this)">บันทึก</button>' +
+            '<input class="name-input is-readonly" value="' + esc(u.name || "") + '" placeholder="ชื่อผู้ใช้" data-ip="' + esc(u.ip) + '" readonly onclick="editDeviceName(this)">' +
+            '<button class="name-edit" type="button" onclick="editDeviceName(this)">แก้ไข</button>' +
+            '<button class="name-save is-disabled" type="button" onclick="saveDeviceName(this)">บันทึก</button>' +
+            '<button class="name-del" type="button" title="ลบผู้ใช้" onclick="deleteDevice(this)">ลบ</button>' +
             "</div>" +
           "</td>" +
           "</tr>"
@@ -1868,6 +2822,21 @@
       btn.textContent = full.classList.contains("hidden")
         ? btn.getAttribute("data-short") || ""
         : "ซ่อน IP";
+    };
+
+    window.editDeviceName = function (el) {
+      var row = el.closest(".device-row");
+      var input = row.querySelector(".name-input");
+      var edit = row.querySelector(".name-edit");
+      var save = row.querySelector(".name-save");
+      if (!input.readOnly) return;
+      input.readOnly = false;
+      input.classList.remove("is-readonly");
+      edit.disabled = true;
+      edit.classList.add("is-on");
+      save.classList.remove("is-disabled");
+      input.focus();
+      input.select();
     };
 
     function saveDeviceName(btn) {
@@ -2000,6 +2969,7 @@
       document.getElementById("detailView").hidden = true;
       document.getElementById("editView").hidden = true;
       document.getElementById("confirmView").hidden = true;
+      document.getElementById("confirmUserView").hidden = true;
       document.getElementById("pdfChoiceView").hidden = true;
       document.getElementById(name).hidden = false;
     }
@@ -2166,6 +3136,29 @@
     }
 
     window.doDelete = doDelete;
+
+    window.deleteDevice = function (btn) {
+      var row = btn.closest(".device-row");
+      var ip = row.getAttribute("data-ip");
+      document.getElementById("confirmUserIp").textContent = ip;
+      showView("confirmUserView");
+      openModal();
+    };
+
+    function doDeleteUser() {
+      var ip = document.getElementById("confirmUserIp").textContent.trim();
+      fetch("/api/admin/users/" + encodeURIComponent(ip), { method: "DELETE" })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "ลบไม่สำเร็จ");
+          toast("ลบผู้ใช้แล้ว: " + ip);
+          closeModal();
+          return loadDevices();
+        })
+        .catch(function (e) { toast(e.message); });
+    }
+
+    window.doDeleteUser = doDeleteUser;
 
     // ---------- แชร์ PDF ----------
     function photosBlocksHtml(title, list) {

@@ -5,19 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#06c755">
 <title>แจ้งซ่อมอุปกรณ์ IT</title>
+<link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="ticket-page">
+<body class="ticket-page app-nav">
 
-<nav class="navbar">
+<nav class="navbar" id="topNav">
   <div class="navbar-inner">
     <a class="navbar-brand" href="ticket.html">
       <svg class="navbar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
       <span class="navbar-title">ระบบแจ้งซ่อม IT</span>
     </a>
+    <button class="nav-trigger" type="button" aria-label="เปิดเมนู" onclick="toggleTicketNav(event)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
     <div class="navbar-links">
       <a class="nav-link is-active" href="ticket.html">แจ้งซ่อม</a>
       <a class="nav-link" href="status.html">ตรวจสอบสถานะ</a>
@@ -25,6 +29,18 @@
     </div>
   </div>
 </nav>
+
+<div id="draftBanner" class="draft-banner hidden" role="status">
+  <button type="button" class="draft-close" id="draftClose" aria-label="ปิด">&times;</button>
+  <div class="draft-banner-text">
+    <strong>พบข้อมูลฉบับร่างที่ยังไม่ได้ส่ง</strong>
+    <span>จากครั้งก่อนที่ค้างไว้ — ต้องการกู้ข้อมูลต่อไหม? <small>(รูปภาพที่แนบไว้จะไม่ถูกกู้คืน)</small></span>
+  </div>
+  <div class="draft-banner-actions">
+    <button type="button" class="draft-btn restore" id="draftRestoreBtn">กู้ข้อมูลต่อ</button>
+    <button type="button" class="draft-btn discard" id="draftDiscardBtn">ลบทิ้ง</button>
+  </div>
+</div>
 
 
 
@@ -67,6 +83,13 @@
               <span class="cat-tab-hint">Excel · Word · PowerPoint · อื่น ๆ</span>
             </span>
           </button>
+          <button type="button" class="cat-tab" data-cat="Disk" role="tab" aria-selected="false">
+            <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="9" ry="3"/><path d="M3 6v12c0 1.66 4.03 3 9 3s9-1.34 9-3V6"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+            <span class="cat-tab-body">
+              <span class="cat-tab-title">ดิสส่วนกลาง</span>
+              <span class="cat-tab-hint">เข้าถึงไม่ได้ · สิทธิ์ · โฟลเดอร์แชร์</span>
+            </span>
+          </button>
         </div>
 
         <div class="dev-panel hidden" data-type="Hardware" id="hardPanel">
@@ -87,6 +110,17 @@
             <div class="dev-custom-row hidden" id="softCustomWrap">
               <input type="text" id="softCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์โปรแกรมอื่น ๆ เช่น โปรแกรมบัญชี">
               <button class="mini-add" data-custom-type="Software" data-input="softCustom" type="button">เพิ่ม</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dev-panel hidden" data-type="Disk" id="diskPanel">
+          <div class="dev-grid" id="diskGrid"></div>
+          <div class="dev-custom">
+            <button type="button" class="cat-custom-toggle" data-custom-type="Disk">+ อื่น ๆ</button>
+            <div class="dev-custom-row hidden" id="diskCustomWrap">
+              <input type="text" id="diskCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์ปัญหาอื่น ๆ เกี่ยวกับดิสส่วนกลาง">
+              <button class="mini-add" data-custom-type="Disk" data-input="diskCustom" type="button">เพิ่ม</button>
             </div>
           </div>
         </div>
@@ -151,6 +185,10 @@
         <div class="iso-wrap">
           <p class="iso-placeholder" id="isoPlaceholder">โปรดเลือกสาขาด้านบนก่อน</p>
           <img id="branchMapImg" class="branch-map-img hidden" alt="แผนผังร้าน" title="ขยายภาพ">
+          <button type="button" id="mapZoomBtn" class="map-zoom-btn hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+            <span>ขยายภาพ</span>
+          </button>
         </div>
       </div>
 
@@ -192,26 +230,37 @@
   <div class="success-box done-box">
     <button id="successClose" class="modal-close" type="button" aria-label="ปิด">&times;</button>
 
-    <div class="done-mascot done-it-logo" aria-hidden="true">
-      <span class="itl" data-c="I" style="--i:0">I</span>
-      <span class="itl" data-c="T" style="--i:1">T</span>
-      <span class="itl gap" style="--i:2"></span>
-      <span class="itl" data-c="S" style="--i:3">S</span>
-      <span class="itl" data-c="U" style="--i:4">U</span>
-      <span class="itl" data-c="P" style="--i:5">P</span>
-      <span class="itl" data-c="P" style="--i:6">P</span>
-      <span class="itl" data-c="O" style="--i:7">O</span>
-      <span class="itl" data-c="R" style="--i:8">R</span>
-      <span class="itl" data-c="T" style="--i:9">T</span>
+    <div class="success-icon">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
     </div>
 
-    <h2 class="done-title">แจ้งซ่อมเสร็จสิ้น</h2>
-    <p class="done-desc">ทีม IT ได้รับแจ้งงานของคุณแล้ว จะติดต่อกลับโดยเร็ว</p>
-    <p class="done-ticket-label">รหัสแจ้งซ่อมของคุณ</p>
-    <div class="done-code-row">
-      <p id="ticketNo" class="ticket-no">IT-000000-000</p>
-      <button id="copyTicketBtn" class="copy-btn" type="button">คัดลอกรหัสซ่อม</button>
+    <h2 class="done-title">ส่งคำขอแจ้งซ่อมสำเร็จ</h2>
+    <p class="done-desc">ทีม IT ได้รับข้อมูลของคุณแล้ว จะติดต่อกลับโดยเร็ว</p>
+
+    <div class="success-card">
+      <div class="success-row">
+        <span class="srow-label">รหัสแจ้งซ่อม</span>
+        <span id="ticketNo" class="ticket-no">—</span>
+      </div>
+      <div class="success-row">
+        <span class="srow-label">หมวด / อุปกรณ์</span>
+        <span id="sDevice" class="srow-value">—</span>
+      </div>
+      <div class="success-row">
+        <span class="srow-label">สถานที่</span>
+        <span id="sLocation" class="srow-value">—</span>
+      </div>
+      <div class="success-row">
+        <span class="srow-label">เบอร์ติดต่อ</span>
+        <span id="sPhone" class="srow-value">—</span>
+      </div>
+      <div class="success-row">
+        <span class="srow-label">แนบรูปภาพ</span>
+        <span id="sPhotos" class="srow-value">—</span>
+      </div>
     </div>
+
+    <button id="copyTicketBtn" class="copy-btn" type="button">คัดลอกรหัสซ่อม</button>
     <a class="back-btn" href="ticket.html">แจ้งซ่อมอีกครั้ง</a>
   </div>
 </div>

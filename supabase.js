@@ -168,4 +168,14 @@ async function setDeviceName(ip, name) {
   return data;
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, recordDevice, listDevices, setDeviceName };
+async function removeDevice(ip) {
+  const { data, error } = await supabase
+    .from("user_devices")
+    .delete()
+    .eq("ip", ip)
+    .select("id");
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, recordDevice, listDevices, setDeviceName, removeDevice };

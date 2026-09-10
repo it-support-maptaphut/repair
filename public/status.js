@@ -92,7 +92,6 @@ function renderTicket(t) {
   resultEl.innerHTML = statusView(t, true);
   resultEl.classList.remove("hidden");
   setHasResult(true);
-  resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderError(msg) {
@@ -102,7 +101,6 @@ function renderError(msg) {
     "</div>";
   resultEl.classList.remove("hidden");
   setHasResult(true);
-  resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function focusSearch() {
