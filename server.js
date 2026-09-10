@@ -7,6 +7,7 @@ const supab = require("./supabase");
 const cloud = require("./cloudinary");
 const line = require("./lineClient");
 const archive = require("./archive");
+const notif = require("./notify");
 
 const app = express();
 
@@ -87,6 +88,10 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
 });
 
 app.get("/admin", (req, res) => res.redirect("/admin.html"));
+
+app.get("/api/notify/stream", (req, res) => {
+  notif.handleStream(req, res, clientIp(req));
+});
 
 app.get("/api/config", (req, res) => {
   res.json({
@@ -310,6 +315,24 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
     }
     if (error || !data) {
       return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+    }
+    if (status === "working") {
+      try {
+        const dev = await supab.supabase
+          .from("user_devices")
+          .select("ip")
+          .eq("last_ticket_no", data.ticket_no)
+          .maybeSingle();
+        if (dev && dev.data && dev.data.ip) {
+          notif.pushToIp(dev.data.ip, {
+            type: "approved",
+            ticketNo: data.ticket_no,
+            at: data.approved_at || approvedAt
+          });
+        }
+      } catch (e) {
+        console.warn("[notify] ส่งแจ้งเตือนไม่สำเร็จ:", e.message);
+      }
     }
     await line.notifyStatus({
       ticketNo,
