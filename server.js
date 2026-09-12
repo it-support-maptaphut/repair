@@ -5,9 +5,10 @@ const path = require("path");
 const config = require("./config");
 const supab = require("./supabase");
 const cloud = require("./cloudinary");
-const line = require("./lineClient");
 const archive = require("./archive");
 const notif = require("./notify");
+const devicePdf = require("./device-pdf");
+const workNotePdf = require("./work-note-pdf");
 
 const app = express();
 
@@ -23,6 +24,14 @@ function clientIp(req) {
 }
 
 app.use(express.json());
+app.use(function (req, res, next) {
+  if (req.path === "/admin" || req.path === "/admin.html") {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => res.redirect("/ticket.html"));
 
@@ -39,7 +48,7 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
     const location = String(body.location || "").trim();
     const name = String(body.reporter_name || "").trim();
     const phone = String(body.reporter_phone || "").trim();
-    const reporterLineId = String(body.reporter_line_id || req.query.uid || "").trim();
+    const reporterLineId = String(body.reporter_line_id || "").trim();
 
     if (!device || !symptom || !location) {
       return res.status(400).json({ ok: false, message: "ข้อมูลไม่ครบ" });
@@ -77,9 +86,6 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
     await supab.addPhotos(ticketId, urls);
     await supab.recordDevice({ ip: clientIp(req), ticketNo });
 
-    await line.notifyAdminTicket({ ticketNo, device, symptom, location, urls, name, phone });
-    await line.notifyUserSubmitted({ ticketNo, reporterLineId });
-
     res.json({ ok: true, ticketNo });
   } catch (err) {
     console.error(err);
@@ -87,7 +93,7 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
   }
 });
 
-app.get("/admin", (req, res) => res.redirect("/admin.html"));
+app.get("/admin", (req, res) => res.redirect("/admin2.html"));
 
 app.get("/api/notify/stream", (req, res) => {
   notif.handleStream(req, res, clientIp(req));
@@ -95,8 +101,6 @@ app.get("/api/notify/stream", (req, res) => {
 
 app.get("/api/config", (req, res) => {
   res.json({
-    liffId: config.LIFF_ID || "",
-    lineOaUrl: config.LINE_OA_URL || "https://line.me/",
     maxPhotos: 10
   });
 });
@@ -162,6 +166,321 @@ app.delete("/api/admin/users/:ip", async (req, res) => {
 });
 
 
+// ---------- โน้ตอุปกรณ์ (Device Notebook) ----------
+app.post("/api/admin/upload-device-photo", upload.single("photo"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ ok: false, message: "ไม่มีไฟล์รูป" });
+    const name = "dev-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+    const up = await cloud.uploadImage(req.file.buffer, name, req.file.mimetype);
+    if (!up || !up.secure_url) return res.status(500).json({ ok: false, message: "อัปโหลดรูปไม่สำเร็จ" });
+    res.json({ ok: true, url: up.secure_url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/device-categories", async (req, res) => {
+  try {
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const cats = await supab.listDeviceCategories();
+    res.json({ ok: true, categories: cats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/device-categories", async (req, res) => {
+  try {
+    const name = String((req.body || {}).name || "").trim();
+    if (!name) return res.status(400).json({ ok: false, message: "กรอกชื่อหมวด" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const cat = await supab.addDeviceCategory(name);
+    res.json({ ok: true, category: cat });
+  } catch (err) {
+    console.error(err);
+    const msg = (err.message || "").includes("duplicate") ? "หมวดนี้มีอยู่แล้ว" : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.get("/api/admin/device-entries", async (req, res) => {
+  try {
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const entries = await supab.listDeviceEntries();
+    res.json({ ok: true, entries });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/device-entries", async (req, res) => {
+  try {
+    const model = String((req.body || {}).model || "").trim();
+    if (!model) return res.status(400).json({ ok: false, message: "กรอกรุ่นสินค้า" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const entryNo = await supab.genDeviceNo();
+    const id = await supab.createDeviceEntry({
+      entryNo,
+      category: String((req.body || {}).category || "").trim(),
+      model,
+      specJson: String((req.body || {}).spec_json || ""),
+      specSource: String((req.body || {}).spec_source || "manual").trim(),
+      specUrl: String((req.body || {}).spec_url || ""),
+      warrantyNo: String((req.body || {}).warranty_no || ""),
+      claimCompany: String((req.body || {}).claim_company || ""),
+      warrantyExpireDate: String((req.body || {}).warranty_expire_date || ""),
+      status: String((req.body || {}).status || "claim").trim(),
+      brokenDate: String((req.body || {}).broken_date || "").trim() || null,
+      claimDate: String((req.body || {}).claim_date || "").trim() || null,
+      assetCode: String((req.body || {}).asset_code || ""),
+      notes: String((req.body || {}).notes || "")
+    });
+    res.json({ ok: true, id, entry_no: entryNo });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/device-entries/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const body = req.body || {};
+    const patch = {};
+    ["category","model","spec_json","spec_source","spec_url","warranty_no","claim_company","status","asset_code","notes"].forEach(function (k) {
+      if (body[k] != null) patch[k] = String(body[k]).trim();
+    });
+    if (body.warranty_expire_date != null) patch.warranty_expire_date = String(body.warranty_expire_date).trim() || null;
+    if (body.broken_date != null) patch.broken_date = String(body.broken_date).trim() || null;
+    if (body.claim_date != null) patch.claim_date = String(body.claim_date).trim() || null;
+    patch.updated_at = new Date().toISOString();
+    if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
+    await supab.updateDeviceEntry(id, patch);
+    res.json({ ok: true, id, ...patch });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/device-entries/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const data = await supab.deleteDeviceEntry(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการนี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/device-entries/:id/photos", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const urls = Array.isArray((req.body || {}).cloud_urls) ? req.body.cloud_urls : [];
+    if (!urls.length) return res.status(400).json({ ok: false, message: "ไม่มีรูป" });
+    await supab.addEntryPhotos(id, urls);
+    res.json({ ok: true, count: urls.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- PDF โน้ตอุปกรณ์ (อย่างเป็นทางการ / Sarabun) ----------
+app.get("/api/admin/device-entries/:id/pdf", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!devicePdf.hasFonts()) return res.status(500).json({ ok: false, message: "หายังพบไฟล์ฟอนต์ Sarabun (โฟลเดอร์ fonts/)" });
+    const entries = await supab.listDeviceEntries();
+    const row = entries.filter(function (e) { return e.id === id; })[0];
+    if (!row) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตอุปกรณ์" });
+    const { stream, filename } = devicePdf.buildDeviceEntryPdf(row);
+    const buffer = await stream;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="' + filename + '"');
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- โน๊ตงาน (Work Notes) ----------
+app.get("/api/admin/work-notes", async (req, res) => {
+  try {
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const notes = await supab.listWorkNotes();
+    res.json({ ok: true, notes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/work-notes", async (req, res) => {
+  try {
+    const title = String((req.body || {}).title || "").trim();
+    if (!title) return res.status(400).json({ ok: false, message: "กรอกหัวเรื่องโน้ตงานก่อน" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const steps = Array.isArray((req.body || {}).steps)
+      ? (req.body.steps || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; })
+      : [];
+    const id = await supab.createWorkNote({
+      title,
+      stepsJson: JSON.stringify(steps),
+      infoExtra: String((req.body || {}).info_extra || "").trim()
+    });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/work-notes/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const body = req.body || {};
+    const patch = {};
+    if (body.title != null) {
+      patch.title = String(body.title).trim();
+      if (!patch.title) return res.status(400).json({ ok: false, message: "กรอกหัวเรื่องโน้ตงานก่อน" });
+    }
+    if (body.info_extra != null) patch.info_extra = String(body.info_extra).trim();
+    if (body.steps != null) {
+      const steps = Array.isArray(body.steps)
+        ? (body.steps || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; })
+        : [];
+      patch.steps_json = JSON.stringify(steps);
+    }
+    patch.updated_at = new Date().toISOString();
+    if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
+    await supab.updateWorkNote(id, patch);
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/work-notes/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const data = await supab.deleteWorkNote(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตงานนี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- PDF โน๊ตงาน (A4 หน้าเดียว / Sarabun) ----------
+app.get("/api/admin/work-notes/:id/pdf", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!workNotePdf.hasFonts()) return res.status(500).json({ ok: false, message: "หายังพบไฟล์ฟอนต์ Sarabun (โฟลเดอร์ fonts/)" });
+    const row = await supab.getWorkNote(id);
+    if (!row) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตงาน" });
+    const { buffer, filename } = await workNotePdf.buildWorkNotePdf(row);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="' + filename + '"');
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- DuckDuckGo (สเปคอุปกรณ์) ----------
+async function duckduckgoInstant(q) {
+  const url = "https://api.duckduckgo.com/?q=" + encodeURIComponent(q) + "&format=json&no_html=1&skip_disambig=1";
+  const resp = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; DeviceNotebook/1.0)" } });
+  const json = await resp.json();
+  const answer = json.Answer || json.Abstract || json.Definition || "";
+  const abstract = json.AbstractText || "";
+  const source = json.AbstractSource || "";
+  const firstTopic = (json.RelatedTopics || []).find(function (t) { return t.Text; });
+  const link = json.AbstractURL || (firstTopic ? firstTopic.FirstURL : "") || "";
+  const topics = (json.RelatedTopics || []).filter(function (t) { return t.Text && t.Text.length > 20; }).slice(0, 3).map(function (t) {
+    return { title: t.Text.split(" - ")[0] || "", snippet: t.Text, url: t.FirstURL || "" };
+  });
+  return { answer, abstract, source, link, results: topics };
+}
+
+function decodeEntities(s) {
+  return String(s || "")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#0*39;/g, "'").replace(/&#0*(\d+);/g, function (m, d) { return String.fromCharCode(parseInt(d, 10)); })
+    .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+async function duckduckgoHtml(q) {
+  const url = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(q + " specifications");
+  const resp = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36" }
+  });
+  const html = await resp.text();
+  const results = [];
+  const reResult = /<div class="result[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/g;
+  let m;
+  let count = 0;
+  while ((m = reResult.exec(html)) !== null && count < 6) {
+    const block = m[0];
+    const linkM = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/.exec(block);
+    const snipM = /<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/.exec(block);
+    if (linkM) {
+      let href = linkM[1];
+      const idx = href.indexOf("uddg=");
+      if (idx !== -1) {
+        href = decodeURIComponent(href.slice(idx + 5).split("&")[0]);
+      }
+      const title = decodeEntities(linkM[2].replace(/<[^>]+>/g, ""));
+      const snippet = snipM ? decodeEntities(snipM[1].replace(/<[^>]+>/g, "")) : "";
+      results.push({ title, snippet: snippet || title, url: href });
+      count++;
+    }
+  }
+  const combined = results.map(function (r) { return r.snippet; }).join(" ").slice(0, 800);
+  const abstract = combined || (results[0] ? results[0].snippet : "");
+  return { answer: "", abstract, source: "DuckDuckGo", link: results[0] ? results[0].url : "", results };
+}
+
+app.get("/api/admin/spec-search", async (req, res) => {
+  try {
+    const q = String((req.query || {}).q || "").trim();
+    if (!q) return res.json({ ok: true, answer: "", abstract: "", url: "", results: [] });
+    let out = await duckduckgoInstant(q);
+    if (!out.answer && !out.abstract && !out.results.length) {
+      out = await duckduckgoHtml(q);
+    }
+    res.json({ ok: true, ...out });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: true, answer: "", abstract: "", url: "", results: [] });
+  }
+});
+
+
 app.get("/status", (req, res) => res.redirect("/status.html"));
 
 app.get("/api/tickets/:ticketNo/status", async (req, res) => {
@@ -190,39 +509,6 @@ app.get("/api/tickets/:ticketNo/status", async (req, res) => {
       return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
     }
     res.json({ ok: true, ticket: data });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, message: "server error" });
-  }
-});
-
-app.get("/api/user/tickets", async (req, res) => {
-  try {
-    const uid = String(req.query.uid || "").trim();
-    if (!uid) {
-      return res.status(400).json({ ok: false, message: "ไม่มีรหัสผู้ใช้" });
-    }
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    }
-    const { data, error } = await supab.supabase
-      .from("tickets")
-      .select("ticket_no,device,symptom,location,status,approved_at,created_at,pdf_url")
-      .eq("reporter_line_id", uid)
-      .order("id", { ascending: false })
-      .limit(50);
-    if (error && /approved_at/.test(error.message)) {
-      const retry = await supab.supabase
-        .from("tickets")
-        .select("ticket_no,device,symptom,location,status,created_at,pdf_url")
-        .eq("reporter_line_id", uid)
-        .order("id", { ascending: false })
-        .limit(50);
-      if (retry.error) throw retry.error;
-      return res.json({ ok: true, tickets: retry.data || [] });
-    }
-    if (error) throw error;
-    res.json({ ok: true, tickets: data || [] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -334,12 +620,6 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
         console.warn("[notify] ส่งแจ้งเตือนไม่สำเร็จ:", e.message);
       }
     }
-    await line.notifyStatus({
-      ticketNo,
-      status,
-      reporterLineId: data.reporter_line_id || "",
-      approvedAt: status === "done" ? data.approved_at || approvedAt : data.approved_at || null
-    });
 
     if (status === "done") {
       try {
@@ -381,34 +661,7 @@ app.get("/api/tickets/:ticketNo/archive", async (req, res) => {
   }
 });
 
-if (line.middleware) {
-  app.post("/webhook", line.middleware, (req, res) => {
-    res.sendStatus(200);
-    const events = (req.body && req.body.events) || [];
-    Promise.all(
-      events.map(async (ev) => {
-        if (ev.type === "message" && ev.message.type === "text") {
-          const uid = (ev.source && ev.source.userId) || "";
-          let name = "";
-          if (uid) {
-            try {
-              const p = await line.getProfile(uid);
-              name = p.displayName || "";
-            } catch (e) {}
-          }
-          const prefix = name ? `[ผู้ใช้ ${name}] ` : "";
-          await line.pushTextToAdmin(prefix + ev.message.text);
-          await line.reply(ev.replyToken, {
-            type: "text",
-            text: "ส่งข้อความถึงทีม IT แล้ว เดี๋ยวจะติดต่อกลับเร็ว ๆ นี้ครับ"
-          });
-        }
-      })
-    ).catch((err) => console.error("[webhook]", err));
-  });
-} else {
-  console.log("[webhook] ข้ามตั้งค่า (Channel Secret ยังไม่พร้อม)");
-}
+// ============================================================
 
 if (process.env.VERCEL) {
   module.exports = app;

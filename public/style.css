@@ -1905,6 +1905,33 @@ textarea.invalid,
   border-top: 1px solid var(--line);
 }
 
+.disk-problem-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  background: var(--green-soft, rgba(14, 107, 58, 0.08));
+  border: 1px solid var(--line);
+  border-left: 3px solid #0e6b3a;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.disk-problem-note svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: #0e6b3a;
+}
+
+.disk-problem-note strong {
+  color: #0e6b3a;
+}
+
 @media (min-width: 768px) {
   .app-header {
     width: 100%;

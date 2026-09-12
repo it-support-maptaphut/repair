@@ -4,8 +4,6 @@ var statusNo = document.getElementById("statusNo");
 var statusBtn = document.getElementById("statusBtn");
 var statusWrap = document.getElementById("statusWrap");
 var resultEl = document.getElementById("result");
-var myTicketsEl = document.getElementById("myTickets");
-var myListEl = document.getElementById("myList");
 var toastEl = document.getElementById("toast");
 
 var STATUS = {
@@ -148,15 +146,6 @@ statusNo.addEventListener("keydown", function (e) {
   }
 });
 
-function renderMyList(tickets) {
-  if (!tickets.length) return;
-  myListEl.className = "my-list";
-  myListEl.innerHTML = tickets.map(function (t) {
-    return statusView(t, false);
-  }).join("");
-  myTicketsEl.classList.remove("hidden");
-}
-
 document.addEventListener("click", function (e) {
   var btn = e.target.closest("[data-copy]");
   if (!btn) return;
@@ -190,28 +179,6 @@ function copyFallback(text, ok) {
   document.body.removeChild(ta);
 }
 
-function applyCfg(cfg) {
-  if (cfg.liffId && window.liff) {
-    liff
-      .init({ liffId: cfg.liffId })
-      .then(function () {
-        if (!liff.isLoggedIn()) return null;
-        return liff.getProfile();
-      })
-      .then(function (profile) {
-        if (profile && profile.userId) {
-          return fetch("/api/user/tickets?uid=" + encodeURIComponent(profile.userId)).then(function (r) {
-            return r.json();
-          }).then(function (d) {
-            if (d.ok && d.tickets) renderMyList(d.tickets);
-          });
-        }
-        return null;
-      })
-      .catch(function () {});
-  }
-}
-
 function readQueryNo() {
   try {
     return new URLSearchParams(window.location.search).get("no") || "";
@@ -220,17 +187,13 @@ function readQueryNo() {
   }
 }
 
-fetch("/api/config")
-  .then(function (r) { return r.json(); })
-  .then(function (cfg) {
-    applyCfg(cfg);
-    var no = readQueryNo();
-    if (no) {
-      statusNo.value = no;
-      lookup();
-    }
-  })
-  .catch(function () {});
+function initByQuery() {
+  var no = readQueryNo();
+  if (no) {
+    statusNo.value = no;
+    lookup();
+  }
+}
 
 function showToast(message) {
   toastEl.textContent = message;
@@ -240,3 +203,5 @@ function showToast(message) {
     toastEl.classList.add("hidden");
   }, 2600);
 }
+
+initByQuery();

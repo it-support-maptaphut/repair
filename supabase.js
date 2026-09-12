@@ -178,4 +178,235 @@ async function removeDevice(ip) {
   return data;
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, recordDevice, listDevices, setDeviceName, removeDevice };
+async function genDeviceNo() {
+  const { data } = await supabase
+    .from("device_entries")
+    .select("entry_no")
+    .like("entry_no", "DEV-%")
+    .order("id", { ascending: false })
+    .limit(1);
+  const row = data && data[0];
+  const m = /(\d+)\s*$/.exec(row ? row.entry_no : "");
+  const seq = row && m ? parseInt(m[1], 10) + 1 : 1;
+  return "DEV-" + String(seq).padStart(3, "0");
+}
+
+async function listDeviceCategories() {
+  const { data, error } = await supabase
+    .from("device_categories")
+    .select("*")
+    .order("name");
+  if (error) throw error;
+  return data || [];
+}
+
+async function addDeviceCategory(name) {
+  const { data, error } = await supabase
+    .from("device_categories")
+    .insert({ name: name.trim() })
+    .select("id, name")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function listDeviceEntries(limit = 500) {
+  const { data, error } = await supabase
+    .from("device_entries")
+    .select("*, photos:device_entry_photos(id, cloud_url, sort_order)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).map(function (r) {
+    r.photos = (r.photos || []).sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+    return r;
+  });
+}
+
+async function createDeviceEntry({ entryNo, category, model, specJson, specSource, specUrl, warrantyNo, claimCompany, warrantyExpireDate, status, brokenDate, claimDate, assetCode, notes }) {
+  const { data, error } = await supabase
+    .from("device_entries")
+    .insert({
+      entry_no: entryNo,
+      category: category || "",
+      model: model || "",
+      spec_json: specJson || "",
+      spec_source: specSource || "manual",
+      spec_url: specUrl || "",
+      warranty_no: warrantyNo || "",
+      claim_company: claimCompany || "",
+      warranty_expire_date: warrantyExpireDate || null,
+      status: status || "claim",
+      broken_date: brokenDate || null,
+      claim_date: claimDate || null,
+      asset_code: assetCode || "",
+      notes: notes || ""
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function updateDeviceEntry(id, patch) {
+  const { data, error } = await supabase
+    .from("device_entries")
+    .update(patch)
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteDeviceEntry(id) {
+  const { data, error } = await supabase
+    .from("device_entries")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+async function addEntryPhotos(entryId, cloudUrls) {
+  if (!cloudUrls || !cloudUrls.length) return [];
+  const rows = cloudUrls.map(function (url, i) {
+    return { entry_id: entryId, cloud_url: url, sort_order: i };
+  });
+  const { data, error } = await supabase
+    .from("device_entry_photos")
+    .insert(rows)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+async function listWorkNotes(limit = 500) {
+  const { data, error } = await supabase
+    .from("work_notes")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function getWorkNote(id) {
+  const { data, error } = await supabase
+    .from("work_notes")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function createWorkNote({ title, stepsJson, infoExtra }) {
+  const { data, error } = await supabase
+    .from("work_notes")
+    .insert({
+      title: title || "",
+      steps_json: stepsJson || "[]",
+      info_extra: infoExtra || ""
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function updateWorkNote(id, patch) {
+  const { data, error } = await supabase
+    .from("work_notes")
+    .update(patch)
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteWorkNote(id) {
+  const { data, error } = await supabase
+    .from("work_notes")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+// ---------- ระบบตรวจสอบประกัน (Warranty Check) ----------
+async function listWarrantyCheckSites() {
+  const { data, error } = await supabase
+    .from("warranty_check_sites")
+    .select("*")
+    .order("sort", { ascending: true })
+    .order("id", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function createWarrantyCheckSite({ name, url, mode, sort }) {
+  const { data, error } = await supabase
+    .from("warranty_check_sites")
+    .insert({
+      name: name || "",
+      url: url || "",
+      mode: mode || "link",
+      sort: sort == null ? 0 : Number(sort),
+      enabled: true
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function updateWarrantyCheckSite(id, patch) {
+  const { data, error } = await supabase
+    .from("warranty_check_sites")
+    .update(patch)
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteWarrantyCheckSite(id) {
+  const { data, error } = await supabase
+    .from("warranty_check_sites")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+async function addWarrantyCheck({ serial, resultsJson, summary }) {
+  const { data, error } = await supabase
+    .from("warranty_checks")
+    .insert({
+      serial: serial || "",
+      results_json: resultsJson || "[]",
+      summary: summary || ""
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function listWarrantyChecks(limit = 100) {
+  const { data, error } = await supabase
+    .from("warranty_checks")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, recordDevice, listDevices, setDeviceName, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks };

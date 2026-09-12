@@ -27,6 +27,8 @@
       --blue-soft: #e8f0ff;
       --red: #dc2626;
       --red-soft: #fdecec;
+      --green-line: #cfe3d7;
+      --border: #e2ece6;
       --radius: 14px;
       --shadow: 0 6px 24px rgba(11, 61, 37, 0.08);
     }
@@ -689,11 +691,14 @@
       padding: 20px;
     }
 
-    .ana-card-title {
+.ana-card-title {
       font-size: 14px;
       font-weight: 600;
-      color: var(--green-dark);
-      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .ana-top5 {
+      max-width: 620px;
     }
 
     .ana-card-head {
@@ -868,7 +873,6 @@
       .ana-card {
         min-height: auto;
       }
-      .ana-grid-3 { grid-template-columns: 1fr; }
       .ana-grid-2 { grid-template-columns: 1fr; }
     }
 
@@ -988,47 +992,7 @@
     }
     .ana-export-btn:hover { background: var(--green); color: #fff; }
 
-    /* ---------- TREND ---------- */
-    .ana-trend {
-      margin-bottom: 16px;
-    }
-    .ana-trend-wrap {
-      min-height: 200px;
-    }
-    .ana-trend-wrap svg {
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-    }
-    .ana-trend-legend {
-      display: flex;
-      gap: 14px;
-    }
-    .ana-trend-legend span {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-.ana-trend-legend i {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: 0;
-      }
-    .ana-trend-legend i.ana-line-key {
-        width: 14px;
-        height: 3px;
-      }
-
     /* ---------- GRID MODS ---------- */
-    .ana-grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
-    }
     .ana-grid-2 {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1042,53 +1006,6 @@
       width: 100%;
       max-width: 100%;
       height: auto;
-    }
-
-    /* ---------- SLA ---------- */
-    .ana-sla-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .ana-sla-row:last-child { border-bottom: none; }
-    .ana-sla-label {
-      font-size: 13px;
-      color: var(--muted);
-      min-width: 120px;
-    }
-    .ana-sla-val {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--green-dark);
-    }
-    .ana-sla-unit {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .ana-sla-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .ana-sla-card {
-      padding: 12px;
-      background: #f7faf8;
-      border: 1px solid var(--line);
-      text-align: center;
-    }
-    .ana-sla-card .val {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--green-dark);
-      line-height: 1.2;
-    }
-    .ana-sla-card .lbl {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 3px;
     }
 
     /* ---------- BRANCH ---------- */
@@ -1121,79 +1038,17 @@
     .ana-branch-stat .v { font-weight: 600; color: var(--text); }
 
     /* ---------- REPEATED ---------- */
-    .ana-rep-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .ana-rep-item:last-child { border-bottom: none; }
-    .ana-rep-rank {
-      width: 26px;
-      height: 26px;
-      background: var(--green-soft);
-      border: 1px solid var(--green-line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--green-dark);
-      flex-shrink: 0;
-    }
-    .ana-rep-label {
-      flex: 1;
-      font-size: 13px;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .ana-rep-count {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--green-dark);
-    }
-    .ana-rep-bar {
-      width: 80px;
-      height: 6px;
-      background: #e6efe9;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .ana-rep-bar i {
+    .ana-rep-chart svg {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
       display: block;
-      height: 100%;
-      background: var(--green);
     }
-
-    /* ---------- STALE ---------- */
-    .ana-stale-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--line);
-      font-size: 13px;
+    .ana-rep-chart .anar-bar {
+      transition: opacity 0.15s ease;
     }
-    .ana-stale-item:last-child { border-bottom: none; }
-    .ana-stale-tno {
-      font-weight: 700;
-      color: var(--green-dark);
-      min-width: 120px;
-    }
-    .ana-stale-dev {
-      flex: 1;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .ana-stale-days {
-      font-weight: 700;
-      color: #b91c1c;
-      white-space: nowrap;
+    .ana-rep-chart .anar-bar:hover {
+      opacity: 0.72;
     }
 
     /* ---------- USERS TABLE ---------- */
@@ -1393,6 +1248,67 @@
     .form-field textarea { resize: vertical; min-height: 84px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+    /* ---------- MAINTENANCE (ซ่อมบำรุง) ---------- */
+    .mbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .mbar select,
+    .mbar input {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 0;
+      padding: 9px 12px;
+      font-family: inherit;
+      font-size: 13.5px;
+      color: var(--text);
+      outline: none;
+      transition: border 0.15s;
+    }
+    .mbar select:focus,
+    .mbar input:focus { border-color: var(--green); }
+    .mbar input { flex: 1; min-width: 170px; }
+    .mbar .btn { flex: none; min-width: 0; padding: 9px 14px; }
+    .m-no { font-weight: 600; color: var(--green-dark); white-space: nowrap; }
+    .m-freq { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .m-due { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+    .m-due.overdue { color: var(--red); font-weight: 600; }
+    .stat-today .stat-icon { background: var(--yellow-soft); color: #92600a; }
+    .stat-overdue .stat-icon { background: var(--red-soft); color: var(--red); }
+    .b-pending { background: #eef1f3; color: #37474f; }
+    .b-due-today { background: var(--yellow-soft); color: #92600a; }
+    .b-overdue { background: var(--red-soft); color: var(--red); }
+
+    /* ---- โน้ตอุปกรณ์ (Device Notebook) ---- */
+    .model-cell { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
+    .model-name { font-weight: 550; color: var(--text); }
+    .spec-line { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+    .spec-line .k { color: var(--green-dark); font-weight: 550; margin-right: 4px; }
+    .spec-line .v { color: var(--muted); }
+    .spec-src { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; font-weight: 550; }
+    .spec-text {
+      white-space: pre-wrap; word-break: break-word;
+      background: #f6f8f9; border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 12.5px; line-height: 1.6; color: var(--text); margin: 0;
+      max-height: 180px; overflow: auto;
+    }
+    .hint { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+    .btn-sm { padding: 6px 10px; font-size: 12.5px; }
+    .img-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .img-grid .img-tile { position: relative; }
+    .img-grid img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; }
+    .img-x {
+      position: absolute; top: 4px; right: 4px;
+      width: 20px; height: 20px; min-width: 20px; min-height: 20px;
+      border-radius: 50%; line-height: 1; padding: 0; font-size: 13px;
+    }
+    .img-xs img { width: 44px; height: 44px; }
+    .more-photos {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 8px;
+      background: var(--green-soft); color: var(--green-dark); font-size: 11px; font-weight: 600;
+    }
+    .existing-photo { position: absolute; bottom: 3px; left: 3px; font-size: 10px; color: #fff; background: rgba(0,0,0,.55); padding: 1px 5px; border-radius: 5px; }
+    .form-field .img-x:hover { border-color: var(--red); color: var(--red); background: var(--red-soft); }
+
     .confirm-icon {
       width: 52px; height: 52px;
       border-radius: 0;
@@ -1498,6 +1414,47 @@
       color: #6b7d72;
       font-size: 13px;
     }
+
+    /* ---------- PDF พรีวิวโน้ตอุปกรณ์ ---------- */
+    .pdfp-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 22, 16, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .pdfp-mask.open { display: flex; }
+    .pdfp-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 820px;
+      height: 88vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .pdfp-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pdfp-title { flex: 1; font-weight: 600; color: var(--green-dark); font-size: 15px; }
+    .pdfp-frame-wrap { flex: 1; overflow: auto; background: #525659; padding: 12px; }
+    .pdfp-frame { width: 100%; height: 100%; border: 0; background: #fff; }
+    .pdfp-foot {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .pdfp-loading { color: var(--muted); font-size: 13px; }
 
     .toast {
       position: fixed;
@@ -1663,8 +1620,8 @@
           </svg>
         </div>
         <div class="side-brand-text">
-          <div class="side-title">ระบบแจ้งซ่อม IT</div>
-          <div class="side-sub">แผงผู้ดูแล</div>
+          <div class="side-title">System Admin IT</div>
+          <div class="side-sub">Dashboard IT Support</div>
         </div>
       </div>
 
@@ -1681,9 +1638,15 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
           <span>วิเคราะห์การแจ้งซ่อม</span>
         </button>
+        <button class="side-btn" data-tab="deviceNotes" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg>
+          <span>โน้ตอุปกรณ์</span>
+        </button>
+        <button class="side-btn" data-tab="workNotes" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+          <span>โน้ตขั้นตอนการดำเนินงาน</span>
+        </button>
       </nav>
-
-      <div class="side-foot">v2.0 · แดชบอร์ด IT</div>
     </aside>
 
     <div class="main">
@@ -1872,29 +1835,7 @@
       </div>
       <div class="ana-tip hidden" id="anaTip" role="tooltip"></div>
 
-      <div class="ana-card ana-trend">
-        <div class="ana-card-head">
-          <div class="ana-card-title">แนวโน้มงานรายวัน</div>
-          <div class="ana-trend-legend">
-            <span><i style="background:#ffb020"></i>งานใหม่</span>
-            <span><i style="background:#2b6cb0"></i>กำลังดำเนินการ</span>
-            <span><i style="background:#0e6b3a"></i>เสร็จสิ้น</span>
-            <span><i class="ana-line-key" style="background:#e14d2a"></i>งานรวมต่อวัน</span>
-          </div>
-        </div>
-        <div class="ana-chart-wrap ana-trend-wrap">
-          <svg id="anaTrend" viewBox="0 0 780 240"></svg>
-        </div>
-        <div class="ana-chart-note">แท่งแนวตั้ง = จำนวนงาน (เคส) ในแต่ละวัน · สีตามสถานะ · เส้นแดง + จุด = งานรวมต่อวัน</div>
-        <div class="ana-no-data hidden" id="anaTrendNoData">ไม่มีข้อมูลในช่วงที่เลือก</div>
-      </div>
-
-      <div class="ana-grid-3">
-        <div class="ana-card">
-          <div class="ana-card-title">เวลาให้บริการ (SLA)</div>
-          <div class="ana-sla" id="anaSla"></div>
-          <div class="ana-no-data hidden" id="anaSlaNoData">ยังไม่มีข้อมูล SLA</div>
-        </div>
+      <div class="ana-grid-2">
         <div class="ana-card">
           <div class="ana-card-title">เปรียบเทียบสาขา</div>
           <div class="ana-chart-wrap">
@@ -1912,97 +1853,209 @@
         </div>
       </div>
 
-      <div class="ana-grid-2">
-        <div class="ana-card">
-          <div class="ana-card-title">ปัญหาที่เกิดซ้ำบ่อยสุด (TOP 5)</div>
-          <div class="ana-repeated" id="anaRepeated"></div>
-          <div class="ana-no-data hidden" id="anaRepeatedNoData">ไม่มีข้อมูล</div>
-        </div>
-        <div class="ana-card">
-          <div class="ana-card-title">งานค้างเก่า (ใหม่/ดำเนินการ &gt; 3 วัน)</div>
-          <div class="ana-stale" id="anaStale"></div>
-          <div class="ana-no-data hidden" id="anaStaleNoData">ไม่มีงานค้าง</div>
-        </div>
+      <div class="ana-card ana-top5">
+        <div class="ana-card-title">ปัญหาที่เกิดซ้ำบ่อยสุด (TOP 5)</div>
+        <div class="ana-rep-chart" id="anaRepeated"></div>
+        <div class="ana-no-data hidden" id="anaRepeatedNoData">ไม่มีข้อมูล</div>
       </div>
 
     </section>
 
+    <section id="deviceNotesView" hidden>
+
+      <section class="stats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div><div class="stat-num" id="dStatAll">0</div><div class="stat-label">อุปกรณ์ทั้งหมด</div></div>
+        </div>
+        <div class="stat-card stat-overdue">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div><div class="stat-num" id="dStatClaim">0</div><div class="stat-label">กำลังส่งเคลม</div></div>
+        </div>
+        <div class="stat-card stat-today">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div><div class="stat-num" id="dStatRepair">0</div><div class="stat-label">อยู่ระหว่างซ่อมบำรุง</div></div>
+        </div>
+        <div class="stat-card stat-done">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div><div class="stat-num" id="dStatDone">0</div><div class="stat-label">เสร็จแล้ว</div></div>
+        </div>
+      </section>
+
+      <main>
+        <div class="mbar">
+          <select id="dCatFilter" onchange="renderDeviceNotes()">
+            <option value="">ทุกหมวด</option>
+          </select>
+          <select id="dStatusFilter" onchange="renderDeviceNotes()">
+            <option value="">ทุกสถานะ</option>
+            <option value="claim">กำลังส่งเคลม</option>
+            <option value="repair">อยู่ระหว่างซ่อมบำรุง</option>
+            <option value="done">เสร็จแล้ว</option>
+          </select>
+          <input id="dSearch" type="search" placeholder="ค้นหาหมวด / รุ่น / รหัส / เลขประกัน / ทรัพย์สิน..." oninput="renderDeviceNotes()" />
+          <button class="btn btn-primary" onclick="openDeviceForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            จดอุปกรณ์ใหม่
+          </button>
+          <button class="btn btn-ghost" onclick="exportDeviceNotesCSV()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            ส่งออก CSV
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="deviceTable">
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>หมวด</th>
+                <th>รุ่นสินค้า / สเปค</th>
+                <th>เลขประกัน / เคลม</th>
+                <th>สถานะ</th>
+                <th>วันที่พัง</th>
+                <th>วันที่ส่งเคลม</th>
+                <th>รหัสทรัพย์สิน</th>
+                <th>รูป</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="deviceBody"></tbody>
+          </table>
+        </div>
+        <div id="deviceEmpty" class="empty hidden">
+          <p>ยังไม่มีโน้ตอุปกรณ์ — กด "จดอุปกรณ์ใหม่" เพื่อบันทึกอุปกรณ์ชำรุด</p>
+        </div>
+      </main>
+    </section>
+
+    <section id="workNotesView" hidden>
+
+      <section class="stats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+          </div>
+          <div><div class="stat-num" id="wStatAll">0</div><div class="stat-label">โน้ตงานทั้งหมด</div></div>
+        </div>
+      </section>
+
+      <main>
+        <div class="mbar">
+          <input id="wSearch" type="search" placeholder="ค้นหาหัวเรื่อง / ขั้นตอน / ข้อมูลเสริม..." oninput="renderWorkNotes()" />
+          <button class="btn btn-primary" onclick="openWorkNoteForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            เพิ่มโน้ต
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="workNoteTable">
+            <thead>
+              <tr>
+                <th>หัวเรื่อง</th>
+                <th>ขั้นตอน</th>
+                <th>ข้อมูลเสริม</th>
+                <th>วันที่</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="workNoteBody"></tbody>
+          </table>
+        </div>
+        <div id="workNoteEmpty" class="empty hidden">
+          <p>ยังไม่มีโน้ตงาน — กด "เพิ่มโน้ต" เพื่อจดบันทึกขั้นตอนการทำงาน / การเคลม</p>
+        </div>
+      </main>
+    </section>
+
+
     </div>
   </div>
 
-  <!-- MODAL -->
-  <div class="modal-mask hidden" id="modalMask">
-    <div class="modal">
-      <button class="modal-close" onclick="closeModal()" title="ปิด">&times;</button>
-      <div class="modal-body">
+      <!-- ---------- TICKET MODAL ---------- -->
+      <div class="modal-mask hidden" id="modalMask" role="dialog" aria-modal="true" aria-label="รายละเอียดใบแจ้งซ่อม" onclick="if(event.target===this) closeModal()">
+        <div class="modal">
+          <button class="modal-close" type="button" title="ปิด" onclick="closeModal()">&times;</button>
+          <div class="modal-body">
 
-        <!-- รายละเอียด -->
-        <div id="detailView">
-          <h3 class="modal-title">รายละเอียดใบแจ้งซ่อม</h3>
-          <div class="modal-no">
-            <span class="tno" id="detNo"></span>
-            <span class="badge" id="detStatus"></span>
-          </div>
-          <div class="det-grid">
-            <div class="det-item"><div class="det-k">วัน / เวลา</div><div class="det-v" id="detDate"></div></div>
-            <div class="det-item"><div class="det-k">หมวด</div><div class="det-v" id="detDevice"></div></div>
-            <div class="det-item"><div class="det-k">สาขา</div><div class="det-v" id="detBranch"></div></div>
-            <div class="det-item"><div class="det-k">ตำแหน่ง / สถานที่</div><div class="det-v" id="detPosition"></div></div>
-            <div class="det-item"><div class="det-k">เบอร์โทรติดต่อ</div><div class="det-v" id="detPhone"></div></div>
-            <div class="det-item"><div class="det-k">บัญชี Line (ผู้แจ้ง)</div><div class="det-v" id="detLineId"></div></div>
-            <div class="det-item full"><div class="det-k">อาการเสีย</div><div class="det-v symptom" id="detSymptom"></div></div>
-            <div class="det-item full">
-              <div class="det-k">รูปภาพ · สภาพอุปกรณ์</div>
-              <div class="ph-grid" id="detPhotos"></div>
-            </div>
-            <div class="det-item full">
-              <div class="det-k">รูปสถานที่ / โซน</div>
-              <div class="ph-grid" id="detZonePhotos"></div>
-            </div>
-            <div class="det-item full" id="detArchiveWrap" hidden>
-              <div class="det-k">ข้อมูลที่จัดเก็บ (บีบอัด)</div>
-              <div class="archive-box">
-                <span id="archiveSize" class="archive-size"></span>
-                <a class="pdf-chip" id="archiveDownload" href="#" download>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                  ดาวน์โหลดข้อมูล (บีบอัด)
-                </a>
+            <div id="detailView">
+              <h3 class="modal-title">รายละเอียดใบแจ้งซ่อม</h3>
+              <div class="modal-no">
+                <span class="tno" id="detNo"></span>
+                <span class="badge" id="detStatus"></span>
+              </div>
 
-      </div>
+              <div class="det-grid">
+                <div class="det-item">
+                  <div class="det-k">วัน / เวลา</div>
+                  <div class="det-v" id="detDate">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">หมวด / อุปกรณ์</div>
+                  <div class="det-v" id="detDevice">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">สาขา</div>
+                  <div class="det-v" id="detBranch">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">ตำแหน่ง / สถานที่</div>
+                  <div class="det-v" id="detPosition">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">เบอร์โทรติดต่อ</div>
+                  <div class="det-v" id="detPhone">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">บัญชี Line (ผู้แจ้ง)</div>
+                  <div class="det-v" id="detLineId">-</div>
+                </div>
+                <div class="det-item full">
+                  <div class="det-k">อาการเสีย</div>
+                  <div class="det-v symptom" id="detSymptom">-</div>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label>รูปภาพ · สภาพอุปกรณ์</label>
+                <div class="ph-grid" id="detPhotos"></div>
+              </div>
+
+              <div class="form-field">
+                <label>รูปสถานที่ / โซน</label>
+                <div class="ph-grid" id="detZonePhotos"></div>
+              </div>
+
+              <div class="archive-box hidden" id="detArchiveWrap">
+                <span class="archive-size" id="archiveSize"></span>
+                <a class="pdf-chip" id="archiveDownload" href="#" target="_blank" rel="noopener">ดาวน์โหลดไฟล์จัดเก็บ</a>
+              </div>
+
+              <div class="archive-box hidden" id="detPdfWrap" style="margin-top:10px">
+                <span class="hint">มี PDF ของใบแจ้งซ่อมแล้ว</span>
+                <a class="pdf-chip" id="detPdfLink" href="#" target="_blank" rel="noopener">เปิด PDF</a>
+              </div>
+
+              <div class="modal-actions">
+                <button class="btn btn-ghost" type="button" onclick="closeModal()">ปิด</button>
+                <button class="btn btn-edit" type="button" onclick="openEditView()">แก้ไข</button>
+                <button class="btn btn-approve" type="button" id="btnApprove" onclick="setStatus(currentRow, 'working')">อนุมัติงาน</button>
+                <button class="btn btn-finish" type="button" id="btnFinish" onclick="setStatus(currentRow, 'done')">ปิดงาน / เสร็จสิ้น</button>
+                <button class="btn btn-share" type="button" onclick="openPdfChoice(currentRow)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>
+                  แชร์เป็น PDF
+                </button>
+              </div>
             </div>
-            <div class="det-item full" id="detPdfWrap" hidden>
-              <div class="det-k">ลิงก์ PDF ที่พี่ตั้งไว้</div>
-              <a id="detPdfLink" class="pdf-chip" target="_blank" rel="noopener">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>
-                เปิด PDF ใน Google Drive
-              </a>
-            </div>
-          </div>
-          <div class="modal-actions" style="margin-bottom:12px">
-            <button class="btn btn-approve" id="btnApprove" onclick="setStatus(currentRow,'working')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              อนุมัติแล้ว
-            </button>
-            <button class="btn btn-finish" id="btnFinish" onclick="setStatus(currentRow,'done')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.73c.6.5 1 1.27 1 2.27h6c0-1 .4-1.77 1-2.27A7 7 0 0 0 12 2Z"/></svg>
-              เสร็จสิ้น
-            </button>
-          </div>
-          <div class="modal-actions">
-            <button class="btn btn-edit" onclick="openEditView()">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"/></svg>
-              แก้ไข
-            </button>
-            <button class="btn btn-danger" onclick="openConfirmView()">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
-              ลบ
-            </button>
-            <button class="btn btn-share" onclick="openPdfChoice(currentRow)">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>
-              แชร์เป็น PDF
-            </button>
-          </div>
-        </div>
 
         <!-- แก้ไข -->
         <div id="editView" hidden>
@@ -2086,11 +2139,216 @@
           </p>
         </div>
 
-</div>
+        <!-- ฟอร์มโน้ตอุปกรณ์ -->
+        <div id="deviceFormView" hidden>
+          <h3 class="modal-title" id="deviceFormTitle">จดอุปกรณ์ใหม่</h3>
+          <div class="modal-no">
+            <span class="tno" id="deviceFormNo" style="color:var(--muted)"></span>
+          </div>
+
+          <div class="form-field">
+            <label>ประเภท / หมวดอุปกรณ์ *</label>
+            <select id="dfCategory" onchange="deviceCatChanged()">
+              <option value="">— เลือกหมวด —</option>
+            </select>
+            <div style="margin-top:8px">
+              <input id="dfCategoryNew" type="text" placeholder="เพิ่มหมวดใหม่... เช่น บอร์ดสแกน, เครื่องสแกนราคา 150 บาท" style="display:none" />
+              <button class="btn btn-ghost btn-sm" id="dfCatAddBtn" type="button" onclick="toggleAddCategory()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                เพิ่มหมวดเอง
+              </button>
+            </div>
+          </div>
+
+          <div class="form-field" id="dfModelWrap">
+            <label>รุ่นสินค้า * <span class="hint">(กรอกรุ่นแล้วระบบค้นหาสเปคจากเน็ตให้อัตโนมัติ)</span></label>
+            <input id="dfModel" type="text" placeholder="เช่น HP LaserJet Pro M404" oninput="deviceModelChanged()" />
+            <div id="dfSpecBox" hidden>
+              <div class="spec-src" id="dfSpecSrc"></div>
+              <pre id="dfSpecText" class="spec-text"></pre>
+              <div class="row-actions" style="margin-top:8px">
+                <button class="btn btn-ghost btn-sm" type="button" onclick="confirmSpec(true)">ยืนยันสเปคนี้</button>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="searchSpecAgain()">ค้นหาใหม่อีกครั้ง</button>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="skipSpec()">สเปคนี้ไม่ถูกต้อง → กรอกเอง</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>เลขประกันของสินค้า *</label>
+            <input id="dfWarranty" type="text" placeholder="เช่น SN-2024-0001234 หรือเลขบิล/ใบเสร็จ" />
+          </div>
+
+          <div class="form-field">
+            <label>บริษัทที่เคลม</label>
+            <input id="dfClaimCompany" type="text" list="claimCompanyList" placeholder="เช่น บริษัท จัสเทค จำกัด (เคยกรอกจะจำให้อัตโนมัติ)" />
+            <datalist id="claimCompanyList"></datalist>
+          </div>
+
+          <div class="form-field hidden" id="dfWarrantyExpField">
+            <label>วันที่หมดประกัน</label>
+            <input id="dfWarrantyExp" type="date" />
+            <div class="hint">ระบบพบเลขประกันแล้ว กรุณาเลือกวันที่หมดประกันสินค้า</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>สถานะของอุปกรณ์ *</label>
+              <select id="dfStatus" onchange="deviceStatusChanged()">
+                <option value="claim">กำลังส่งเคลม</option>
+                <option value="repair">อยู่ระหว่างซ่อมบำรุง</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>วันที่พัง *</label>
+              <input id="dfBroken" type="date" />
+            </div>
+          </div>
+
+          <div class="form-row" id="dfClaimWrap">
+            <div class="form-field">
+              <label>วันที่ส่งเคลม</label>
+              <input id="dfClaim" type="date" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>รหัสทรัพย์สินของบริษัท</label>
+              <input id="dfAsset" type="text" placeholder="เช่น AST-00123 (ถ้ามี)" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>รูปถ่ายอุปกรณ์ (หลายรูปได้)</label>
+            <div class="img-grid" id="dfPhotos"></div>
+            <div style="margin-top:8px">
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                เลือกรูป
+                <input type="file" accept="image/*" multiple style="display:none" onchange="devicePickPhotos(this)" />
+              </label>
+              <span id="dfPhotoNames" class="hint" style="margin-left:8px"></span>
+            </div>
+            <p class="drive-note" style="margin-top:10px;color:var(--muted);font-size:12px">รูปจะถูกอัปโหลดไปยัง Supabase Storage (bucket: photos)</p>
+          </div>
+
+          <div class="form-field">
+            <label>หมายเหตุ</label>
+            <textarea id="dfNotes" placeholder="เช่น อาการเสีย อุปกรณ์ประกอบ อะไหล่ที่ต้องใช้..."></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-primary" id="dfSaveBtn" onclick="saveDeviceForm()">บันทึกโน้ตอุปกรณ์</button>
+          </div>
+        </div>
+
+        <!-- ยืนยันลบโน้ตอุปกรณ์ -->
+        <div id="deviceConfirmView" hidden>
+          <div class="confirm-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">ยืนยันการลบโน้ต</h3>
+          <p class="confirm-no" id="deviceConfirmNo"></p>
+          <p class="confirm-text">จะลบโน้ตอุปกรณ์นี้พร้อมรูปถ่ายทั้งหมดทันที ไม่สามารถกู้คืนได้</p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="deleteDeviceForm()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+        <!-- ฟอร์มโน้ตงาน -->
+        <div id="workNoteFormView" hidden>
+          <h3 class="modal-title" id="workNoteFormTitle">เพิ่มโน้ตงาน</h3>
+
+          <div class="form-field">
+            <label>หัวเรื่องโน้ตงาน *</label>
+            <input id="wnTitle" type="text" placeholder="เช่น โน้ตเรื่องขั้นตอนการส่งเคลม" />
+          </div>
+
+          <div class="form-field">
+            <label>ขั้นตอนการทำงาน / การเคลม</label>
+            <p class="hint" style="margin:0 0 8px">พิมพ์ขั้นตอนทีละขั้น พิมพ์เสร็จในช่อง ระบบจะสร้าง "ขั้นตอนที่ถัดไป" ให้อัตโนมัติ — กด "ยืนยัน" เมื่อครบขั้นตอน (กรอกแค่ขั้นตอนเดียวก็ยืนยันได้เลย)</p>
+            <div id="wnSteps"></div>
+            <div class="row-actions" style="margin-top:8px">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="addWorkStepNow()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                เพิ่มขั้นตอนด้วยตนเอง
+              </button>
+              <button class="btn btn-primary btn-sm" type="button" id="wnConfirmBtn" onclick="confirmWorkSteps()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                ยืนยัน
+              </button>
+            </div>
+          </div>
+
+          <div class="form-field hidden" id="wnInfoWrap">
+            <label>ข้อมูลเสริม <span class="hint">(เช่น รายละเอียดบริษัท, เลขทะเบียน — กรอกหลายบรรทัดได้)</span></label>
+            <textarea id="wnInfo" placeholder="เช่น รายละเอียดบริษัท, เลขทะเบียนนิติบุคคล, เบอร์ติดต่อ..." style="min-height:90px"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveWorkNote()">บันทึกโน้ตงาน</button>
+          </div>
+        </div>
+
+        <!-- ยืนยันลบโน้ตงาน -->
+        <div id="workNoteConfirmView" hidden>
+          <div class="confirm-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">ยืนยันการลบโน้ตงาน</h3>
+          <p class="confirm-no" id="workNoteConfirmTitle"></p>
+          <p class="confirm-text">จะลบโน้ตงานนี้ทันที ไม่สามารถกู้คืนได้</p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="deleteWorkNote()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+          </div>
+        </div>
       </div>
-    </div>
 
   <div class="pdf-card" id="pdfCard"></div>
+
+  <!-- PDF พรีวิวโน้ตอุปกรณ์ -->
+  <div class="pdfp-mask" id="devicePdfPreview" onclick="closeDevicePdfPreview(event)">
+    <div class="pdfp-box" role="dialog" aria-modal="true" aria-label="พรีวิว PDF โน้ตอุปกรณ์">
+      <div class="pdfp-head">
+        <div class="pdfp-title" id="devicePdfPreviewTitle">พรีวิว PDF โน้ตอุปกรณ์</div>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="downloadDevicePdfFromPreview()">ดาวน์โหลด PDF</button>
+        <button class="icon-btn" type="button" title="ปิด" onclick="closeDevicePdfPreview(null)">&times;</button>
+      </div>
+      <div class="pdfp-frame-wrap">
+        <div class="pdfp-loading" id="devicePdfPreviewLoading">กำลังสร้าง PDF พรีวิว...</div>
+        <iframe class="pdfp-frame" id="devicePdfPreviewFrame" style="display:none" title="พรีวิว PDF โน้ตอุปกรณ์"></iframe>
+      </div>
+      <div class="pdfp-foot">
+        <span class="hint">แสดงผลเป็น PDF ที่สร้างจากข้อมูลโน้ตอุปกรณ์ปัจจุบัน (เปิดบนเบราว์เซอร์ได้)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF พรีวิวโน้ตงาน -->
+  <div class="pdfp-mask" id="workNotePdfPreview" onclick="closeWorkNotePdfPreview(event)">
+    <div class="pdfp-box" role="dialog" aria-modal="true" aria-label="พรีวิว PDF โน้ตงาน">
+      <div class="pdfp-head">
+        <div class="pdfp-title" id="workNotePdfPreviewTitle">พรีวิว PDF โน้ตงาน</div>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="downloadWorkNotePdfFromPreview()">ดาวน์โหลด PDF</button>
+        <button class="icon-btn" type="button" title="ปิด" onclick="closeWorkNotePdfPreview(null)">&times;</button>
+      </div>
+      <div class="pdfp-frame-wrap">
+        <div class="pdfp-loading" id="workNotePdfPreviewLoading">กำลังสร้าง PDF พรีวิว...</div>
+        <iframe class="pdfp-frame" id="workNotePdfPreviewFrame" style="display:none" title="พรีวิว PDF โน้ตงาน"></iframe>
+      </div>
+      <div class="pdfp-foot">
+        <span class="hint">PDF ขนาด A4 หน้าเดียว สร้างจากขั้นตอนและข้อมูลเสริมของโน้ตงานนี้ (เปิดบนเบราว์เซอร์ได้)</span>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -2159,15 +2417,22 @@
       document.getElementById("ticketsView").hidden = tab !== "tickets";
       document.getElementById("devicesView").hidden = tab !== "devices";
       document.getElementById("analyticsView").hidden = tab !== "analytics";
+      document.getElementById("deviceNotesView").hidden = tab !== "deviceNotes";
+      document.getElementById("workNotesView").hidden = tab !== "workNotes";
       var titles = {
         tickets: ["แดชบอร์ดงานแจ้งซ่อม IT", "จัดการใบแจ้งงานทั้งหมด"],
         devices: ["ผู้ใช้งาน", "รายชื่อเครื่องคอมพิวเตอร์จาก IP ที่แจ้งซ่อม"],
-        analytics: ["วิเคราะห์การแจ้งซ่อม", "ภาพรวมปัญหาบริษัท คิดเป็นเปอร์เซ็นต์"]
+        analytics: ["วิเคราะห์การแจ้งซ่อม", "ภาพรวมปัญหาบริษัท คิดเป็นเปอร์เซ็นต์"],
+        deviceNotes: ["โน้ตอุปกรณ์", "จดบันทึกอุปกรณ์ชำรุด พร้อมสเปคจากเน็ต / เลขประกัน / เคลม"],
+        workNotes: ["โน้ตงาน", "จดบันทึกขั้นตอนการทำงาน / การเคลม"],
+        warranty: ["ตรวจสอบประกัน", "ตรวจสอบประกันสินค้า — กรอก S/N ครั้งเดียว ไล่ดูทุกบริษัท แล้วสรุปประกันอยู่ที่ไหน / หมดเมื่อไร"]
       };
       document.getElementById("headTitle").textContent = titles[tab][0];
       document.getElementById("headSub").textContent = titles[tab][1];
       if (tab === "devices" && !deviceUsers.length) loadDevices();
       if (tab === "analytics") renderAnalytics();
+      if (tab === "deviceNotes" && !deviceEntries.length) loadDeviceNotes();
+      if (tab === "workNotes" && !workNotesLoaded) loadWorkNotes();
     });
 
     function loadDevices() {
@@ -2382,12 +2647,6 @@
       return b;
     }
 
-    function fmtHours(h) {
-      if (h < 1) return Math.round(h * 60) + " นาที";
-      if (h < 24) return h.toFixed(1) + " ชม.";
-      return (h / 24).toFixed(1) + " วัน";
-    }
-
     // ---------- RENDER: FILTERED STATS ----------
     function renderAnaStats(f) {
       var n = 0, w = 0, d = 0;
@@ -2398,112 +2657,6 @@
       document.getElementById("aStatNew").textContent = n;
       document.getElementById("aStatWorking").textContent = w;
       document.getElementById("aStatDone").textContent = d;
-    }
-
-    // ---------- RENDER: TREND CHART ----------
-    function anaThaiDate(k) {
-      var y = +k.slice(0, 4), m = +k.slice(5, 7), d = +k.slice(8, 10);
-      return (d < 10 ? "0" + d : "" + d) + "/" + (m < 10 ? "0" + m : "" + m) + "/" + (y + 543);
-    }
-
-    function renderTrendChart(f) {
-      var svg = document.getElementById("anaTrend");
-      var noData = document.getElementById("anaTrendNoData");
-      if (!f.length) { svg.innerHTML = ""; noData.classList.remove("hidden"); return; }
-      noData.classList.add("hidden");
-      var dayMap = {};
-      f.forEach(function (t) {
-        var d = new Date(t.created_at);
-        if (isNaN(d)) return;
-        var key = d.toISOString().slice(0, 10);
-        if (!dayMap[key]) dayMap[key] = { n: 0, w: 0, d: 0 };
-        if (t.status === "new") dayMap[key].n++;
-        else if (t.status === "working") dayMap[key].w++;
-        else if (t.status === "done") dayMap[key].d++;
-      });
-      var days = Object.keys(dayMap).sort();
-      if (days.length > 30) days = days.slice(days.length - 30);
-      var W = 780, H = 240, PL = 46, PB = 36, PT = 8;
-      var gap = (W - 12 - PL) / days.length;
-      var barW = Math.max(4, Math.floor(gap) - 2);
-      var D3 = 8;
-      var maxV = 1;
-      days.forEach(function (k) { var s = dayMap[k].n + dayMap[k].w + dayMap[k].d; if (s > maxV) maxV = s; });
-      var sc = (H - PT - PB) / maxV;
-      var bars = [], lbls = [], yl = [], linePts = [], lineDots = [];
-      yl.push('<text x="13" y="' + (PT + (H - PT - PB) / 2) + '" text-anchor="middle" font-size="8.5" fill="#888" transform="rotate(-90 13 ' + (PT + (H - PT - PB) / 2) + ')">จำนวนงาน (เคส)</text>');
-      for (var yv = 0; yv <= maxV; yv += Math.max(1, Math.ceil(maxV / 4))) {
-        var yy = H - PB - yv * sc;
-        yl.push('<line x1="' + PL + '" y1="' + yy + '" x2="' + W + '" y2="' + yy + '" stroke="#e2ece6"/>');
-        yl.push('<text x="' + (PL - 5) + '" y="' + (yy + 3) + '" text-anchor="end" font-size="9" fill="#999">' + yv + '</text>');
-      }
-      days.forEach(function (k, i) {
-        var dm = dayMap[k], x = PL + i * gap, y0 = H - PB;
-        var segs = [
-          { c: "#0e6b3a", n: dm.d, t: "เสร็จ" },
-          { c: "#2b6cb0", n: dm.w, t: "ดำเนินการ" },
-          { c: "#ffb020", n: dm.n, t: "ใหม่" }
-        ];
-        var part = "", yCur = y0;
-        segs.forEach(function (s) {
-          var h = s.n * sc;
-          if (h <= 0) return;
-          var yt = yCur - h;
-          part += '<path d="M' + x + ',' + yCur + ' L' + (x + barW) + ',' + yCur + ' L' + (x + barW + D3) + ',' + (yCur - D3) + ' L' + (x + D3) + ',' + (yCur - D3) + ' Z" fill="' + anaShade(s.c, 1.28) + '"></path>';
-          part += '<path d="M' + (x + barW) + ',' + yCur + ' L' + (x + barW + D3) + ',' + (yCur - D3) + ' L' + (x + barW + D3) + ',' + (yt - D3) + ' L' + (x + barW) + ',' + yt + ' Z" fill="' + anaShade(s.c, 0.55) + '"></path>';
-          part += '<rect x="' + x + '" y="' + yt + '" width="' + barW + '" height="' + h + '" fill="' + s.c + '"><title>' + k + ' ' + s.t + ': ' + s.n + '</title></rect>';
-          yCur = yt;
-        });
-        bars.push(part);
-        var total = dm.n + dm.w + dm.d;
-        var cx = x + barW / 2, cy = y0 - total * sc;
-        linePts.push(cx + "," + cy);
-        lineDots.push('<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="#e14d2a" stroke="#fff" stroke-width="1"><title>' + anaThaiDate(k) + ' · งานรวม: ' + total + '</title></circle>');
-        if (i % Math.max(1, Math.floor(days.length / 6)) === 0 || i === days.length - 1)
-          lbls.push('<text x="' + (x + barW / 2) + '" y="' + (H - 13) + '" text-anchor="middle" font-size="7" fill="#777">' + anaThaiDate(k) + '</text>');
-      });
-      lbls.push('<text x="' + (PL + (W - PL) / 2) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="8.5" fill="#888">วันที่ (วัน/เดือน/พ.ศ.)</text>');
-      var lineMarkup = '<path d="M' + linePts.join("L") + '" fill="none" stroke="#e14d2a" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><title>งานรวมต่อวัน</title></path>' + lineDots.join("");
-      svg.innerHTML = yl.join("") + bars.join("") + lineMarkup + lbls.join("");
-    }
-
-    // ---------- RENDER: SLA ----------
-    function renderSLA(f) {
-      var wrap = document.getElementById("anaSla");
-      var noData = document.getElementById("anaSlaNoData");
-      if (!f.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
-      noData.classList.add("hidden");
-      var done = f.filter(function (t) { return t.status === "done" && t.approved_at; });
-      var working = f.filter(function (t) { return t.status === "working"; });
-      var sumCycle = 0, sumResp = 0;
-      done.forEach(function (t) { sumCycle += anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime()); });
-      var now = Date.now();
-      working.forEach(function (t) { sumResp += anaHoursDiff(new Date(t.created_at).getTime(), now); });
-      var avgCycle = done.length ? sumCycle / done.length : 0;
-      var avgResp = working.length ? sumResp / working.length : 0;
-      var catMap = {};
-      f.forEach(function (t) {
-        parseDeviceParts(t.device).forEach(function (p) {
-          var cat = deviceType(p);
-          if (!catMap[cat]) catMap[cat] = { c: 0, ch: [] };
-          catMap[cat].c++;
-          if (t.approved_at) catMap[cat].ch.push(anaHoursDiff(new Date(t.created_at).getTime(), new Date(t.approved_at).getTime()));
-        });
-      });
-      var h = '<div class="ana-sla-cards">';
-      h += '<div class="ana-sla-card"><div class="val">' + fmtHours(avgCycle) + '</div><div class="lbl">เฉลี่ยแก้ไขเสร็จ (' + done.length + ' เคส)</div></div>';
-      h += '<div class="ana-sla-card"><div class="val">' + fmtHours(avgResp) + '</div><div class="lbl">เฉลี่ยดำเนินการ (' + working.length + ' เคส)</div></div>';
-      h += '</div>';
-      var cats = Object.keys(catMap).sort(function (a, b) { return catMap[b].c - catMap[a].c; });
-      if (cats.length) {
-        h += '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">แยกตามหมวด</div>';
-        cats.forEach(function (cat) {
-          var c = catMap[cat];
-          var avg = c.ch.length ? c.ch.reduce(function (s, v) { return s + v; }, 0) / c.ch.length : 0;
-          h += '<div class="ana-sla-row"><span class="ana-sla-label">' + anaEsc(cat) + '</span><span class="ana-sla-val">' + fmtHours(avg) + '</span><span class="ana-sla-unit"> (' + c.c + ')</span></div>';
-        });
-      }
-      wrap.innerHTML = h;
     }
 
     // ---------- RENDER: BRANCH COMPARISON ----------
@@ -2635,35 +2788,39 @@
       items = items.slice(0, 5);
       if (!items.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
       noData.classList.add("hidden");
-      var maxC = items[0].count || 1;
-      var h = "";
-      items.forEach(function (item, i) {
-        var pct = Math.round(item.count / maxC * 100);
-        h += '<div class="ana-rep-item"><span class="ana-rep-rank">' + (i + 1) + '</span><span class="ana-rep-label">' + anaEsc(item.label) + '</span><span class="ana-rep-count">' + item.count + '</span><span class="ana-rep-bar"><i style="width:' + pct + '%"></i></span></div>';
-      });
-      wrap.innerHTML = h;
-    }
 
-    // ---------- RENDER: STALE TICKETS ----------
-    function renderStaleTickets(f) {
-      var wrap = document.getElementById("anaStale");
-      var noData = document.getElementById("anaStaleNoData");
-      var now = Date.now(), THREE = 3 * 86400000;
-      var stale = f.filter(function (t) {
-        if (t.status !== "new" && t.status !== "working") return false;
-        var c = new Date(t.created_at).getTime();
-        return !isNaN(c) && (now - c) > THREE;
+      function clipR(s, n) {
+        s = String(s);
+        return s.length > n ? s.slice(0, n) + "…" : s;
+      }
+
+      var maxC = items[0].count || 1;
+      var W = 300, X0 = 16, ROW = 26, TH = 12, TOP = 6;
+      var BMAX = W - X0 - 30;
+      var H = TOP + items.length * ROW + 4;
+      var rows = [];
+
+      items.forEach(function (item, i) {
+        var col = ANA_PALETTE[i % ANA_PALETTE.length];
+        var len = Math.max(12, Math.round((item.count / maxC) * BMAX));
+        var y = TOP + i * ROW;
+        var yb = y + 9;
+        var tip = (i + 1) + ". " + anaEsc(item.label) + " · " + item.count + " เคส";
+        rows.push(
+          '<text x="36" y="' + (y + 7) + '" font-size="8" font-weight="600" fill="#17241c">' +
+          anaEsc(clipR(item.label, 26)) +
+          '<title>' + anaEsc(item.label) + " (" + item.count + " เคส)</title></text>" +
+          '<circle cx="' + X0 + '" cy="' + (y + 3) + '" r="6" fill="' + col + '"/>' +
+          '<text x="' + X0 + '" y="' + (y + 6) + '" text-anchor="middle" font-size="7" font-weight="700" fill="#fff">' + (i + 1) + "</text>" +
+          '<rect class="anar-bar" x="' + X0 + '" y="' + yb + '" width="' + len + '" height="' + TH + '" rx="3" fill="' + col + '"><title>' + tip + "</title></rect>" +
+          '<text x="' + (X0 + len + 5) + '" y="' + (yb + TH - 3) + '" font-size="9" font-weight="700" fill="#0e6b3a">' + item.count + " เคส</text>"
+        );
       });
-      stale.sort(function (a, b) { return new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); });
-      if (!stale.length) { wrap.innerHTML = ""; noData.classList.remove("hidden"); return; }
-      noData.classList.add("hidden");
-      var h = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">พบ ' + stale.length + ' งานค้างเก่า</div>';
-      stale.slice(0, 10).forEach(function (t) {
-        var days = Math.round((now - new Date(t.created_at).getTime()) / 86400000);
-        var label = t.device.split("·").pop().trim() || t.device;
-        h += '<div class="ana-stale-item"><span class="ana-stale-tno">' + anaEsc(t.ticket_no) + '</span><span class="ana-stale-dev">' + anaEsc(label) + '</span><span class="ana-stale-days">' + days + ' วัน</span></div>';
-      });
-      wrap.innerHTML = h;
+
+      wrap.innerHTML =
+        '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="ปัญหาที่เกิดซ้ำ 5 อันดับแรก">' +
+        rows.join("") +
+        "</svg>";
     }
 
     // ---------- RENDER: EXPORT CSV ----------
@@ -2814,12 +2971,9 @@
     function renderAnalytics() {
       var filtered = getFilteredTickets();
       renderAnaStats(filtered);
-      renderTrendChart(filtered);
-      renderSLA(filtered);
       renderBranchComparison(filtered);
       renderPeakHours(filtered);
       renderRepeatedProblems(filtered);
-      renderStaleTickets(filtered);
 
       renderCatDonut("Hardware", filtered, { svg: "anaDonutHw", legend: "anaLegendHw", total: "anaTotalHw", noData: "anaNoDataHw" });
       renderCatDonut("Software", filtered, { svg: "anaDonutSw", legend: "anaLegendSw", total: "anaTotalSw", noData: "anaNoDataSw" });
@@ -3083,6 +3237,10 @@
       document.getElementById("confirmView").hidden = true;
       document.getElementById("confirmUserView").hidden = true;
       document.getElementById("pdfChoiceView").hidden = true;
+      document.getElementById("deviceFormView").hidden = true;
+      document.getElementById("deviceConfirmView").hidden = true;
+      document.getElementById("workNoteFormView").hidden = true;
+      document.getElementById("workNoteConfirmView").hidden = true;
       document.getElementById(name).hidden = false;
     }
 
@@ -3483,6 +3641,1052 @@
       if (e.target === this) closeModal();
     });
 
+    // ---------- DEVICE NOTES (โน้ตอุปกรณ์) ----------
+    var deviceEntries = [];
+    var deviceCategories = [];
+    var deviceEditId = null;
+    var deviceDeleteId = null;
+    var devicePhotos = [];
+    var deviceSpecConfirmed = false;
+
+    var D_STATUS = { claim: "กำลังส่งเคลม", repair: "อยู่ระหว่างซ่อมบำรุง", done: "เสร็จแล้ว" };
+    var D_BADGE = { claim: "b-due-today", repair: "b-working", done: "b-done" };
+
+    function parseDateOnly2(s) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
+      if (!m) return null;
+      return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+
+    function fmtDateOnly(s) {
+      var d = parseDateOnly2(s);
+      if (!d) return "-";
+      return d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function loadDeviceCategories() {
+      return fetch("/api/admin/device-categories")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          deviceCategories = (data.categories || []).map(function (c) { return c.name; });
+          var sel = document.getElementById("dCatFilter");
+          var cur = sel.value;
+          sel.innerHTML = '<option value="">ทุกหมวด</option>' +
+            deviceCategories.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+          if (cur) sel.value = cur;
+
+          var fSel = document.getElementById("dfCategory");
+          var fCur = fSel.value;
+          fSel.innerHTML = '<option value="">— เลือกหมวด —</option>' +
+            deviceCategories.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+          if (fCur) fSel.value = fCur;
+        })
+        .catch(function () {});
+    }
+
+    window.loadDeviceCategories = loadDeviceCategories;
+
+    function loadDeviceNotes() {
+      var body = document.getElementById("deviceBody");
+      var empty = document.getElementById("deviceEmpty");
+      body.innerHTML =
+        '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      empty.classList.add("hidden");
+      return Promise.all([loadDeviceCategories(), fetch("/api/admin/device-entries").then(function (r) { return r.json(); })])
+        .then(function (results) {
+          deviceEntries = results[1].entries || [];
+          populateClaimCompanyList();
+          renderDeviceNotes();
+        })
+        .catch(function () {
+          body.innerHTML =
+            '<tr><td colspan="10" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ต้องรัน SQL ตาราง device_entries ใน Supabase และรีสตาร์ท server)</td></tr>';
+        });
+    }
+
+    window.loadDeviceNotes = loadDeviceNotes;
+
+    function renderDeviceNotes() {
+      var cat = document.getElementById("dCatFilter").value;
+      var st = document.getElementById("dStatusFilter").value;
+      var q = document.getElementById("dSearch").value.trim().toLowerCase();
+
+      var all = deviceEntries.length, claim = 0, repair = 0, done = 0;
+      deviceEntries.forEach(function (e) {
+        if (e.status === "claim") claim++;
+        else if (e.status === "repair") repair++;
+        else if (e.status === "done") done++;
+      });
+      document.getElementById("dStatAll").textContent = all;
+      document.getElementById("dStatClaim").textContent = claim;
+      document.getElementById("dStatRepair").textContent = repair;
+      document.getElementById("dStatDone").textContent = done;
+
+      var rows = deviceEntries.filter(function (e) {
+        if (cat && (e.category || "") !== cat) return false;
+        if (st && (e.status || "") !== st) return false;
+        if (q) {
+          var hay = (e.entry_no + " " + (e.category || "") + " " + (e.model || "") + " " +
+            (e.warranty_no || "") + " " + (e.claim_company || "") + " " + (e.asset_code || "") + " " + (e.spec_json || "")).toLowerCase();
+          if (hay.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+
+      var body = document.getElementById("deviceBody");
+      var empty = document.getElementById("deviceEmpty");
+      if (!rows.length) {
+        body.innerHTML = "";
+        empty.classList.remove("hidden");
+        empty.querySelector("p").textContent = deviceEntries.length
+          ? "ไม่มีโน้ตที่ตรงกับตัวกรอง"
+          : 'ยังไม่มีโน้ตอุปกรณ์ — กด "จดอุปกรณ์ใหม่" เพื่อบันทึกอุปกรณ์ชำรุด';
+        return;
+      }
+      empty.classList.add("hidden");
+
+      body.innerHTML = rows.map(function (e) {
+        var badge = D_BADGE[e.status] || "b-pending";
+        var specSnip = "";
+        var spec = [];
+        try { spec = JSON.parse(e.spec_json || "[]"); } catch (err) { spec = []; }
+        if (Array.isArray(spec) && spec.length) {
+          specSnip = '<div class="spec-line">' + spec.slice(0, 4).map(function (s) {
+            return '<div><span class="k">' + esc(s.k) + ':</span> <span class="v">' + esc(s.v) + "</span></div>";
+          }).join("") + "</div>";
+        } else if (e.spec_json && e.spec_json !== "[]") {
+          specSnip = '<span class="cell-trunc" style="max-width:180px">' + esc(e.spec_json) + "</span>";
+        }
+
+        var catCell = e.category
+          ? '<span class="dev-tag">' + esc(e.category) + "</span>"
+          : '<span style="color:var(--muted)">-</span>';
+
+        var photos = e.photos || [];
+        var photoCell = photos.length
+          ? '<div class="img-grid img-xs">' + photos.slice(0, 3).map(function (p) {
+              return '<img src="' + esc(p.cloud_url) + '" alt="รูป" onclick="previewDevicePhoto(\'' + esc(p.cloud_url) + '\')" />';
+            }).join("") + (photos.length > 3 ? '<span class="more-photos">+' + (photos.length - 3) + "</span>" : "") + "</div>"
+          : '<span style="color:var(--muted)">-</span>';
+
+        var actions = '<div class="row-actions">';
+        actions += '<button class="icon-btn" title="พรีวิว PDF" onclick="previewDevicePdf(' + e.id + ')">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button>';
+        actions += '<button class="icon-btn share" title="ดาวน์โหลด PDF" onclick="downloadDevicePdf(' + e.id + ')">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v10M8 13l4 4 4-4"/><path d="M4 21h16"/></svg></button>';
+        if (e.status !== "done") {
+          actions += '<button class="icon-btn" title="เสร็จแล้ว" onclick="markDeviceDone(' + e.id + ')">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>';
+        }
+        actions += '<button class="icon-btn edit" title="แก้ไข" onclick="openDeviceForm(' + e.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>';
+        actions += '<button class="icon-btn del" title="ลบ" onclick="openDeviceDelete(' + e.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button>';
+        actions += "</div>";
+
+        var warrantyCell = e.warranty_no ? '<span class="m-freq">' + esc(e.warranty_no) + "</span>" : '<span style="color:var(--muted)">-</span>';
+        if (e.warranty_expire_date) {
+          warrantyCell += '<div style="margin-top:3px;font-size:11.5px;color:var(--muted)">หมดประกัน: ' + fmtDateOnly(e.warranty_expire_date) + "</div>";
+        }
+        if (e.claim_company) {
+          warrantyCell += '<div style="margin-top:3px;font-size:11.5px;color:var(--blue)">' + esc(e.claim_company) + "</div>";
+        }
+
+        return "<tr>" +
+          '<td><span class="m-no">' + esc(e.entry_no) + "</span></td>" +
+          "<td>" + catCell + "</td>" +
+          '<td><div class="model-cell"><span class="model-name">' + esc(e.model) + "</span>" + (specSnip ? specSnip : "") + "</div></td>" +
+          "<td>" + warrantyCell + "</td>" +
+          '<td><span class="badge ' + badge + '">' + esc(D_STATUS[e.status] || e.status) + "</span></td>" +
+          '<td>' + fmtDateOnly(e.broken_date) + "</td>" +
+          '<td>' + fmtDateOnly(e.claim_date) + "</td>" +
+          "<td>" + (e.asset_code ? esc(e.asset_code) : '<span style="color:var(--muted)">-</span>') + "</td>" +
+          "<td>" + photoCell + "</td>" +
+          '<td style="text-align:right">' + actions + "</td>" +
+          "</tr>";
+      }).join("");
+    }
+
+    window.renderDeviceNotes = renderDeviceNotes;
+
+    function previewDevicePhoto(url) {
+      window.open(url, "_blank");
+    }
+
+    window.previewDevicePhoto = previewDevicePhoto;
+
+    function populateClaimCompanyList() {
+      var list = document.getElementById("claimCompanyList");
+      var seen = {};
+      var opts = "";
+      deviceEntries.forEach(function (e) {
+        var v = (e.claim_company || "").trim();
+        if (v && !seen[v]) {
+          seen[v] = 1;
+          opts += '<option value="' + esc(v) + '"></option>';
+        }
+      });
+      list.innerHTML = opts;
+    }
+
+    window.populateClaimCompanyList = populateClaimCompanyList;
+
+    function refreshWarrantyExpField() {
+      var inp = document.getElementById("dfWarrantyExp");
+      var wrap = document.getElementById("dfWarrantyExpField");
+      var hasNo = (document.getElementById("dfWarranty").value || "").trim().length > 0;
+      wrap.classList.toggle("hidden", !hasNo);
+      if (!hasNo) inp.value = "";
+    }
+
+    window.refreshWarrantyExpField = refreshWarrantyExpField;
+    document.addEventListener("DOMContentLoaded", function () {
+      var w = document.getElementById("dfWarranty");
+      if (w) {
+        w.addEventListener("input", refreshWarrantyExpField);
+        w.addEventListener("change", refreshWarrantyExpField);
+      }
+    });
+
+    function downloadDevicePdf(id) {
+      var btn = document.querySelector('#deviceBody button[onclick="downloadDevicePdf(' + id + ')"]');
+      var oldHtml = btn ? btn.innerHTML : "";
+      if (btn) btn.disabled = true;
+      fetch("/api/admin/device-entries/" + id + "/pdf")
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || "สร้าง PDF ไม่สำเร็จ"); });
+          return r.blob();
+        })
+        .then(function (blob) {
+          var row = deviceEntries.filter(function (e) { return e.id === id; })[0];
+          var a = document.createElement("a");
+          var url = URL.createObjectURL(blob);
+          a.href = url;
+          a.download = (row && row.entry_no ? row.entry_no : "device-" + id) + ".pdf";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+            a.remove();
+          }, 400);
+          toast("ดาวน์โหลด PDF แล้ว");
+        })
+        .catch(function (err) {
+          toast(err.message || "สร้าง PDF ไม่สำเร็จ");
+        })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+        });
+    }
+
+    window.downloadDevicePdf = downloadDevicePdf;
+
+    function previewDevicePdf(id) {
+      var row = deviceEntries.filter(function (e) { return e.id === id; })[0];
+      var title = document.getElementById("devicePdfPreviewTitle");
+      var loading = document.getElementById("devicePdfPreviewLoading");
+      var frame = document.getElementById("devicePdfPreviewFrame");
+      var mask = document.getElementById("devicePdfPreview");
+      title.textContent = "พรีวิว PDF โน้ตอุปกรณ์" + (row && row.entry_no ? " — " + row.entry_no : "");
+      loading.style.display = "";
+      frame.style.display = "none";
+      frame.src = "";
+      mask.classList.add("open");
+      if (row) {
+        title.textContent += " (" + esc(row.model || "") + ")";
+      }
+      frame.setAttribute("data-id", id);
+      frame.onload = function () {
+        loading.style.display = "none";
+        frame.style.display = "";
+      };
+      frame.onerror = function () {
+        loading.textContent = "ไม่สามารถสร้าง PDF พรีวิวได้ (ตรวจสอบไฟล์ฟอนต์ / ข้อมูล)";
+      };
+      frame.src = "/api/admin/device-entries/" + id + "/pdf";
+    }
+
+    window.previewDevicePdf = previewDevicePdf;
+
+    function downloadDevicePdfFromPreview() {
+      var frame = document.getElementById("devicePdfPreviewFrame");
+      var id = frame.getAttribute("data-id");
+      if (!id) return;
+      downloadDevicePdf(Number(id));
+    }
+
+    window.downloadDevicePdfFromPreview = downloadDevicePdfFromPreview;
+
+    function closeDevicePdfPreview(event) {
+      if (event && event.target !== event.currentTarget) return;
+      var mask = document.getElementById("devicePdfPreview");
+      if (!mask.classList.contains("open")) return;
+      mask.classList.remove("open");
+      var frame = document.getElementById("devicePdfPreviewFrame");
+      frame.src = "";
+      frame.removeAttribute("data-id");
+    }
+
+    window.closeDevicePdfPreview = closeDevicePdfPreview;
+
+    // ---------- WORK NOTES (โน้ตงาน) ----------
+    var workNotes = [];
+    var workNotesLoaded = false;
+    var workNoteEditId = null;
+    var workNoteDeleteId = null;
+    var workStepTimer = null;
+
+    function parseWorkSteps(note) {
+      try {
+        var s = JSON.parse(note.steps_json || "[]");
+        return Array.isArray(s) ? s.map(function (x) { return String(x); }) : [];
+      } catch (e) { return []; }
+    }
+
+    function fmtWorkDate(s) {
+      var d = new Date(s);
+      if (isNaN(d)) return "-";
+      return d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" }) +
+        " " + d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function loadWorkNotes() {
+      var body = document.getElementById("workNoteBody");
+      var empty = document.getElementById("workNoteEmpty");
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      empty.classList.add("hidden");
+      return fetch("/api/admin/work-notes")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          workNotes = (data.notes || []).map(function (n) {
+            n.steps = parseWorkSteps(n);
+            return n;
+          });
+          workNotesLoaded = true;
+          renderWorkNotes();
+        })
+        .catch(function () {
+          body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ต้องรัน SQL ตาราง work_notes ใน Supabase แล้วรีสตาร์ท server)</td></tr>';
+        });
+    }
+
+    window.loadWorkNotes = loadWorkNotes;
+
+    function renderWorkNotes() {
+      var q = document.getElementById("wSearch").value.trim().toLowerCase();
+      var rows = workNotes;
+      if (q) {
+        rows = workNotes.filter(function (n) {
+          var hay = (n.title + " " + (n.info_extra || "") + " " + n.steps.join(" ")).toLowerCase();
+          return hay.indexOf(q) !== -1;
+        });
+      }
+      document.getElementById("wStatAll").textContent = workNotes.length;
+      var body = document.getElementById("workNoteBody");
+      var empty = document.getElementById("workNoteEmpty");
+      if (!rows.length) {
+        body.innerHTML = "";
+        empty.classList.remove("hidden");
+        empty.querySelector("p").textContent = workNotes.length
+          ? "ไม่มีโน้ตที่ตรงกับตัวกรอง"
+          : 'ยังไม่มีโน้ตงาน — กด "เพิ่มโน้ต" เพื่อจดบันทึกขั้นตอนการทำงาน / การเคลม';
+        return;
+      }
+      empty.classList.add("hidden");
+      var wLine = "var(--line)";
+
+      body.innerHTML = rows.map(function (n) {
+        var stepsHtml = n.steps.length
+          ? '<ul style="list-style:none;margin:0;padding:0;font-size:12.5px;line-height:1.55">' +
+            n.steps.map(function (s, i) {
+              return '<li style="padding:2px 0;border-left:2px solid ' + wLine + ';padding-left:8px;margin-bottom:2px"><span style="font-weight:700;color:var(--blue)">' + (i + 1) + ".</span> " + esc(s) + "</li>";
+            }).join("") + "</ul>"
+          : '<span style="color:var(--muted)">-</span>';
+        var infoCell = n.info_extra
+          ? '<span class="cell-trunc" style="max-width:240px;white-space:normal">' + esc(n.info_extra) + "</span>"
+          : '<span style="color:var(--muted)">-</span>';
+
+        var actions = '<div class="row-actions">';
+        actions += '<button class="icon-btn" title="พรีวิว PDF" onclick="previewWorkNotePdf(' + n.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button>';
+        actions += '<button class="icon-btn share" title="ดาวน์โหลด PDF" onclick="downloadWorkNotePdf(' + n.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v10M8 13l4 4 4-4"/><path d="M4 21h16"/></svg></button>';
+        actions += '<button class="icon-btn edit" title="แก้ไข" onclick="openWorkNoteForm(' + n.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>';
+        actions += '<button class="icon-btn del" title="ลบ" onclick="openWorkNoteDelete(' + n.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button>';
+        actions += "</div>";
+
+        return "<tr>" +
+          '<td><div class="model-cell"><span class="model-name">' + (n.title ? esc(n.title) : '(ไม่มีหัวเรื่อง)') + "</span></div></td>" +
+          "<td>" + stepsHtml + "</td>" +
+          "<td>" + infoCell + "</td>" +
+          "<td>" + fmtWorkDate(n.created_at) + "</td>" +
+          '<td style="text-align:right">' + actions + "</td>" +
+          "</tr>";
+      }).join("");
+    }
+
+    window.renderWorkNotes = renderWorkNotes;
+
+    function makeWorkStepRow(i) {
+      var row = document.createElement("div");
+      row.className = "wn-step-row";
+      row.style.marginBottom = "8px";
+      row.style.padding = "10px 10px 10px 12px";
+      row.style.border = "1px solid var(--line)";
+      row.style.borderLeft = "3px solid var(--blue)";
+      row.style.borderRadius = "10px";
+      row.style.background = "#fbfdff";
+      row.innerHTML =
+        '<div class="wn-step-no" style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">ขั้นตอนที่ ' + (i + 1) + "</div>" +
+        '<div style="display:flex;gap:8px;align-items:flex-start">' +
+          '<textarea class="wn-step-input" data-i="' + i + '" placeholder="พิมพ์ขั้นตอน..." style="flex:1;min-height:52px;width:auto" oninput="workStepTyped(this)"></textarea>' +
+          '<button class="icon-btn del wn-step-x" type="button" title="ลบขั้นตอน" onclick="removeWorkStep(' + i + ')">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>' +
+          "</button>" +
+        "</div>";
+      return row;
+    }
+
+    function reindexWorkSteps() {
+      var rows = document.querySelectorAll("#wnSteps .wn-step-row");
+      rows.forEach(function (row, i) {
+        row.querySelector(".wn-step-no") && (row.querySelector(".wn-step-no").textContent = "ขั้นตอนที่ " + (i + 1));
+        row.querySelector(".wn-step-input").setAttribute("data-i", i);
+        row.querySelector(".wn-step-x").setAttribute("onclick", "removeWorkStep(" + i + ")");
+      });
+    }
+
+    function workStepTyped(el) {
+      var list = document.getElementById("wnSteps");
+      var lastInput = list.lastElementChild.querySelector(".wn-step-input");
+      var isLast = el === lastInput;
+      clearTimeout(workStepTimer);
+      if (!isLast) return;
+      if (!String(el.value).trim()) return;
+      workStepTimer = setTimeout(function () {
+        workStepTimer = null;
+        var box = document.getElementById("wnSteps");
+        if (!box || !box.lastElementChild) return;
+        if (box.lastElementChild.querySelector(".wn-step-input") !== el) return;
+        if (!String(el.value).trim()) return;
+        box.appendChild(makeWorkStepRow(box.children.length));
+        box.lastElementChild.querySelector(".wn-step-input").focus();
+      }, 1200);
+    }
+
+    window.workStepTyped = workStepTyped;
+
+    function removeWorkStep(i) {
+      var list = document.getElementById("wnSteps");
+      var rows = list.querySelectorAll(".wn-step-row");
+      if (rows.length <= 1) {
+        var inp = rows[0].querySelector(".wn-step-input");
+        inp.value = "";
+        reindexWorkSteps();
+        inp.focus();
+        return;
+      }
+      rows[i].remove();
+      reindexWorkSteps();
+    }
+
+    window.removeWorkStep = removeWorkStep;
+
+    function addWorkStepNow() {
+      var list = document.getElementById("wnSteps");
+      list.appendChild(makeWorkStepRow(list.children.length));
+      list.lastElementChild.querySelector(".wn-step-input").focus();
+    }
+
+    window.addWorkStepNow = addWorkStepNow;
+
+    function confirmWorkSteps() {
+      var inputs = document.querySelectorAll("#wnSteps .wn-step-input");
+      var hasStep = Array.prototype.some.call(inputs, function (inp) { return String(inp.value).trim(); });
+      document.getElementById("wnInfoWrap").classList.remove("hidden");
+      document.getElementById("wnInfo").focus();
+      toast(hasStep ? "ยืนยันขั้นตอนแล้ว — ระบุข้อมูลเสริม (ถ้ามี) แล้วกดบันทึก" : "ยังไม่กรอกขั้นตอน — ระบุขั้นตอนหรือข้อมูลเสริมแล้วกดบันทึกได้");
+    }
+
+    window.confirmWorkSteps = confirmWorkSteps;
+
+    function openWorkNoteForm(id) {
+      workNoteEditId = id || null;
+      document.getElementById("workNoteFormTitle").textContent = id ? "แก้ไขโน้ตงาน" : "เพิ่มโน้ตงาน";
+      var row = id ? workNotes.filter(function (n) { return n.id === id; })[0] : null;
+      document.getElementById("wnTitle").value = row ? row.title || "" : "";
+      var steps = (row && Array.isArray(row.steps)) ? row.steps.slice() : [];
+      var list = document.getElementById("wnSteps");
+      list.innerHTML = "";
+      if (!steps.length) steps.push("");
+      steps.forEach(function (s, i) {
+        var r = makeWorkStepRow(i);
+        list.appendChild(r);
+        r.querySelector(".wn-step-input").value = s;
+      });
+      var infoWrap = document.getElementById("wnInfoWrap");
+      var hasInfo = row && String(row.info_extra || "").trim();
+      infoWrap.classList.toggle("hidden", !hasInfo);
+      document.getElementById("wnInfo").value = hasInfo ? row.info_extra : "";
+      showView("workNoteFormView");
+      openModal();
+      document.getElementById("wnTitle").focus();
+    }
+
+    window.openWorkNoteForm = openWorkNoteForm;
+
+    function saveWorkNote() {
+      var title = document.getElementById("wnTitle").value.trim();
+      if (!title) { toast("กรอกหัวเรื่องโน้ตงานก่อน"); return; }
+      var inputs = document.querySelectorAll("#wnSteps .wn-step-input");
+      var steps = Array.prototype.map.call(inputs, function (inp) { return inp.value.trim(); }).filter(function (v) { return v; });
+      var info = document.getElementById("wnInfo").value.trim();
+      var payload = { title: title, steps: steps, info_extra: info };
+      var isEdit = !!workNoteEditId;
+      fetch(isEdit ? "/api/admin/work-notes/" + workNoteEditId : "/api/admin/work-notes", {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "บันทึกไม่สำเร็จ"); return; }
+          closeModal();
+          toast(isEdit ? "แก้ไขโน้ตงานแล้ว" : "บันทึกโน้ตงานแล้ว");
+          loadWorkNotes();
+        })
+        .catch(function () { toast("บันทึกไม่สำเร็จ"); });
+    }
+
+    window.saveWorkNote = saveWorkNote;
+
+    function openWorkNoteDelete(id) {
+      workNoteDeleteId = id;
+      var row = workNotes.filter(function (n) { return n.id === id; })[0] || {};
+      document.getElementById("workNoteConfirmTitle").textContent = row.title ? "“" + row.title + "”" : "โน้ตงานนี้";
+      showView("workNoteConfirmView");
+      openModal();
+    }
+
+    window.openWorkNoteDelete = openWorkNoteDelete;
+
+    function deleteWorkNote() {
+      if (!workNoteDeleteId) { toast("เลือกรายการที่จะลบก่อน"); return; }
+      var id = workNoteDeleteId;
+      fetch("/api/admin/work-notes/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "ลบไม่สำเร็จ"); return; }
+          toast("ลบโน้ตงานแล้ว");
+          closeModal();
+          workNoteDeleteId = null;
+          loadWorkNotes();
+        })
+        .catch(function () { toast("ลบไม่สำเร็จ"); });
+    }
+
+    window.deleteWorkNote = deleteWorkNote;
+
+    function previewWorkNotePdf(id) {
+      var row = workNotes.filter(function (n) { return n.id === id; })[0];
+      var title = document.getElementById("workNotePdfPreviewTitle");
+      var loading = document.getElementById("workNotePdfPreviewLoading");
+      var frame = document.getElementById("workNotePdfPreviewFrame");
+      var mask = document.getElementById("workNotePdfPreview");
+      title.textContent = "พรีวิว PDF โน้ตงาน" + (row && row.title ? " — " + row.title : "");
+      loading.style.display = "";
+      frame.style.display = "none";
+      frame.src = "";
+      mask.classList.add("open");
+      frame.setAttribute("data-id", id);
+      frame.onload = function () {
+        loading.style.display = "none";
+        frame.style.display = "";
+      };
+      frame.onerror = function () {
+        loading.textContent = "ไม่สามารถสร้าง PDF พรีวิวได้ (ตรวจสอบไฟล์ฟอนต์ / ข้อมูล)";
+      };
+      frame.src = "/api/admin/work-notes/" + id + "/pdf";
+    }
+
+    window.previewWorkNotePdf = previewWorkNotePdf;
+
+    function downloadWorkNotePdf(id) {
+      var btn = document.querySelector('#workNoteBody button[onclick="downloadWorkNotePdf(' + id + ')"]');
+      var oldHtml = btn ? btn.innerHTML : "";
+      if (btn) btn.disabled = true;
+      fetch("/api/admin/work-notes/" + id + "/pdf")
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || "สร้าง PDF ไม่สำเร็จ"); });
+          return r.blob();
+        })
+        .then(function (blob) {
+          var a = document.createElement("a");
+          var url = URL.createObjectURL(blob);
+          a.href = url;
+          a.download = "work-note-" + id + ".pdf";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+            a.remove();
+          }, 400);
+          toast("ดาวน์โหลด PDF แล้ว");
+        })
+        .catch(function (err) {
+          toast(err.message || "สร้าง PDF ไม่สำเร็จ");
+        })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
+        });
+    }
+
+    window.downloadWorkNotePdf = downloadWorkNotePdf;
+
+    function downloadWorkNotePdfFromPreview() {
+      var frame = document.getElementById("workNotePdfPreviewFrame");
+      var id = frame.getAttribute("data-id");
+      if (!id) return;
+      downloadWorkNotePdf(Number(id));
+    }
+
+    window.downloadWorkNotePdfFromPreview = downloadWorkNotePdfFromPreview;
+
+    function closeWorkNotePdfPreview(event) {
+      if (event && event.target !== event.currentTarget) return;
+      var mask = document.getElementById("workNotePdfPreview");
+      if (!mask.classList.contains("open")) return;
+      mask.classList.remove("open");
+      var frame = document.getElementById("workNotePdfPreviewFrame");
+      frame.src = "";
+      frame.removeAttribute("data-id");
+    }
+
+    window.closeWorkNotePdfPreview = closeWorkNotePdfPreview;
+
+    function toggleAddCategory() {
+      var inp = document.getElementById("dfCategoryNew");
+      var btn = document.getElementById("dfCatAddBtn");
+      var hidden = inp.style.display === "none";
+      inp.style.display = hidden ? "block" : "none";
+      btn.style.display = "none";
+      if (hidden) { inp.focus(); inp.onkeydown = function (ev) { if (ev.key === "Enter") { ev.preventDefault(); addDeviceCategoryInline(); } }; }
+      else { btn.style.display = ""; }
+    }
+
+    window.toggleAddCategory = toggleAddCategory;
+
+    function addDeviceCategoryInline() {
+      var inp = document.getElementById("dfCategoryNew");
+      var name = inp.value.trim();
+      if (!name) { toast("กรอกชื่อหมวดก่อน"); return; }
+      fetch("/api/admin/device-categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "เพิ่มหมวดไม่ได้"); return; }
+          toast("เพิ่มหมวด \"" + name + "\" แล้ว");
+          inp.value = "";
+          inp.style.display = "none";
+          document.getElementById("dfCatAddBtn").style.display = "";
+          deviceCategories.push(data.category.name);
+          var sel = document.getElementById("dfCategory");
+          var val = data.category.name;
+          var existing = Array.prototype.slice.call(sel.options).some(function (o) { return o.value === val; });
+          if (!existing) {
+            var opt = document.createElement("option");
+            opt.value = val;
+            opt.textContent = val;
+            sel.appendChild(opt);
+          }
+          sel.value = val;
+          deviceCatChanged();
+        })
+        .catch(function () { toast("เพิ่มหมวดไม่ได้"); });
+    }
+
+    window.addDeviceCategoryInline = addDeviceCategoryInline;
+
+    function deviceCatChanged() {
+      var sel = document.getElementById("dfCategory");
+      var wrap = document.getElementById("dfModelWrap");
+      if (sel.value) { wrap.style.display = ""; }
+      else { wrap.style.display = "none"; }
+    }
+
+    window.deviceCatChanged = deviceCatChanged;
+
+    function deviceStatusChanged() {
+      var sel = document.getElementById("dfStatus");
+      var claimWrap = document.getElementById("dfClaimWrap");
+      claimWrap.style.display = sel.value === "claim" ? "" : "none";
+      if (sel.value !== "claim") document.getElementById("dfClaim").value = "";
+    }
+
+    window.deviceStatusChanged = deviceStatusChanged;
+
+    function deviceModelChanged() {
+      var v = document.getElementById("dfModel").value.trim();
+      if (v.length >= 3) {
+        var box = document.getElementById("dfSpecBox");
+        box.hidden = false;
+        document.getElementById("dfSpecSrc").textContent = "กำลังค้นหาสเปคจาก DuckDuckGo...";
+        document.getElementById("dfSpecText").textContent = "";
+        searchSpec(v);
+      } else {
+        document.getElementById("dfSpecBox").hidden = true;
+      }
+      deviceSpecConfirmed = false;
+    }
+
+    window.deviceModelChanged = deviceModelChanged;
+
+    function searchSpec(query) {
+      var box = document.getElementById("dfSpecBox");
+      box.hidden = false;
+      document.getElementById("dfSpecSrc").style.color = "";
+      document.getElementById("dfSpecSrc").textContent = "กำลังค้นหาสเปค \"" + query + "\" ...";
+      document.getElementById("dfSpecText").textContent = "";
+      var lastQuery = query;
+      fetch("/api/admin/spec-search?q=" + encodeURIComponent(query))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || (data.answer === "" && data.abstract === "" && !data.results.length)) {
+            document.getElementById("dfSpecSrc").textContent = "ไม่พบสเปคอัตโนมัติ — กรอกสเปคเองด้านล่าง";
+            document.getElementById("dfSpecText").textContent = "";
+            deviceSpecConfirmed = false;
+            return;
+          }
+          var lines = [];
+          if (data.answer) lines.push(data.answer);
+          if (data.abstract) lines.push(data.abstract);
+          (data.results || []).forEach(function (r) {
+            if (r.snippet) lines.push("• " + r.snippet);
+          });
+          document.getElementById("dfSpecSrc").textContent = "พบสเปคจาก " + (data.source || "DuckDuckGo");
+          document.getElementById("dfSpecSrc").style.color = "var(--green)";
+          document.getElementById("dfSpecText").textContent = lines.join("\n") || "ไม่พบสเปค";
+          deviceSpecConfirmed = true;
+          window.__specResults = data.results || [];
+          window.__specSource = data.source || "DuckDuckGo";
+          window.__specAnswer = data.answer || data.abstract || "";
+          window.__specUrl = data.link || (data.results && data.results[0] ? data.results[0].url : "");
+        })
+        .catch(function () {
+          document.getElementById("dfSpecSrc").textContent = "ค้นหาไม่สำเร็จ — กรอกสเปคเองได้เลย";
+          deviceSpecConfirmed = false;
+        });
+    }
+
+    window.searchSpec = searchSpec;
+
+    function searchSpecAgain() {
+      var v = document.getElementById("dfModel").value.trim();
+      if (v) searchSpec(v);
+      else toast("กรอกรุ่นสินค้าก่อน");
+    }
+
+    window.searchSpecAgain = searchSpecAgain;
+
+    function confirmSpec() {
+      deviceSpecConfirmed = true;
+      toast("ยืนยันสเปคนี้แล้ว — ไปต่อได้");
+    }
+
+    window.confirmSpec = confirmSpec;
+
+    function skipSpec() {
+      deviceSpecConfirmed = false;
+      var txt = document.getElementById("dfSpecText");
+      if (!txt.textContent || txt.textContent === "ไม่พบสเปค") {
+        txt.textContent = "กรอกสเปคสำคัญแบบบรรทัดละหัวข้อ เช่น" +
+          "\nประเภท: เครื่องพิมพ์เลเซอร์ขาวดำ" +
+          "\nความเร็ว: 40 หน้า/นาที" +
+          "\nขนาด: A4 / Letter" +
+          "\nปี: 2022";
+      }
+      txt.contentEditable = "true";
+      txt.style.border = "1px dashed var(--border)";
+      txt.style.padding = "8px";
+      toast("พิมพ์สเปคเองด้านล่างได้เลย (แล้วกดยืนยันสเปคนี้)");
+    }
+
+    window.skipSpec = skipSpec;
+
+    function specToJSON() {
+      var txt = document.getElementById("dfSpecText");
+      var text = (txt.textContent || "").trim();
+      if (!text) return [];
+      var out = [];
+      text.split("\n").forEach(function (line) {
+        var lt = line.trim();
+        if (!lt) return;
+        var i = lt.indexOf(":");
+        if (i > 0) out.push({ k: lt.slice(0, i).trim(), v: lt.slice(i + 1).trim() });
+        else out.push({ k: "", v: lt });
+      });
+      return out;
+    }
+
+    function devicePickPhotos(input) {
+      var files = Array.prototype.slice.call(input.files || []);
+      var names = files.map(function (f) { return f.name; }).join(", ");
+      document.getElementById("dfPhotoNames").textContent = names || "";
+      var grid = document.getElementById("dfPhotos");
+      devicePhotos = devicePhotos.concat(files.map(function (f) { return f; }));
+      renderDevicePhotoThumbs();
+    }
+
+    window.devicePickPhotos = devicePickPhotos;
+
+    function renderDevicePhotoThumbs() {
+      var grid = document.getElementById("dfPhotos");
+      grid.innerHTML = devicePhotos.map(function (f, i) {
+        var url = URL.createObjectURL(f);
+        return '<div class="img-tile" style="position:relative">' +
+          '<img src="' + url + '" alt="" />' +
+          '<button class="icon-btn del img-x" onclick="removeDevicePhoto(' + i + ')">&times;</button></div>';
+      }).join("");
+    }
+
+    function removeDevicePhoto(i) {
+      devicePhotos.splice(i, 1);
+      renderDevicePhotoThumbs();
+    }
+
+    window.removeDevicePhoto = removeDevicePhoto;
+
+    function openDeviceForm(id) {
+      deviceEditId = id || null;
+      devicePhotos = [];
+      deviceSpecConfirmed = false;
+      window.__specResults = null;
+      window.__specSource = null;
+      window.__specAnswer = null;
+      window.__specUrl = null;
+      var fRow = id ? deviceEntries.filter(function (e) { return e.id === id; })[0] : null;
+      document.getElementById("deviceFormTitle").textContent = fRow ? "แก้ไขโน้ตอุปกรณ์" : "จดอุปกรณ์ใหม่";
+      document.getElementById("deviceFormNo").textContent = fRow ? "รหัส " + fRow.entry_no : "รหัสจะถูกสร้างอัตโนมัติ (DEV-...)";
+      document.getElementById("dfCategory").value = fRow ? fRow.category || "" : "";
+      document.getElementById("dfCategoryNew").value = "";
+      document.getElementById("dfCategoryNew").style.display = "none";
+      document.getElementById("dfCatAddBtn").style.display = "";
+      document.getElementById("dfModel").value = fRow ? fRow.model || "" : "";
+      document.getElementById("dfWarranty").value = fRow ? fRow.warranty_no || "" : "";
+      document.getElementById("dfClaimCompany").value = fRow ? fRow.claim_company || "" : "";
+      populateClaimCompanyList();
+      document.getElementById("dfWarrantyExp").value = fRow ? fRow.warranty_expire_date || "" : "";
+      refreshWarrantyExpField();
+      document.getElementById("dfStatus").value = fRow ? fRow.status || "claim" : "claim";
+      document.getElementById("dfBroken").value = fRow ? fRow.broken_date || "" : "";
+      document.getElementById("dfClaim").value = fRow ? fRow.claim_date || "" : "";
+      document.getElementById("dfAsset").value = fRow ? fRow.asset_code || "" : "";
+      document.getElementById("dfNotes").value = fRow ? fRow.notes || "" : "";
+      document.getElementById("dfPhotoNames").textContent = "";
+      document.getElementById("dfPhotos").innerHTML = "";
+      document.getElementById("dfModelWrap").style.display = document.getElementById("dfCategory").value ? "" : "none";
+      document.getElementById("dfClaimWrap").style.display = document.getElementById("dfStatus").value === "claim" ? "" : "none";
+      var box = document.getElementById("dfSpecBox");
+      box.hidden = true;
+      document.getElementById("dfSpecText").contentEditable = "false";
+      document.getElementById("dfSpecText").style.border = "";
+      document.getElementById("dfSpecText").style.padding = "";
+      if (fRow) {
+        var existing = [];
+        try { existing = JSON.parse(fRow.spec_json || "[]"); } catch (e) { existing = []; }
+        if (Array.isArray(existing) && existing.length) {
+          document.getElementById("dfSpecSrc").textContent = "สเปคเดิมจากระบบ (" + (fRow.spec_source === "web" ? "ดึงจากเน็ต" : "กรอกเอง") + ")";
+          document.getElementById("dfSpecSrc").style.color = "";
+          document.getElementById("dfSpecText").textContent = existing.map(function (s) {
+            return (s.k ? s.k + ": " : "") + s.v;
+          }).join("\n");
+          box.hidden = false;
+          deviceSpecConfirmed = true;
+        }
+      }
+      if (fRow && fRow.photos && fRow.photos.length) {
+        document.getElementById("dfPhotos").innerHTML = fRow.photos.map(function (p) {
+          return '<div class="img-tile" style="position:relative"><img src="' + esc(p.cloud_url) + '" alt="" />' +
+            '<span class="existing-photo" style="position:absolute;bottom:3px;right:6px;font-size:10.5px;color:#fff;background:rgba(0,0,0,.55);padding:1px 5px;border-radius:6px">รูปเดิม</span></div>';
+        }).join("");
+      }
+      showView("deviceFormView");
+      openModal();
+    }
+
+    window.openDeviceForm = openDeviceForm;
+
+    function saveDeviceForm() {
+      var model = document.getElementById("dfModel").value.trim();
+      var category = document.getElementById("dfCategory").value.trim();
+      var warranty = document.getElementById("dfWarranty").value.trim();
+      var claimCompany = document.getElementById("dfClaimCompany").value.trim();
+      var warrantyExp = document.getElementById("dfWarrantyExp").value.trim();
+      var status = document.getElementById("dfStatus").value;
+      var broken = document.getElementById("dfBroken").value.trim();
+      var claim = status === "claim" ? document.getElementById("dfClaim").value.trim() : "";
+      var asset = document.getElementById("dfAsset").value.trim();
+      var notes = document.getElementById("dfNotes").value.trim();
+
+      if (!category) { toast("เลือกหมวดอุปกรณ์ก่อน"); return; }
+      if (!model) { toast("กรอกรุ่นสินค้าก่อน"); return; }
+      if (!warranty) { toast("กรอกเลขประกันของสินค้าก่อน"); return; }
+      if (!broken) { toast("เลือกวันที่พังก่อน"); return; }
+      if (status === "claim" && !claim) { toast("สถานะกำลังส่งเคลมต้องมีวันที่ส่งเคลมด้วย"); return; }
+
+      var specJson = JSON.stringify(specToJSON());
+      if (specJson === "[]") {
+        if (window.__specAnswer) {
+          specJson = JSON.stringify([{ k: "", v: window.__specAnswer }]);
+        } else if (Array.isArray(window.__specResults) && window.__specResults.length) {
+          specJson = JSON.stringify(window.__specResults.slice(0, 5).map(function (r) { return { k: "", v: r.snippet }; }));
+        }
+      }
+      var specSource = deviceSpecConfirmed && (window.__specSource || document.getElementById("dfSpecSrc").textContent.indexOf("ไม่พบ") === -1)
+        ? "web" : "manual";
+      var specUrl = window.__specUrl || "";
+      if (deviceEditId) {
+        var editRow = deviceEntries.filter(function (e) { return e.id === deviceEditId; })[0];
+        if (editRow) {
+          specSource = editRow.spec_source || "manual";
+          specUrl = editRow.spec_url || "";
+        }
+      }
+
+      var payload = {
+        category: category,
+        model: model,
+        spec_json: specJson,
+        spec_source: specSource,
+        spec_url: specUrl,
+        warranty_no: warranty,
+        claim_company: claimCompany,
+        warranty_expire_date: warrantyExp,
+        status: status,
+        broken_date: broken,
+        claim_date: claim,
+        asset_code: asset,
+        notes: notes
+      };
+
+      var isEdit = !!deviceEditId;
+      fetch(isEdit ? "/api/admin/device-entries/" + deviceEditId : "/api/admin/device-entries", {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "บันทึกไม่สำเร็จ"); return; }
+          var entryId = data.id || deviceEditId;
+          var uploads = devicePhotos.map(function (f) { return uploadPhotoToSupabase(f); });
+          return Promise.all(uploads).then(function (urls) {
+            urls = urls.filter(function (u) { return u; });
+            if (urls.length) {
+              return fetch("/api/admin/device-entries/" + entryId + "/photos", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ cloud_urls: urls })
+              }).then(function (r) { return r.json(); });
+            }
+            return { ok: true };
+          }).then(function () {
+            closeModal();
+            toast(isEdit ? "แก้ไขโน้ตอุปกรณ์แล้ว" : "จดอุปกรณ์ " + (data.entry_no || "") + " แล้ว");
+            loadDeviceNotes();
+          });
+        })
+        .catch(function () { toast("บันทึกไม่สำเร็จ"); });
+    }
+
+    window.saveDeviceForm = saveDeviceForm;
+
+    function uploadPhotoToSupabase(file) {
+      return new Promise(function (resolve) {
+        var formData = new FormData();
+        formData.append("photo", file);
+        fetch("/api/admin/upload-device-photo", {
+          method: "POST",
+          body: formData
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            resolve(data.ok ? data.url : null);
+          })
+          .catch(function () { resolve(null); });
+      });
+    }
+
+    function markDeviceDone(id) {
+      fetch("/api/admin/device-entries/" + id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "ไม่สำเร็จ"); return; }
+          toast("บันทึกสถานะเสร็จแล้ว");
+          loadDeviceNotes();
+        })
+        .catch(function () { toast("ไม่สำเร็จ"); });
+    }
+
+    window.markDeviceDone = markDeviceDone;
+
+    function openDeviceDelete(id) {
+      deviceDeleteId = id;
+      var fRow = deviceEntries.filter(function (e) { return e.id === id; })[0] || {};
+      document.getElementById("deviceConfirmNo").textContent = fRow.entry_no || "โน้ตอุปกรณ์";
+      showView("deviceConfirmView");
+      openModal();
+    }
+
+    window.openDeviceDelete = openDeviceDelete;
+
+    function deleteDeviceForm() {
+      if (!deviceDeleteId) { toast("เลือกรายการที่จะลบก่อน"); return; }
+      var id = deviceDeleteId;
+      fetch("/api/admin/device-entries/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "ลบไม่สำเร็จ"); return; }
+          closeModal();
+          deviceDeleteId = null;
+          toast("ลบโน้ตอุปกรณ์แล้ว");
+          loadDeviceNotes();
+        })
+        .catch(function () { toast("ลบไม่สำเร็จ"); });
+    }
+
+    window.deleteDeviceForm = deleteDeviceForm;
+
+    function exportDeviceNotesCSV() {
+      if (!deviceEntries.length) { toast("ยังไม่มีข้อมูลให้ส่งออก"); return; }
+      var head = ["รายการ", "อุปกรณ์", "สถานะ", "สาเหตุที่เสีย"];
+      var lines = deviceEntries.map(function (e) {
+        return [e.entry_no, e.model || e.category, D_STATUS[e.status] || e.status || "", e.notes || ""]
+          .map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; })
+          .join(",");
+      });
+      var csv = "\ufeff" + head.join(",") + "\n" + lines.join("\n");
+      var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "device-notes-" + new Date().toISOString().slice(0, 10) + ".csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+    }
+
+    window.exportDeviceNotesCSV = exportDeviceNotesCSV;
 
     loadTickets();
   </script>

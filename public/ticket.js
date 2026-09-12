@@ -1,5 +1,3 @@
-var LINE_OA_URL = "https://line.me/";
-
 var MAX_PHOTOS = 10;
 
 var photos = [];
@@ -24,7 +22,6 @@ var form = document.getElementById("ticketForm");
 var actionBar = document.querySelector(".action-bar");
 var reporterName = document.getElementById("reporterName");
 var reporterPhone = document.getElementById("reporterPhone");
-var reporterLineId = document.getElementById("reporterLineId");
 var lineIdText = document.getElementById("lineIdText");
 var positionText = document.getElementById("positionText");
 var device = document.getElementById("device");
@@ -287,13 +284,26 @@ function renderProblems() {
     var label = document.createElement("label");
     label.className = "field-label prob-flex";
     label.innerHTML = devFamiliarLogo(d) + "<span>" + escapeHtml(d.label) + " — ปัญหาคือ <span class=\"req\">*</span></span>";
+    field.appendChild(label);
+
+    if (d.type === "Disk") {
+      problems[k] = problems[k] || d.label;
+      var note = document.createElement("div");
+      note.className = "disk-problem-note";
+      note.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+        '<span>ปัญหาที่ระบุ: <strong>' + escapeHtml(d.label) + "</strong> (จากรายการที่เลือกในขั้นตอนก่อนหน้า — ไม่ต้องกรอก)</span>";
+      field.appendChild(note);
+      problemFields.appendChild(field);
+      return;
+    }
 
     var ta = document.createElement("textarea");
     ta.rows = 3;
     ta.maxLength = 500;
     ta.placeholder = "พิมพ์รายละเอียดปัญหาของ " + d.label + " เช่น เปิดไม่ติด, ค้าง, error เด้ง";
     ta.value = problems[k] || "";
-ta.addEventListener("input", function () {
+    ta.addEventListener("input", function () {
       problems[k] = this.value;
       this.classList.remove("invalid");
       var cnt = field.querySelector(".p-count");
@@ -305,7 +315,6 @@ ta.addEventListener("input", function () {
     count.className = "char-count";
     count.innerHTML = '<span class="p-count">' + (problems[k] || "").length + "</span>/500";
 
-    field.appendChild(label);
     field.appendChild(ta);
     field.appendChild(count);
     problemFields.appendChild(field);
@@ -491,9 +500,10 @@ function validateStep(step) {
     return true;
   }
 
-  if (step === 2) {
+if (step === 2) {
     for (var i = 0; i < selectedDevs.length; i++) {
       var d = selectedDevs[i];
+      if (d.type === "Disk") continue;
       var k = devKey(d);
       var val = (problems[k] || "").trim();
       if (!val) {
@@ -644,6 +654,7 @@ photoGrid.addEventListener("click", function (e) {
 function buildSymptomText() {
   return selectedDevs.map(function (d) {
     var k = devKey(d);
+    if (d.type === "Disk") return (problems[k] || d.label);
     return d.label + ": " + ((problems[k] || "").trim());
   }).join("\n");
 }
@@ -668,7 +679,7 @@ function submitForm() {
   formData.append("zone_count", "0");
   formData.append("reporter_name", reporterName.value.trim());
   formData.append("reporter_phone", reporterPhone.value.trim());
-  formData.append("reporter_line_id", lineIdText.value.trim() || reporterLineId.value.trim());
+  formData.append("reporter_line_id", lineIdText.value.trim());
 
   fetch("/api/tickets", { method: "POST", body: formData })
     .then(function (res) {
@@ -756,45 +767,12 @@ function showSuccess(ticketNo, info) {
   successOverlay.classList.remove("hidden");
 }
 
-function applyReporter(profile) {
-  if (reporterName.value.trim() === "") {
-    reporterName.value = profile.displayName || "";
-  }
-  reporterLineId.value = profile.userId || "";
-}
-
-function initLineProfile() {
-  fetch("/api/config")
-    .then(function (res) {
-      return res.json();
-    })
-    .then(function (cfg) {
-      if (cfg.lineOaUrl) LINE_OA_URL = cfg.lineOaUrl;
-      if (!cfg.liffId || !window.liff) return;
-      liff
-        .init({ liffId: cfg.liffId })
-        .then(function () {
-          if (!liff.isLoggedIn()) {
-            liff.login();
-            return null;
-          }
-          return liff.getProfile();
-        })
-        .then(function (profile) {
-          if (profile) applyReporter(profile);
-        })
-        .catch(function () {});
-    })
-    .catch(function () {});
-}
-
 function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
   });
 }
 
-initLineProfile();
 buildDeviceGrid(hardGrid, HARDWARE_OPTIONS, "Hardware");
 buildDeviceGrid(softGrid, SOFTWARE_OPTIONS, "Software");
 buildDeviceGrid(diskGrid, DISK_OPTIONS, "Disk");
