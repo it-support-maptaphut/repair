@@ -17,11 +17,27 @@ if (ok) {
 }
 
 const EXT_BY_MIME = { jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp", gif: "gif" };
+const AUDIO_EXT_BY_MIME = {
+  webm: "webm",
+  ogg: "ogg",
+  opus: "opus",
+  mpeg: "mp3",
+  mp3: "mp3",
+  mp4: "mp4",
+  m4a: "m4a",
+  "x-m4a": "m4a",
+  "mp4a-latm": "m4a",
+  wav: "wav",
+  "x-wav": "wav",
+  aac: "aac"
+};
 
 function extFromMime(mimetype) {
   if (!mimetype) return "jpg";
-  const m = /image\/([\w.+-]+)/.exec(String(mimetype));
-  if (m && EXT_BY_MIME[m[1]]) return EXT_BY_MIME[m[1]];
+  const m = /([\w.+-]+)/.exec(String(mimetype).split("/")[1] || "");
+  const sub = m ? m[1] : "";
+  if (EXT_BY_MIME[sub]) return EXT_BY_MIME[sub];
+  if (AUDIO_EXT_BY_MIME[sub]) return AUDIO_EXT_BY_MIME[sub];
   return "jpg";
 }
 
@@ -67,4 +83,26 @@ async function uploadImage(buffer, name, mimetype) {
   return null;
 }
 
-module.exports = { ok, uploadImage };
+async function uploadAudio(buffer, name, mimetype) {
+  if (ok) {
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "repair-tickets", public_id: name, resource_type: "video" },
+          (err, uploaded) => (err ? reject(err) : resolve(uploaded))
+        );
+        stream.end(buffer);
+      });
+      if (result && result.secure_url) return result;
+    } catch (e) {
+      console.warn("[Cloudinary] อัปโหลดเสียงไม่สำเร็จ ใช้ Supabase Storage แทน:", e.message);
+    }
+  }
+  if (supab.ready) {
+    const stored = await uploadToSupabase(buffer, name, mimetype);
+    if (stored) return stored;
+  }
+  return null;
+}
+
+module.exports = { ok, uploadImage, uploadAudio };

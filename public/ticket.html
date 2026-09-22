@@ -10,6 +10,112 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+  .mode-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 11px 12px;
+    border-radius: 14px;
+    border: 1.5px solid #cfe8d9;
+    background: #fff;
+    color: #075027;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+  }
+  .mode-btn svg { flex: 0 0 auto; }
+  .mode-btn.is-active {
+    border-color: #06c755;
+    background: #e9f9f0;
+    box-shadow: 0 2px 8px rgba(6, 199, 85, .18);
+  }
+  .voice-panel {
+    margin-top: 4px;
+    border: 1.5px dashed #9fd6ba;
+    border-radius: 16px;
+    padding: 14px;
+    background: #f4fbf7;
+  }
+  .voice-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .mic-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: none;
+    background: #06c755;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  .mic-btn.rec {
+    background: #e02424;
+    box-shadow: 0 0 0 0 rgba(224, 36, 36, .45);
+    animation: rec-pulse 1.2s infinite;
+  }
+  @keyframes rec-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(224, 36, 36, .45); }
+    70% { box-shadow: 0 0 0 12px rgba(224, 36, 36, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(224, 36, 36, 0); }
+  }
+  .voice-timer {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e02424;
+    font-variant-numeric: tabular-nums;
+    min-width: 52px;
+  }
+  .voice-hint {
+    font-size: 14px;
+    color: #0a5a2f;
+  }
+  .voice-audio {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .voice-audio audio { height: 40px; flex: 1 1 200px; min-width: 0; }
+  .redo-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #cfe8d9;
+    background: #fff;
+    color: #075027;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .voice-unsupported {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff3cd;
+    color: #7a5b08;
+    font-size: 13px;
+  }
+</style>
 </head>
 <body class="ticket-page app-nav">
 
@@ -34,7 +140,7 @@
   <button type="button" class="draft-close" id="draftClose" aria-label="ปิด">&times;</button>
   <div class="draft-banner-text">
     <strong>พบข้อมูลฉบับร่างที่ยังไม่ได้ส่ง</strong>
-    <span>จากครั้งก่อนที่ค้างไว้ — ต้องการกู้ข้อมูลต่อไหม? <small>(รูปภาพที่แนบไว้จะไม่ถูกกู้คืน)</small></span>
+    <span>จากครั้งก่อนที่ค้างไว้ — ต้องการกู้ข้อมูลต่อไหม? <small>(รูปภาพและไฟล์เสียงจะไม่ถูกกู้คืน)</small></span>
   </div>
   <div class="draft-banner-actions">
     <button type="button" class="draft-btn restore" id="draftRestoreBtn">กู้ข้อมูลต่อ</button>
@@ -42,135 +148,91 @@
   </div>
 </div>
 
-
-
-<div class="stepper">
-  <div class="step-ind is-active" id="ind1">
-    <span class="step-dot">1</span>
-    <span class="step-label">อุปกรณ์</span>
-  </div>
-  <span class="step-line" id="line1"></span>
-  <div class="step-ind" id="ind2">
-    <span class="step-dot">2</span>
-    <span class="step-label">ปัญหา</span>
-  </div>
-  <span class="step-line" id="line2"></span>
-  <div class="step-ind" id="ind3">
-    <span class="step-dot">3</span>
-    <span class="step-label">สถานที่/ข้อมูลติดต่อ</span>
-  </div>
-</div>
-
 <main class="form-wrap">
   <form id="ticketForm" novalidate>
 
     <section class="step is-active" data-step="1">
-      <p class="step-heading">เลือกอุปกรณ์ / โปรแกรมที่พบปัญหา <span class="opt-hint">เลือกได้หลายรายการ</span></p>
+      <p class="step-heading">บอกรายละเอียดงานที่ต้องการแจ้ง</p>
 
-      <div id="devTypeGroup" class="devtype-panels">
-        <div class="cat-tabs" role="tablist" aria-label="หมวดอุปกรณ์">
-          <button type="button" class="cat-tab" data-cat="Hardware" role="tab" aria-selected="false">
-            <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="12" rx="2"/><path d="M6 20h12M12 16v4"/></svg>
-            <span class="cat-tab-body">
-              <span class="cat-tab-title">อุปกรณ์ Hardware</span>
-              <span class="cat-tab-hint">ปริ้นเตอร์ · คอมพิวเตอร์ · POS · CCTV</span>
-            </span>
+      <div class="field" id="descField">
+        <label for="symptomText" class="field-label">รายละเอียดปัญหา / งานที่ต้องการ <span class="req">*</span></label>
+        <p class="field-hint">พิมพ์เอง หรือสลับไปโหมด "พิมพ์ด้วยเสียง" แล้วพูดบอกรายละเอียดได้เลย</p>
+
+        <div class="mode-group" role="tablist" aria-label="โหมดการกรอก">
+          <button type="button" class="mode-btn is-active" data-mode="type" role="tab" aria-selected="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            พิมพ์
           </button>
-          <button type="button" class="cat-tab" data-cat="Software" role="tab" aria-selected="false">
-            <span class="cat-logos" id="catSoftLogos" aria-hidden="true"></span>
-            <span class="cat-tab-body">
-              <span class="cat-tab-title">โปรแกรม Software</span>
-              <span class="cat-tab-hint">Excel · Word · PowerPoint · อื่น ๆ</span>
-            </span>
-          </button>
-          <button type="button" class="cat-tab" data-cat="Disk" role="tab" aria-selected="false">
-            <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="9" ry="3"/><path d="M3 6v12c0 1.66 4.03 3 9 3s9-1.34 9-3V6"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
-            <span class="cat-tab-body">
-              <span class="cat-tab-title">ดิสส่วนกลาง</span>
-              <span class="cat-tab-hint">เข้าถึงไม่ได้ · สิทธิ์ · โฟลเดอร์แชร์</span>
-            </span>
+          <button type="button" class="mode-btn" data-mode="voice" role="tab" aria-selected="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+            พิมพ์ด้วยเสียง
           </button>
         </div>
 
-        <div class="dev-panel hidden" data-type="Hardware" id="hardPanel">
-          <div class="dev-grid" id="hardGrid"></div>
-          <div class="dev-custom">
-            <button type="button" class="cat-custom-toggle" data-custom-type="Hardware">+ อื่น ๆ</button>
-            <div class="dev-custom-row hidden" id="hardCustomWrap">
-              <input type="text" id="hardCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์อุปกรณ์อื่น ๆ เช่น เครื่องอ่านบาร์โค้ด">
-              <button class="mini-add" data-custom-type="Hardware" data-input="hardCustom" type="button">เพิ่ม</button>
-            </div>
+        <textarea id="symptomText" class="text-input" rows="4" maxlength="2000" placeholder="เช่น เครื่องปริ้นหน้าจุดแคชเชียร์ปริ้นไม่ออก error เด้ง เดิม..."
+                  style="width:100%; resize:vertical; min-height:110px"></textarea>
+
+        <div id="voicePanel" class="voice-panel hidden">
+          <div class="voice-actions">
+            <button id="micBtn" class="mic-btn" type="button">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+              <span id="micLabel">เริ่มพูด</span>
+            </button>
+            <span id="voiceTimer" class="voice-timer hidden">00:00</span>
+            <span id="voiceHint" class="voice-hint">พูดแล้วบอกรายละเอียดได้เลยครับ</span>
           </div>
-        </div>
-
-        <div class="dev-panel hidden" data-type="Software" id="softPanel">
-          <div class="dev-grid" id="softGrid"></div>
-          <div class="dev-custom">
-            <button type="button" class="cat-custom-toggle" data-custom-type="Software">+ อื่น ๆ</button>
-            <div class="dev-custom-row hidden" id="softCustomWrap">
-              <input type="text" id="softCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์โปรแกรมอื่น ๆ เช่น โปรแกรมบัญชี">
-              <button class="mini-add" data-custom-type="Software" data-input="softCustom" type="button">เพิ่ม</button>
-            </div>
+          <div id="voiceAudioWrap" class="voice-audio hidden">
+            <audio id="voiceAudio" controls preload="metadata"></audio>
+            <button id="redoBtn" class="redo-btn" type="button">อัดใหม่</button>
           </div>
-        </div>
-
-        <div class="dev-panel hidden" data-type="Disk" id="diskPanel">
-          <div class="dev-grid" id="diskGrid"></div>
-          <div class="dev-custom">
-            <button type="button" class="cat-custom-toggle" data-custom-type="Disk">+ อื่น ๆ</button>
-            <div class="dev-custom-row hidden" id="diskCustomWrap">
-              <input type="text" id="diskCustom" class="text-input dev-custom-input" maxlength="60" placeholder="พิมพ์ปัญหาอื่น ๆ เกี่ยวกับดิสส่วนกลาง">
-              <button class="mini-add" data-custom-type="Disk" data-input="diskCustom" type="button">เพิ่ม</button>
-            </div>
+          <div id="voiceUnsupported" class="voice-unsupported hidden">
+            เบราว์เซอร์นี้ไม่รองรับการพิมพ์ด้วยเสียง กรุณาใช้โหมดพิมพ์แทน
           </div>
         </div>
       </div>
-
-      <div id="devSelectedWrap" class="dev-selected hidden">
-        <div class="dev-selected-title">รายการที่เลือก <span id="devSelectedCount">0</span></div>
-        <div id="devSelectedList" class="dev-selected-list"></div>
-      </div>
-
-      <input type="hidden" id="device" value="">
-    </section>
-
-    <section class="step" data-step="2">
-      <p class="step-heading">กรอกรายละเอียดปัญหาของแต่ละรายการที่เลือก ตามช่องที่ระบบจัดให้</p>
-
-      <div id="problemFields" class="problem-fields"></div>
 
       <div class="field" id="photoField">
         <div class="photo-head">
           <label class="field-label">แนบรูปภาพ หรือภาพแคป  <span class="opt-hint">ไม่บังคับ</span></label>
-          <span class="photo-count" id="photoCount">0/10</span>
+          <span class="photo-count" id="photoCount">0/3</span>
         </div>
-        <p class="field-hint"> ถ้ามีภาพหน้าจอ error หรือรูปประกอบ ช่วยแนบเพื่อให้ทีมเห็นภาพชัดขึ้น</p>
+        <p class="field-hint"> ถ้ามีภาพหน้าจอ error หรือรูปประกอบ ช่วยแนบเพื่อให้ทีมเห็นภาพชัดขึ้น (ไม่เกิน 3 รูป)</p>
         <input type="file" id="photoInput" accept="image/*" multiple hidden>
         <button id="photoBtn" class="photo-btn" type="button">
           <svg class="cam-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
           <span class="photo-btn-text">เพิ่มรูป / ภาพแคป</span>
-          <span class="photo-btn-hint">เลือกไฟล์จากคอมพิวเตอร์หรือมือถือ (ไม่เกิน 10 รูป)</span>
+          <span class="photo-btn-hint">เลือกไฟล์จากคอมพิวเตอร์หรือมือถือ (ไม่เกิน 3 รูป)</span>
         </button>
         <div id="photoGrid" class="photo-grid"></div>
       </div>
-    </section>
-
-    <section class="step" data-step="3">
-      <p class="step-heading">เลือกสาขา ระบุตำแหน่ง/สถานที่ และข้อมูลติดต่อ</p>
 
       <div class="field" id="branchField">
         <label class="field-label">สาขา <span class="req">*</span></label>
-        <p class="field-hint">เลือกร้านวรรณสาขาที่อุปกรณ์นี้ตั้งอยู่</p>
+        <p class="field-hint">เลือกสาขาที่อุปกรณ์นี้ตั้งอยู่</p>
         <div class="loc-group" id="branchGroup">
-          <input type="radio" name="branch" id="br1" value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">
+          <input type="radio" name="branch" id="br1" value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)">
           <label for="br1" class="loc-option">
+            <span class="loc-text">
+              <span class="loc-title">ร้านวรรณสาขา 1</span>
+              <span class="loc-desc">ขนส่งเก่าระยอง</span>
+            </span>
+          </label>
+          <input type="radio" name="branch" id="br2" value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)">
+          <label for="br2" class="loc-option">
+            <span class="loc-text">
+              <span class="loc-title">ร้านวรรณสาขา 3</span>
+              <span class="loc-desc">ไกล้ รพ. กรุงเทพระยอง</span>
+            </span>
+          </label>
+          <input type="radio" name="branch" id="br3" value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">
+          <label for="br3" class="loc-option">
             <span class="loc-text">
               <span class="loc-title">ร้านวรรณสาขา 4</span>
               <span class="loc-desc">มาบตาพุด ระยอง</span>
             </span>
           </label>
-          <input type="radio" name="branch" id="br2" value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">
-          <label for="br2" class="loc-option">
+          <input type="radio" name="branch" id="br4" value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">
+          <label for="br4" class="loc-option">
             <span class="loc-text">
               <span class="loc-title">ร้านวรรณสาขา 5</span>
               <span class="loc-desc">บ้านฉาง ระยอง</span>
@@ -179,30 +241,16 @@
         </div>
       </div>
 
-      <div class="field" id="mapField">
-        <label class="field-label">แผนผังร้าน <span class="opt-hint">ดูประกอบการระบุตำแหน่ง</span></label>
-        <p class="field-hint">เลือกสาขาด้านบนก่อน แล้วดูผังด้านล่างเพื่อระบุจุดที่อุปกรณ์ตั้งอยู่ (หรือพิมพ์ตำแหน่งเองด้านล่าง)</p>
-        <div class="iso-wrap">
-          <p class="iso-placeholder" id="isoPlaceholder">โปรดเลือกสาขาด้านบนก่อน</p>
-          <img id="branchMapImg" class="branch-map-img hidden" alt="แผนผังร้าน" title="ขยายภาพ">
-          <button type="button" id="mapZoomBtn" class="map-zoom-btn hidden">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
-            <span>ขยายภาพ</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="field" id="positionField">
-        <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="req">*</span></label>
-        <p class="field-hint">พิมพ์จุดที่อุปกรณ์ตั้งอยู่ เช่น จุดแคชเชียร์, หลังห้องเก็บของ, ชั้นวางสินค้า</p>
-        <input type="text" id="positionText" class="text-input" maxlength="120" placeholder="เช่น จุดแคชเชียร์หน้าแรก / มุมหลังห้องเซิร์ฟเวอร์">
+      <div class="field" id="nameField">
+        <label for="reporterName" class="field-label">ชื่อผู้แจ้ง (ชื่อเล่น) <span class="req">*</span></label>
+        <p class="field-hint">ชื่อเล่นของคุณ เพื่อให้ทีม IT รู้ว่าเป็นใครเวลาโทรติดต่อกลับ</p>
+        <input type="text" id="reporterName" class="text-input" maxlength="60" placeholder="เช่น บาส, เบลล์, มินต์" autocomplete="name">
       </div>
 
       <div class="field" id="phoneField">
         <label for="reporterPhone" class="field-label">เบอร์โทรติดต่อ <span class="opt-hint">ไม่บังคับ</span></label>
         <p class="field-hint">ใส่เบอร์โทรให้ทีม IT โทรติดต่อสอบถามได้ (ไม่บังคับ)</p>
-        <input type="tel" id="reporterPhone" class="text-input" inputmode="tel" maxlength="10" placeholder="เช่น 0812345678">
-        <input type="hidden" id="reporterName" value="">
+        <input type="tel" id="reporterPhone" class="text-input" inputmode="tel" maxlength="10" placeholder="เช่น 0812345678" autocomplete="tel">
       </div>
 
       <div class="field" id="lineIdField">
@@ -210,14 +258,15 @@
         <p class="field-hint">ใส่ ID LINE (ชื่อผู้ใช้ LINE) เพื่อให้ทีม IT หาข้อมูลผู้แจ้งได้ง่ายขึ้น</p>
         <input type="text" id="lineIdText" class="text-input" maxlength="50" placeholder="เช่น itsupport123" autocomplete="off">
       </div>
+
+      <input type="hidden" id="device" value="">
     </section>
 
   </form>
 </main>
 
 <div class="action-bar">
-  <button id="prevBtn" class="action-btn secondary hidden" type="button">ย้อนกลับ</button>
-  <button id="nextBtn" class="action-btn primary" type="button">ถัดไป</button>
+  <button id="submitBtn" class="action-btn primary" type="button">ส่งแจ้งซ่อม</button>
 </div>
 
 <div id="loadingOverlay" class="overlay hidden">
@@ -242,12 +291,12 @@
         <span id="ticketNo" class="ticket-no">—</span>
       </div>
       <div class="success-row">
-        <span class="srow-label">หมวด / อุปกรณ์</span>
-        <span id="sDevice" class="srow-value">—</span>
+        <span class="srow-label">สาขา</span>
+        <span id="sLocation" class="srow-value">—</span>
       </div>
       <div class="success-row">
-        <span class="srow-label">สถานที่</span>
-        <span id="sLocation" class="srow-value">—</span>
+        <span class="srow-label">ชื่อผู้แจ้ง</span>
+        <span id="sName" class="srow-value">—</span>
       </div>
       <div class="success-row">
         <span class="srow-label">เบอร์ติดต่อ</span>
@@ -257,6 +306,10 @@
         <span class="srow-label">แนบรูปภาพ</span>
         <span id="sPhotos" class="srow-value">—</span>
       </div>
+      <div class="success-row">
+        <span class="srow-label">ไฟล์เสียง</span>
+        <span id="sAudio" class="srow-value">—</span>
+      </div>
     </div>
 
     <button id="copyTicketBtn" class="copy-btn" type="button">คัดลอกรหัสซ่อม</button>
@@ -265,11 +318,6 @@
 </div>
 
 <div id="toast" class="toast hidden"></div>
-
-<div id="mapLightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="แผนผังร้าน">
-  <button id="mapLightboxClose" class="lightbox-close" type="button" aria-label="ปิด">&times;</button>
-  <img id="mapLightboxImg" class="lightbox-img" alt="แผนผังร้าน">
-</div>
 
 <script src="notify.js"></script>
 <script src="ticket.js"></script>

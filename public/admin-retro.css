@@ -1,0 +1,476 @@
+/* ============================================================
+   admin-retro.css — ธีมย้อนยุค 90s (Windows 95 / FoxPro / DOS)
+   ------------------------------------------------------------
+   ไฟล์นี้เป็นธีมแยกจากระบบเดิมโดยสิ้นเชิง
+   - ถ้าอยากกลับไปหน้าตาเดิม: ลบ <link> ของไฟล์นี้ออกจาก admin.html
+   - ไม่แตะต้องโค้ดระบบอื่น / ไม่แตะ CSS หลักของ admin.html
+   ใช้เทคนิค `!important` เฉพาะจุดที่ inline style ของ HTML
+   บังอยู่ เพื่อให้ธีมนี้มีอำนาจชนะโดยไม่ต้องแก้ HTML
+   ============================================================ */
+
+:root {
+  --r-face: #c0c0c0;          /* พื้นผิวสีเงิน (dialog face) */
+  --r-face-hi: #cfcfcf;       /* พื้นผิวสว่างกว่า */
+  --r-light: #ffffff;         /* ไฮไลต์ขอบบน / ซ้าย (bevel สว่าง) */
+  --r-dark: #808080;          /* เงา (bevel กลาง) */
+  --r-darkest: #404040;       /* เงาเข้ม (bevel ล่าง / ขวา) */
+  --r-navy: #000080;          /* สีน้ำเงินเข้ม (selection / title) */
+  --r-title-a: #000080;       /* ไล่เฉดแถบชื่อ Windows 95 */
+  --r-title-b: #1084d0;
+  --r-text: #000000;
+  --r-field: #ffffff;
+  --r-focus: #000080;
+  --r-font: Tahoma, "MS Sans Serif", "Sarabun", Arial, sans-serif;
+  --r-mono: "Courier New", Consolas, monospace;
+}
+
+/* ---------- พื้นฐาน ---------- */
+html, body { background: #c0c0c0 !important; font-family: var(--r-font) !important; }
+body { color: #000 !important; }
+
+::selection { background: #000080; color: #fff; }
+
+* {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  letter-spacing: normal !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- แถบเลื่อนแบบวินโดว์เก่า ---------- */
+* { scrollbar-width: thin; scrollbar-color: #808080 #c0c0c0; }
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: #c0c0c0; }
+::-webkit-scrollbar-thumb {
+  background: #b5b5b5;
+  border: 2px solid #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #404040;
+  border-right: 2px solid #404040;
+}
+::-webkit-scrollbar-corner { background: #c0c0c0; }
+
+/* ---------- ฟอนต์พิเศษสำหรับเลข/รหัส ---------- */
+.tno, .ticket-no, .inbox-no, .stat-num, .tf-success-no,
+.w-result-v, .w-result-k, .many-lines b,
+td[data-c="no"] { font-family: var(--r-mono) !important; }
+
+/* ---------- เส้นขอบ bevel 3 มิติ (Win95) ---------- */
+.rb { border-style: solid; border-color: var(--r-darkest); }
+
+/* ---------- เลย์เอาต์ ---------- */
+.layout { background: #c0c0c0 !important; }
+
+.sidebar {
+  background: #c0c0c0 !important;
+  border-right: 2px solid #404040 !important;
+  box-shadow: none !important;
+  padding: 10px 8px 12px !important;
+}
+
+/* แผงหัวแบรนด์ด้านข้าง เหมือนแถบชื่องาน (program title) */
+.sidebar-header, .side-brand {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  border: none !important;
+  border-bottom: 2px solid #000 !important;
+  margin: 0 0 8px !important;
+  padding: 8px 10px !important;
+}
+.side-title { color: #fff !important; font-size: 13px !important; font-weight: 700 !important; }
+.side-sub { color: #cfe2ff !important; font-size: 10px !important; font-weight: 400 !important; }
+.side-logo { background: #404040 !important; border: 2px outset #fff; }
+
+.sidebar-toggle {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border: 2px outset #fff !important;
+}
+.sidebar-toggle:hover { background: #e8f0ff !important; color: #000 !important; }
+
+/* กลุ่มเมนูในsidebar */
+.side-group { margin: 2px 0 !important; }
+.side-group[data-group="worklog"] { margin-top: 18px !important; }
+.side-group-head {
+  background: #c0c0c0 !important;
+  color: #000080 !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  border: none !important;
+  border-top: 1px solid #fff !important;
+  border-bottom: 1px solid #808080 !important;
+  padding: 7px 8px !important;
+  font-family: var(--r-font) !important;
+}
+.side-group-head:hover { color: #000080 !important; }
+
+.side-btn {
+  color: #000 !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  margin: 1px 0 !important;
+  padding: 8px 10px !important;
+  border: none !important;
+  background: transparent !important;
+}
+.side-btn:hover { background: #c8d7f0 !important; color: #000 !important; }
+.side-btn.is-active {
+  background: #000080 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-left: 4px solid #cfe2ff !important;
+}
+.side-btn svg { color: currentColor !important; }
+.side-foot { color: #000 !important; border-top: 1px solid #808080 !important; }
+
+/* ---------- พื้นที่ทำงานหลัก + แถบชื่องาน (title bar) ---------- */
+.main {
+  background: #c0c0c0 !important;
+  padding: 10px 14px 30px !important;
+}
+.main::before {
+  content: "SYSTEM ADMIN IT — ระบบจัดการงานแจ้งซ่อม";
+  display: block;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-family: var(--r-font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 6px 10px;
+  border: 1px solid #000;
+  border-bottom: 2px solid #404040;
+  margin-bottom: 10px;
+}
+
+/* ---------- สถิติการ์ด เหมือนกล่องข้อมูลเก่า ---------- */
+.stats { gap: 8px !important; margin-bottom: 12px !important; }
+.stat-card {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  padding: 10px 12px !important;
+  box-shadow: inset 1px 1px 0 #e4e4e4, inset -1px -1px 0 #e4e4e4 !important;
+}
+.stat-card.is-active {
+  background: #000080 !important;
+  border-color: #404040 #fff #fff #404040 !important;
+}
+.stat-card.is-active .stat-label, .stat-card.is-active .stat-icon,
+.stat-card.is-active .stat-num { color: #fff !important; }
+.stat-icon {
+  background: #e0e0e0 !important;
+  color: #000080 !important;
+  border: 2px outset #fff !important;
+  width: 38px; height: 38px;
+}
+.stat-num { color: #000 !important; font-size: 21px !important; }
+.stat-label { color: #000 !important; font-size: 10.5px !important; text-transform: uppercase; letter-spacing: .3px !important; }
+
+/* ---------- ปุ่ม 3 มิติแบบ Win95 ---------- */
+button, .btn, .btn-refresh, .btn-inbox, .icon-btn, .status-btn, .pdf-chip,
+.ana-export-btn, .ana-filter-reset, .ana-refresh, .w-btn, .modal-close,
+.sidebar-toggle {
+  font-family: var(--r-font) !important;
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+  border-radius: 0 !important;
+  font-weight: 400 !important;
+  transition: none !important;
+}
+button:hover, .btn:hover, .status-btn:hover, .pdf-chip:hover,
+.ana-export-btn:hover, .w-btn:hover, .modal-close:hover { color: #000 !important; }
+button:active, .btn:active, .status-btn:active, .icon-btn:active, .pdf-chip:active,
+.ana-export-btn:active, .ana-filter-reset:active, .modal-close:active, .sidebar-toggle:active {
+  border-color: #404040 #fff #fff #404040 !important;
+}
+
+/* ปุ่มหลัก / สำคัญ ใช้พื้นสีน้ำเงินเข้มแบบ DOS menu */
+.btn-primary, .w-btn-primary {
+  background: #000080 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-color: #cfe2ff #000028 #000028 #cfe2ff !important;
+}
+.btn-primary:hover, .w-btn-primary:hover { color: #fff !important; background: #1a1aa8 !important; }
+
+/* กลุ่มปุ่มสถานะสีตามความหมาย แต่ยังคงแบบแบนๆ โบราณ */
+.btn-danger { background: #8b0000 !important; color: #fff !important; border-color: #ffa0a0 #400000 #400000 #ffa0a0 !important; }
+.btn-ghost { background: #d0d0d0 !important; color: #000 !important; }
+.btn-approve, .status-btn.approve { background: #c6e8c6 !important; color: #0a5a0a !important; font-weight: 700 !important; }
+.btn-finish, .status-btn.finish { background: #cfe2ff !important; color: #00338d !important; font-weight: 700 !important; }
+.btn-edit { background: #e8f0ff !important; color: #000080 !important; }
+.btn-share, .btn-drive { background: #d8ece6 !important; color: #066 !important; }
+
+.icon-btn {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border-color: #fff #808080 #808080 #fff !important;
+}
+.icon-btn:hover { color: #000 !important; border-color: #fff #808080 #808080 #fff !important; }
+.icon-btn.edit:hover { background: #e8f0ff !important; }
+.icon-btn.del:hover { background: #f8d0d0 !important; }
+.icon-btn.share:hover { background: #d8ece6 !important; }
+
+.pdf-chip { background: #c6e8c6 !important; color: #0a5a0a !important; font-weight: 700 !important; }
+.pdf-chip:hover { background: #9fd09f !important; color: #003 !important; }
+
+/* ปุ่มกล่องข้อความ / รีเฟรช (ต้องชนะ inline style ใน HTML) */
+.btn-inbox, .btn-refresh {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+  padding: 7px 12px !important;
+}
+
+/* ---------- โต๊ะข้อมูล + กริดแบบเก่า ---------- */
+.table-wrap {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  padding: 2px !important;
+}
+table {
+  border-collapse: collapse;
+  background: #fff !important;
+  width: 100%;
+  font-family: var(--r-font);
+}
+table th {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  border: 1px solid #808080;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 1px solid #404040;
+  border-bottom: 1px solid #404040;
+  padding: 7px 9px !important;
+  white-space: nowrap;
+}
+table td {
+  border: 1px solid #a8a8a8;
+  padding: 7px 9px !important;
+  color: #000 !important;
+  background: #fff;
+  font-size: 13px !important;
+}
+table tr:nth-child(even) td { background: #e9e9e9; }
+
+/* การ์ดแถว: highlight แบบวินโดว์เลือกแถว */
+tr.ticket-card:hover td { background: #000080 !important; color: #fff !important; }
+tr.ticket-card:hover td span, tr.ticket-card:hover td .badge,
+tr.ticket-card:hover td a, tr.ticket-card:hover td .symp-item { color: #fff !important; }
+tr.ticket-card:hover td .badge, tr.ticket-card:hover td .pdf-chip,
+tr.ticket-card:hover td .dev-tag { background: #0000a0 !important; border-color: #cfe2ff !important; }
+
+/* ข้อความในเซลล์ */
+.tno { color: #000080 !important; font-size: 14px !important; font-weight: 700 !important; }
+.t-date { color: #000 !important; }
+.cell-user { color: #000 !important; }
+td[data-c="symptom"] .cell-trunc { color: #000 !important; }
+
+/* Badge สถานะ แบบป้ายสี่เหลี่ยมเรียบๆ 90s */
+.badge {
+  background: #c0c0c0 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+  color: #000 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+}
+.badge::before { display: none !important; }
+.b-new { background: #fff1b3 !important; color: #7a5c00 !important; }
+.b-working { background: #cfe2ff !important; color: #00338d !important; }
+.b-done { background: #c6e8c6 !important; color: #0a5a0a !important; }
+
+/* แท็กหมวดอุปกรณ์ */
+.dev-tag {
+  background: #e9e9e9 !important;
+  border: 1px solid #808080 !important;
+  border-left: 3px solid #000080 !important;
+  color: #000 !important;
+  font-size: 11px !important;
+}
+.dev-tag.soft { border-left-color: #1084d0 !important; }
+
+/* ---------- เลย์เอาต์/แถบเครื่องมือ ---------- */
+.mbar, .devices-toolbar {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  padding: 8px !important;
+  margin-bottom: 10px !important;
+  gap: 8px !important;
+}
+.mbar input, .mbar select, .devices-toolbar input, .devices-toolbar select,
+.ana-sel, .ana-date-input { font-family: var(--r-font) !important; }
+
+/* ---------- ฟอร์ม field เก่า (พื้นขาว ขอบสลัก) ---------- */
+input, select, textarea, .ana-sel, .ana-date-input, .w-drop {
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px inset #808080 !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+  font-family: var(--r-font) !important;
+  font-size: 13px !important;
+}
+input:focus, select:focus, textarea:focus { outline: 1px dotted #000; }
+input::placeholder { color: #666; }
+
+/* ---------- วินโดว์/โมดอลแบบ 95 ---------- */
+.modal-mask { background: rgba(0, 0, 0, .45) !important; }
+.modal {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.35) !important;
+}
+.modal::before {
+  content: "SYSTEM ADMIN IT";
+  display: block;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-family: var(--r-font);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-bottom: 1px solid #000;
+}
+.modal-body { background: #c0c0c0 !important; padding: 16px 18px 18px !important; }
+.modal-title { color: #000080 !important; font-size: 16px !important; font-weight: 700 !important; }
+.modal-no, .tf-field-hint, .tf-success-desc { color: #000 !important; }
+.form-field label { color: #000 !important; font-weight: 700 !important; }
+
+.modal-close {
+  position: absolute; top: 3px; right: 3px;
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+  font-family: var(--r-mono) !important;
+}
+.modal-close:hover { background: #f8d0d0 !important; }
+
+/* ---------- โทสต์ข้อความ ---------- */
+.toast {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #000 #000 #fff !important;
+  font-family: var(--r-font) !important;
+  font-weight: 700 !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.35) !important;
+}
+
+/* ---------- หน้า ตรวจสอบประกัน : ไฮไลต์วันหมดประกัน ---------- */
+.wl-chip {
+  border: 2px solid #000 !important;
+  border-radius: 0 !important;
+  font-family: var(--r-mono) !important;
+}
+.wl-expired { background: #8b0000 !important; color: #fff !important; }
+.wl-warn { background: #d9a406 !important; color: #000 !important; }
+.wl-good { background: #0a5a0a !important; color: #fff !important; }
+.wl-none { background: #d0d0d0 !important; color: #000 !important; }
+.w-sn, .w-spec .k { font-family: var(--r-mono) !important; }
+
+/* ---------- เลือกฟอร์มโน้ต / จดบันทึก ---------- */
+.wn-choose-card {
+  background: #c0c0c0;
+  border: 1px solid #fff;
+  border-right-color: #404040 !important;
+  border-bottom-color: #404040 !important;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #fff;
+  border-radius: 0 !important;
+  padding: 14px;
+}
+.wn-choose-card:hover { background: #d4d0c8; border-color: #fff; box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #fff; }
+.wn-choose-ico { background: #000080 !important; color: #fff !important; border-radius: 0 !important; }
+.wn-choose-name { color: #000 !important; font-size: 14px; }
+.wn-choose-desc { color: #404040 !important; font-family: Microsoft Sans Serif, ui-sans-serif, sans-serif; }
+.wn-choose-grid .wn-choose-card:focus { outline: 1px dotted #000; }
+.wn-back { color: #000080 !important; }
+.wn-journal-text { border-left: 2px dashed #808080 !important; color: #000 !important; }
+.modal.wn-journal-modal { background: transparent !important; border: none !important; box-shadow: none !important; }
+.modal.wn-journal-modal .wn-choose-ico { background: #000080 !important; }
+
+/* ---------- รายการงานทั้งหมด (ระบบบันทึกการทำงาน) ---------- */
+.wl-date-head {
+  background: #000080 !important;
+  color: #fff !important;
+  border: 2px solid;
+  border-color: #cfe2ff #000028 #000028 #cfe2ff !important;
+  font-family: var(--r-font) !important;
+}
+.wl-date-count { background: #1084d0 !important; color: #fff !important; }
+
+/* ---------- ตั้งค่าธีม (ล่างสุดของ sidebar) ---------- */
+.theme-group { border-top: 2px solid #808080 !important; }
+.theme-group .side-group-head { border-top: none !important; }
+.theme-opt.is-on {
+  background: #000080 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: inset 3px 0 0 #1084d0 !important;
+}
+.theme-opt svg { color: currentColor !important; }
+
+/* ---------- กล่องข้อความ (inbox) ---------- */
+.inbox-item {
+  background: #fff !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+}
+.inbox-no { color: #000080 !important; font-size: 15px !important; }
+.inbox-time, .inbox-loc, .inbox-reporter { color: #000 !important; }
+.inbox-empty { color: #000 !important; }
+.inbox-badge { background: #ff0 !important; color: #000 !important; border: 2px solid #000 !important; font-family: var(--r-mono) !important; }
+
+/* ---------- หน้าการ์ดวิเคราะห์ ---------- */
+.ana-filter, .ana-card, .ana-filtered-stats, .ana-export-row {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+}
+.ana-filter { padding: 10px !important; }
+.ana-filter-label, .ana-card-title, .ana-tip-name, .ana-tip-row, .ana-total { color: #000 !important; }
+.ana-card-title { font-size: 13px !important; font-weight: 700 !important; }
+.ana-no-data { color: #000 !important; }
+.ana-device-chip {
+  background: #000080 !important;
+  color: #fff !important;
+  border: 1px solid #000 !important;
+}
+.ana-rep-chart { color: #000 !important; }
+
+/* ---------- หน้าเช็คประกัน / โน้ต ---------- */
+.w-bar, .w-result, .w-result-item {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+}
+.w-label, .w-note, .w-result-k, .w-result-v, .w-result-name, .w-result-cat { color: #000 !important; }
+.w-result-name { font-weight: 700 !important; color: #000080 !important; }
+
+/* ---------- รายการว่าง / คำแนะนำ ---------- */
+.empty { color: #000 !important; }
+.users-empty-hint { color: #000 !important; }
+
+/* ---------- กดปุ่มลิงก์/ตารางหน้า ---------- */
+.pagination .btn { font-family: var(--r-mono) !important; }
+
+/* ---------- มือถือ: ย่อให้เข้ากับพื้นที่ ---------- */
+@media (max-width: 767px) {
+  .main { padding: 8px 8px 24px !important; }
+  .main::before { font-size: 11px !important; padding: 5px 8px !important; }
+  .stat-card { padding: 8px 10px !important; }
+  .sidebar { padding: 8px 6px !important; }
+}

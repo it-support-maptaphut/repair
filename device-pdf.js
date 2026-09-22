@@ -17,8 +17,10 @@ const hasFonts = () =>
 
 const STATUS_LABEL = {
   claim: "กำลังส่งเคลม",
+  repairing: "กำลังส่งซ่อม",
   repair: "อยู่ระหว่างซ่อมบำรุง",
-  done: "เสร็จแล้ว"
+  done: "เสร็จแล้ว",
+  ok: "ปกติ"
 };
 
 function padDate(s) {

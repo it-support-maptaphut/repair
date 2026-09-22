@@ -559,6 +559,54 @@ button {
   margin-bottom: 10px;
 }
 
+.status-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-radio-group input[type="radio"] {
+  display: none;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 2px solid var(--line);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fff;
+}
+
+.status-radio-group input[type="radio"]:checked + .status-option {
+  background: var(--green-soft);
+  border-color: var(--green);
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.status-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status-radio-group input[type="radio"]:checked + .status-option .status-title {
+  color: var(--green-dark);
+}
+
 .photo-head {
   display: flex;
   align-items: center;
@@ -710,22 +758,27 @@ button {
 
 textarea,
 .text-input {
-  width: 100%;
-  border: 1.5px solid var(--line);
-  background: #fff;
-  border-radius: 0;
-  padding: 12px 14px;
-  font-size: 15px;
-  resize: none;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
+   width: 100%;
+   border: 1.5px solid var(--line);
+   background: #fff;
+   border-radius: 0;
+   padding: 12px 14px;
+   font-size: 15px;
+   resize: none;
+   outline: none;
+   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+ }
 
-textarea:focus,
-.text-input:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(10, 107, 59, 0.12);
-}
+ select.text-input {
+   appearance: auto;
+   cursor: pointer;
+ }
+
+ textarea:focus,
+ .text-input:focus {
+   border-color: var(--green);
+   box-shadow: 0 0 0 3px rgba(10, 107, 59, 0.12);
+ }
 
 textarea.invalid,
 .text-input.invalid {
@@ -2390,4 +2443,148 @@ textarea.invalid,
   .ticket-page .nav-trigger:hover {
     transform: scale(1.08);
   }
+}
+
+/* ============ MOBILE : ปรับ UI ให้เหมาะกับโทรศัพท์ (เฉพาะหน้า Ticket) ============ */
+@media (max-width: 767.98px) {
+  /* Stepper 4 ขั้นตอน — หดให้พอดีจอ ไม่ล้นแนวนอน */
+  .ticket-page .stepper {
+    width: 100%;
+    max-width: 700px;
+    padding: 16px 10px 2px;
+  }
+  .ticket-page .step-ind {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 5px;
+  }
+  .ticket-page .step-dot {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+  .ticket-page .step-label {
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: normal;
+    text-align: center;
+    max-width: 80px;
+  }
+  .ticket-page .step-line {
+    flex: 1 1 18px;
+    min-width: 8px;
+    max-width: 28px;
+  }
+
+  /* ฟอร์ม */
+  .ticket-page .form-wrap {
+    margin-top: 12px;
+    padding: 0 12px 172px;
+  }
+  .ticket-page .step.is-active {
+    padding: 22px 16px 26px;
+    box-shadow: 0 2px 12px rgba(23, 36, 28, 0.06);
+  }
+  .ticket-page .step-heading {
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 12px 14px;
+    margin-bottom: 22px;
+  }
+  .ticket-page .field { margin-bottom: 24px; }
+  .ticket-page .field + .field { margin-top: 22px; padding-top: 22px; }
+
+  /* ป้องกัน iOS Auto-zoom ตอนโฟกัสช่องกรอก (ต้อง >= 16px) + พื้นที่แตะใหญ่ขึ้น */
+  .ticket-page textarea,
+  .ticket-page .text-input {
+    font-size: 16px;
+    padding: 13px 14px;
+  }
+  .ticket-page input[type="date"].text-input,
+  .ticket-page select.text-input {
+    min-height: 50px;
+  }
+  .ticket-page .status-option { padding: 14px 16px; gap: 12px; }
+  .ticket-page .loc-option { padding: 14px 15px; }
+
+  /* แถบปุ่มล่าง — จรดขอบจอ แตะง่าย */
+  .ticket-page .action-bar {
+    width: 100%;
+    max-width: 560px;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+  .ticket-page .action-btn {
+    min-height: 54px;
+    padding: 16px 18px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ticket-page .action-btn.primary { box-shadow: 0 8px 20px rgba(10, 107, 59, 0.34); }
+
+  /* ขั้นตอน 1 : หมวดแบบ 2x2 + ปุ่มเลือกอุปกรณ์คว้าจอ */
+  .ticket-page .cat-tabs { grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+  .ticket-page .cat-tab[data-cat="Disk"] { grid-column: auto; }
+  .ticket-page .cat-tab { gap: 10px; padding: 13px 12px; }
+  .ticket-page .cat-tab-title { font-size: 14px; }
+  .ticket-page .cat-tab-hint { font-size: 10px; white-space: normal; line-height: 1.3; }
+  .ticket-page .cat-icon { width: 28px; height: 28px; }
+  .ticket-page .cat-logos { gap: 3px; }
+  .ticket-page .cat-logo { width: 22px; height: 22px; }
+
+  .ticket-page .devtype-panels { gap: 16px; }
+  .ticket-page .dev-grid { gap: 9px; }
+  .ticket-page .dev-opt { padding: 16px 6px 14px; font-size: 13px; min-height: 92px; }
+  .ticket-page .dev-opt svg { width: 28px; height: 28px; }
+  .ticket-page .dev-opt .dev-logo { width: 36px; height: 36px; }
+  .ticket-page .dev-opt.sel::after { top: 6px; right: 6px; width: 20px; height: 20px; background-size: 11px; }
+  .ticket-page .cat-custom-toggle { padding: 13px; }
+  .ticket-page .mini-add { min-height: 50px; padding: 0 18px; }
+  .ticket-page .dev-custom-row { margin-top: 10px; }
+
+  /* รายการที่เลือก — chip ใหญ่ขึ้น แตะปุ่มลบง่ายขึ้น */
+  .ticket-page .dev-chip { padding: 8px 8px 8px 12px; font-size: 13px; gap: 8px; }
+  .ticket-page .dev-chip-type { padding: 3px 8px; }
+  .ticket-page .dev-chip-del { width: 28px; height: 28px; font-size: 16px; }
+  .ticket-page .dev-selected { margin-top: 14px; padding-top: 14px; }
+
+  /* ขั้นตอน 2 : รายละเอียด + รูป */
+  .ticket-page .problem-fields .problem-item { margin-bottom: 20px; }
+  .ticket-page .problem-fields .problem-item + .problem-item { margin-top: 20px; padding-top: 20px; }
+  .ticket-page .problem-item textarea { min-height: 84px; }
+  .ticket-page .photo-btn { padding: 26px 14px; }
+  .ticket-page .photo-grid { gap: 8px; }
+  .ticket-page .photo-add { font-size: 10px; }
+  .ticket-page .photo-del { width: 26px; height: 26px; }
+
+  /* ขั้นตอน 3 : แผนผังร้าน ให้ภาพเต็มความกว้าง แตะขยายง่าย */
+  .ticket-page .step[data-step="3"] .iso-wrap { margin-top: 2px; }
+  .ticket-page .iso-placeholder { padding: 28px 16px; font-size: 13px; }
+
+  /* ขั้นตอน 4 : ตัวเลือกสถานะเต็มความกว้าง */
+  .ticket-page .status-radio-group { gap: 9px; }
+  .ticket-page .status-title { font-size: 14px; }
+  .ticket-page .status-desc { font-size: 12px; }
+
+  /* การ์ดสำเร็จภายใต้จอเล็ก */
+  .ticket-page .success-box { padding: 28px 18px 20px; }
+  .ticket-page .toast { top: 74px; font-size: 13px; padding: 12px 16px; }
+
+  /* ปัดลบ hover float ที่ไม่จำเป็นบนจอสัมผัส */
+  .ticket-page .cat-tab:hover,
+  .ticket-page .dev-opt:not(.sel):hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .ticket-page .stepper { padding: 14px 6px 0; }
+  .ticket-page .step-dot { width: 24px; height: 24px; font-size: 11px; }
+  .ticket-page .step-label { font-size: 9.5px; max-width: 70px; }
+  .ticket-page .step.is-active { padding: 20px 13px 24px; }
+  .ticket-page .form-wrap { padding: 0 10px 170px; }
+  .ticket-page .dev-opt { min-height: 86px; padding: 14px 5px 12px; }
 }

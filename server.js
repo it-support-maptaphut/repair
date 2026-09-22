@@ -1,9 +1,10 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fsSync = require("fs");
 
 const config = require("./config");
-const supab = require("./supabase");
+const db = require("./db-adapter");
 const cloud = require("./cloudinary");
 const archive = require("./archive");
 const notif = require("./notify");
@@ -40,7 +41,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024, files: 12 }
 });
 
-app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
+app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name: "audio", maxCount: 1 }]), async (req, res) => {
   try {
     const body = req.body || {};
     const device = String(body.device || "").trim();
@@ -49,42 +50,81 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
     const name = String(body.reporter_name || "").trim();
     const phone = String(body.reporter_phone || "").trim();
     const reporterLineId = String(body.reporter_line_id || "").trim();
+    const handlerName = String(body.handler_name || "").trim();
+    const statusDateRaw = String(body.status_date || "").trim();
+    const statusDate = /^\d{4}-\d{2}-\d{2}$/.test(statusDateRaw) ? statusDateRaw : null;
+    const statusValue = String(body.status || "new").trim();
+    const status = ["new", "working", "done"].includes(statusValue) ? statusValue : "new";
+    const sourceRaw = String(body.source || "external").trim();
+    const source = sourceRaw === "internal" ? "internal" : "external";
+    // ใบแจ้งภายในเข้าระบบทันที / ใบแจ้งจากภายนอกจะรอ IT กด "ตอบรับ" ก่อนถึงจะเข้าระบบบันทึกรายการ
+    const acceptedAt = source === "internal" ? new Date().toISOString() : null;
 
-    if (!device || !symptom || !location) {
+    if (!symptom || !location) {
       return res.status(400).json({ ok: false, message: "ข้อมูลไม่ครบ" });
     }
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (source !== "internal" && !name) {
+      return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อผู้แจ้ง (ชื่อเล่น)" });
+    }
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
 
-    const ticketNo = await supab.genTicketNo(device);
+    const ticketNo = await adapter.genTicketNo(device);
 
+    const photos = (req.files && req.files.photos) || [];
     const zoneCount = parseInt(String(body.zone_count || "0"), 10) || 0;
-    const files = req.files || [];
-    const fileCount = files.length;
+    const fileCount = photos.length;
     const problemCount = Math.max(0, fileCount - zoneCount);
     const urls = [];
     for (let i = 0; i < fileCount; i++) {
       const isZone = i >= problemCount;
       const label = isZone ? `z${i - problemCount + 1}` : `${i + 1}`;
-      const up = await cloud.uploadImage(files[i].buffer, `${ticketNo}-${label}`, files[i].mimetype);
+      const up = await cloud.uploadImage(photos[i].buffer, `${ticketNo}-${label}`, photos[i].mimetype);
       if (up && up.secure_url) urls.push(up.secure_url);
     }
-    if (files.length && !cloud.ok) {
+    if (fileCount && !cloud.ok) {
       console.warn("[Cloudinary] ยังไม่ได้ตั้งค่า ใช้ Supabase Storage แทน (ถ้าอัปโหลดสำเร็จ)");
     }
 
-    const ticketId = await supab.createTicket({
+    let audioUrl = "";
+    const audioFile = (req.files && req.files.audio && req.files.audio[0]) || null;
+    if (audioFile) {
+      const up = await cloud.uploadAudio(audioFile.buffer, `${ticketNo}-audio`, audioFile.mimetype);
+      if (up && up.secure_url) audioUrl = up.secure_url;
+    }
+
+    const ticketId = await adapter.createTicket({
       ticketNo,
       device,
       symptom,
       location,
       reporterName: name,
       reporterPhone: phone,
-      reporterLineId
+      reporterLineId,
+      status,
+      handlerName,
+      statusDate,
+      source,
+      acceptedAt,
+      audioUrl
     });
-    await supab.addPhotos(ticketId, urls);
-    await supab.recordDevice({ ip: clientIp(req), ticketNo });
+    await adapter.addPhotos(ticketId, urls);
+    await adapter.recordDevice({ ip: clientIp(req), ticketNo });
+
+    if (source === "internal") {
+      try {
+        const noteId = await adapter.createRepairNote({
+          ticketNo,
+          category: "ภายใน",
+          content: symptom
+        });
+        console.log(`[repair-notes] สร้างบันทึกภายในอัตโนมัติ ${ticketNo} (id=${noteId})`);
+      } catch (e) {
+        console.warn("[repair-notes] สร้างบันทึกภายในอัตโนมัติไม่สำเร็จ:", e.message);
+      }
+    }
 
     res.json({ ok: true, ticketNo });
   } catch (err) {
@@ -93,7 +133,7 @@ app.post("/api/tickets", upload.array("photos", 12), async (req, res) => {
   }
 });
 
-app.get("/admin", (req, res) => res.redirect("/admin2.html"));
+app.get("/admin", (req, res) => res.redirect("/admin.html"));
 
 app.get("/api/notify/stream", (req, res) => {
   notif.handleStream(req, res, clientIp(req));
@@ -101,17 +141,76 @@ app.get("/api/notify/stream", (req, res) => {
 
 app.get("/api/config", (req, res) => {
   res.json({
-    maxPhotos: 10
+    maxPhotos: 3
   });
 });
 
 app.get("/api/admin/tickets", async (req, res) => {
   try {
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const tickets = await supab.listTickets();
+    const tickets = await adapter.listTickets();
     res.json({ ok: true, tickets });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- กล่องข้อความจากผู้แจ้งภายนอก (รอ IT กด "ตอบรับ") ----------
+app.get("/api/admin/inbox", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const inbox = await adapter.listInbox();
+    res.json({ ok: true, count: inbox.length, inbox });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/inbox/:ticketNo/accept", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const ticketNo = String(req.params.ticketNo || "").trim();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const row = await adapter.acceptTicket(ticketNo);
+    if (!row) {
+      return res.status(404).json({ ok: false, message: "ไม่พบรายการรอตอบรับ (หรือตอบรับไปแล้ว)" });
+    }
+    try {
+      let dev;
+      if (adapter.mode === "supabase") {
+        dev = await adapter.supabase
+          .from("user_devices")
+          .select("ip")
+          .eq("last_ticket_no", ticketNo)
+          .maybeSingle();
+      } else {
+        const result = await adapter.pool.query(
+          `SELECT ip FROM user_devices WHERE last_ticket_no = $1`,
+          [ticketNo]
+        );
+        dev = { data: result.rows[0] };
+      }
+      if (dev && dev.data && dev.data.ip) {
+        notif.pushToIp(dev.data.ip, {
+          type: "accepted",
+          ticketNo,
+          at: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.warn("[notify] ส่งแจ้งเตือน 'ตอบรับ' ไม่สำเร็จ:", e.message);
+    }
+    res.json({ ok: true, ticketNo });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -120,11 +219,30 @@ app.get("/api/admin/tickets", async (req, res) => {
 
 app.get("/api/admin/users", async (req, res) => {
   try {
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const users = await supab.listDevices();
+    const users = await adapter.listDevices();
     res.json({ ok: true, users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/users", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const ip = String((req.body || {}).ip || "").trim();
+    const name = String((req.body || {}).name || "").trim();
+    if (!ip) return res.status(400).json({ ok: false, message: "กรอก IP Address" });
+    if (!name) return res.status(400).json({ ok: false, message: "กรอกชื่อผู้ใช้ / เครื่อง" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const user = await adapter.createDevice({ ip, name });
+    res.json({ ok: true, user });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -133,13 +251,14 @@ app.get("/api/admin/users", async (req, res) => {
 
 app.put("/api/admin/users/:ip", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ip = String(req.params.ip || "").trim();
     const name = String((req.body || {}).name || "").trim();
     if (!ip) return res.status(400).json({ ok: false, message: "ไม่มีรหัส IP" });
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    await supab.setDeviceName(ip, name);
+    await adapter.setDeviceName(ip, name);
     res.json({ ok: true, ip, name });
   } catch (err) {
     console.error(err);
@@ -149,12 +268,13 @@ app.put("/api/admin/users/:ip", async (req, res) => {
 
 app.delete("/api/admin/users/:ip", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ip = String(req.params.ip || "").trim();
     if (!ip) return res.status(400).json({ ok: false, message: "ไม่มีรหัส IP" });
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const data = await supab.removeDevice(ip);
+    const data = await adapter.removeDevice(ip);
     if (!data || !data.length) {
       return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
     }
@@ -182,8 +302,9 @@ app.post("/api/admin/upload-device-photo", upload.single("photo"), async (req, r
 
 app.get("/api/admin/device-categories", async (req, res) => {
   try {
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const cats = await supab.listDeviceCategories();
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const cats = await adapter.listDeviceCategories();
     res.json({ ok: true, categories: cats });
   } catch (err) {
     console.error(err);
@@ -193,10 +314,11 @@ app.get("/api/admin/device-categories", async (req, res) => {
 
 app.post("/api/admin/device-categories", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const name = String((req.body || {}).name || "").trim();
     if (!name) return res.status(400).json({ ok: false, message: "กรอกชื่อหมวด" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const cat = await supab.addDeviceCategory(name);
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const cat = await adapter.addDeviceCategory(name);
     res.json({ ok: true, category: cat });
   } catch (err) {
     console.error(err);
@@ -207,8 +329,9 @@ app.post("/api/admin/device-categories", async (req, res) => {
 
 app.get("/api/admin/device-entries", async (req, res) => {
   try {
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const entries = await supab.listDeviceEntries();
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const entries = await adapter.listDeviceEntries();
     res.json({ ok: true, entries });
   } catch (err) {
     console.error(err);
@@ -218,11 +341,12 @@ app.get("/api/admin/device-entries", async (req, res) => {
 
 app.post("/api/admin/device-entries", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const model = String((req.body || {}).model || "").trim();
     if (!model) return res.status(400).json({ ok: false, message: "กรอกรุ่นสินค้า" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const entryNo = await supab.genDeviceNo();
-    const id = await supab.createDeviceEntry({
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const entryNo = await adapter.genDeviceNo();
+    const id = await adapter.createDeviceEntry({
       entryNo,
       category: String((req.body || {}).category || "").trim(),
       model,
@@ -247,9 +371,10 @@ app.post("/api/admin/device-entries", async (req, res) => {
 
 app.put("/api/admin/device-entries/:id", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     const body = req.body || {};
     const patch = {};
     ["category","model","spec_json","spec_source","spec_url","warranty_no","claim_company","status","asset_code","notes"].forEach(function (k) {
@@ -260,7 +385,7 @@ app.put("/api/admin/device-entries/:id", async (req, res) => {
     if (body.claim_date != null) patch.claim_date = String(body.claim_date).trim() || null;
     patch.updated_at = new Date().toISOString();
     if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
-    await supab.updateDeviceEntry(id, patch);
+    await adapter.updateDeviceEntry(id, patch);
     res.json({ ok: true, id, ...patch });
   } catch (err) {
     console.error(err);
@@ -270,10 +395,11 @@ app.put("/api/admin/device-entries/:id", async (req, res) => {
 
 app.delete("/api/admin/device-entries/:id", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const data = await supab.deleteDeviceEntry(id);
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteDeviceEntry(id);
     if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการนี้" });
     res.json({ ok: true, id });
   } catch (err) {
@@ -284,12 +410,13 @@ app.delete("/api/admin/device-entries/:id", async (req, res) => {
 
 app.post("/api/admin/device-entries/:id/photos", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     const urls = Array.isArray((req.body || {}).cloud_urls) ? req.body.cloud_urls : [];
     if (!urls.length) return res.status(400).json({ ok: false, message: "ไม่มีรูป" });
-    await supab.addEntryPhotos(id, urls);
+    await adapter.addEntryPhotos(id, urls);
     res.json({ ok: true, count: urls.length });
   } catch (err) {
     console.error(err);
@@ -300,12 +427,13 @@ app.post("/api/admin/device-entries/:id/photos", async (req, res) => {
 // ---------- PDF โน้ตอุปกรณ์ (อย่างเป็นทางการ / Sarabun) ----------
 app.get("/api/admin/device-entries/:id/pdf", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     if (!devicePdf.hasFonts()) return res.status(500).json({ ok: false, message: "หายังพบไฟล์ฟอนต์ Sarabun (โฟลเดอร์ fonts/)" });
-    const entries = await supab.listDeviceEntries();
-    const row = entries.filter(function (e) { return e.id === id; })[0];
+    const entries = await adapter.listDeviceEntries();
+    const row = entries.filter(function (e) { return String(e.id) === String(id); })[0];
     if (!row) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตอุปกรณ์" });
     const { stream, filename } = devicePdf.buildDeviceEntryPdf(row);
     const buffer = await stream;
@@ -321,8 +449,9 @@ app.get("/api/admin/device-entries/:id/pdf", async (req, res) => {
 // ---------- โน๊ตงาน (Work Notes) ----------
 app.get("/api/admin/work-notes", async (req, res) => {
   try {
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const notes = await supab.listWorkNotes();
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const notes = await adapter.listWorkNotes();
     res.json({ ok: true, notes });
   } catch (err) {
     console.error(err);
@@ -332,13 +461,14 @@ app.get("/api/admin/work-notes", async (req, res) => {
 
 app.post("/api/admin/work-notes", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const title = String((req.body || {}).title || "").trim();
     if (!title) return res.status(400).json({ ok: false, message: "กรอกหัวเรื่องโน้ตงานก่อน" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     const steps = Array.isArray((req.body || {}).steps)
       ? (req.body.steps || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; })
       : [];
-    const id = await supab.createWorkNote({
+    const id = await adapter.createWorkNote({
       title,
       stepsJson: JSON.stringify(steps),
       infoExtra: String((req.body || {}).info_extra || "").trim()
@@ -352,9 +482,10 @@ app.post("/api/admin/work-notes", async (req, res) => {
 
 app.put("/api/admin/work-notes/:id", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     const body = req.body || {};
     const patch = {};
     if (body.title != null) {
@@ -370,7 +501,7 @@ app.put("/api/admin/work-notes/:id", async (req, res) => {
     }
     patch.updated_at = new Date().toISOString();
     if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
-    await supab.updateWorkNote(id, patch);
+    await adapter.updateWorkNote(id, patch);
     res.json({ ok: true, id });
   } catch (err) {
     console.error(err);
@@ -380,10 +511,11 @@ app.put("/api/admin/work-notes/:id", async (req, res) => {
 
 app.delete("/api/admin/work-notes/:id", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
-    const data = await supab.deleteWorkNote(id);
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteWorkNote(id);
     if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตงานนี้" });
     res.json({ ok: true, id });
   } catch (err) {
@@ -392,14 +524,166 @@ app.delete("/api/admin/work-notes/:id", async (req, res) => {
   }
 });
 
+// ---------- โน๊ตแจ้งซ่อม (Repair Notes) ----------
+app.get("/api/admin/repair-notes", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const notes = await adapter.listRepairNotes();
+    res.json({ ok: true, notes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/repair-notes", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const ticketNo = String((req.body || {}).ticket_no || "").trim();
+    const content = String((req.body || {}).content || "").trim();
+    if (!ticketNo) return res.status(400).json({ ok: false, message: "กรอกเลขใบแจ้งซ่อมก่อน" });
+    if (!content) return res.status(400).json({ ok: false, message: "กรอกเนื้อหาโน้ตก่อน" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const id = await adapter.createRepairNote({
+      ticketNo,
+      category: String((req.body || {}).category || "").trim(),
+      content
+    });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/repair-notes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    const patch = {};
+    if (body.ticket_no != null) patch.ticket_no = String(body.ticket_no).trim();
+    if (body.category != null) patch.category = String(body.category).trim();
+    if (body.content != null) {
+      patch.content = String(body.content).trim();
+      if (!patch.content) return res.status(400).json({ ok: false, message: "กรอกเนื้อหาโน้ตก่อน" });
+    }
+    patch.updated_at = new Date().toISOString();
+    if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
+    await adapter.updateRepairNote(id, patch);
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/repair-notes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteRepairNote(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตแจ้งซ่อมนี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- API ทดสอบการเชื่อมต่อฐานข้อมูล ----------
+app.get("/api/admin/db-test", async (req, res) => {
+  const host = String(req.query.host || "").trim();
+  const port = Number(req.query.port || "0") || 0;
+
+  // Validate inputs
+  if (!host) {
+    return res.json({ ok: false, message: "ไม่เจอ IP" });
+  }
+  if (port === 0) {
+    return res.json({ ok: false, message: "ไม่เจอ port ที่ตั้ง" });
+  }
+
+  // Test PostgreSQL connection (legacy GET for old UI)
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+
+    const result = await adapter.testConnection();
+    return res.json(result);
+  } catch (err) {
+    console.error("[db-test] Error:", err.message);
+    return res.json({ ok: false, message: "เกิดข้อผิดพลาด: " + err.message });
+  }
+});
+
+app.post("/api/admin/db-test", async (req, res) => {
+  try {
+    const { mode, host, port, database, user, password, ssl } = req.body || {};
+    
+    if (mode === "supabase") {
+      const adapter = db.getAdapter();
+      if (adapter.mode !== "supabase") {
+        // Create temporary supabase adapter for testing
+        const tempAdapter = db.createSupabaseAdapter();
+        const result = await tempAdapter.testConnection();
+        return res.json(result);
+      }
+      const result = await adapter.testConnection();
+      return res.json(result);
+    } else if (mode === "postgres") {
+      if (!host || !database || !user) {
+        return res.json({ ok: false, message: "กรุณาระบุ Host, Database, และ Username" });
+      }
+      
+      // Create temporary postgres adapter for testing
+      const { Pool } = require("pg");
+      const testPool = new Pool({
+        host,
+        port: port || 5432,
+        database,
+        user,
+        password: password || "",
+        ssl: ssl ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 5000,
+      });
+      
+      try {
+        const result = await testPool.query(`SELECT 1 as test`);
+        await testPool.end();
+        if (result.rows[0]?.test === 1) {
+          return res.json({ ok: true, message: `เชื่อมต่อ PostgreSQL สำเร็จ (${host}:${port || 5432}/${database})` });
+        }
+        return res.json({ ok: false, message: "ทดสอบการเชื่อมต่อไม่สำเร็จ" });
+      } catch (e) {
+        await testPool.end().catch(() => {});
+        return res.json({ ok: false, message: "เชื่อมต่อ PostgreSQL ล้มเหลว: " + e.message });
+      }
+    } else {
+      return res.json({ ok: false, message: "โหมดไม่ถูกต้อง" });
+    }
+  } catch (err) {
+    console.error("[db-test] Error:", err.message);
+    return res.json({ ok: false, message: "เกิดข้อผิดพลาด: " + err.message });
+  }
+});
+
 // ---------- PDF โน๊ตงาน (A4 หน้าเดียว / Sarabun) ----------
 app.get("/api/admin/work-notes/:id/pdf", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
-    if (!supab.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     if (!workNotePdf.hasFonts()) return res.status(500).json({ ok: false, message: "หายังพบไฟล์ฟอนต์ Sarabun (โฟลเดอร์ fonts/)" });
-    const row = await supab.getWorkNote(id);
+    const row = await adapter.getWorkNote(id);
     if (!row) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตงาน" });
     const { buffer, filename } = await workNotePdf.buildWorkNotePdf(row);
     res.setHeader("Content-Type", "application/pdf");
@@ -485,30 +769,43 @@ app.get("/status", (req, res) => res.redirect("/status.html"));
 
 app.get("/api/tickets/:ticketNo/status", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const { data, error } = await supab.supabase
-      .from("tickets")
-      .select("ticket_no,device,symptom,location,reporter_name,reporter_phone,status,approved_at,created_at,pdf_url")
-      .eq("ticket_no", ticketNo)
-      .single();
-    if (error && /approved_at/.test(error.message)) {
-      const retry = await supab.supabase
+    
+    if (adapter.mode === "supabase") {
+      const { data, error } = await adapter.supabase
         .from("tickets")
-        .select("ticket_no,device,symptom,location,reporter_name,reporter_phone,status,created_at,pdf_url")
+        .select("ticket_no,device,symptom,location,reporter_name,reporter_phone,status,approved_at,created_at,pdf_url")
         .eq("ticket_no", ticketNo)
         .single();
-      if (retry.error || !retry.data) {
+      if (error && /approved_at/.test(error.message)) {
+        const retry = await adapter.supabase
+          .from("tickets")
+          .select("ticket_no,device,symptom,location,reporter_name,reporter_phone,status,created_at,pdf_url")
+          .eq("ticket_no", ticketNo)
+          .single();
+        if (retry.error || !retry.data) {
+          return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+        }
+        return res.json({ ok: true, ticket: retry.data });
+      }
+      if (error || !data) {
         return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
       }
-      return res.json({ ok: true, ticket: retry.data });
+      res.json({ ok: true, ticket: data });
+    } else {
+      const result = await adapter.pool.query(
+        `SELECT ticket_no,device,symptom,location,reporter_name,reporter_phone,status,approved_at,created_at,pdf_url FROM tickets WHERE ticket_no = $1`,
+        [ticketNo]
+      );
+      if (!result.rows[0]) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+      res.json({ ok: true, ticket: result.rows[0] });
     }
-    if (error || !data) {
-      return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
-    }
-    res.json({ ok: true, ticket: data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -517,6 +814,7 @@ app.get("/api/tickets/:ticketNo/status", async (req, res) => {
 
 app.put("/api/tickets/:ticketNo", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
     const body = req.body || {};
     const patch = {};
@@ -525,23 +823,45 @@ app.put("/api/tickets/:ticketNo", async (req, res) => {
     if (body.location !== undefined) patch.location = String(body.location).trim();
     if (body.reporter_name !== undefined) patch.reporter_name = String(body.reporter_name).trim();
     if (body.reporter_phone !== undefined) patch.reporter_phone = String(body.reporter_phone).trim();
+    if (body.reporter_line_id !== undefined) patch.reporter_line_id = String(body.reporter_line_id).trim();
+    if (body.status !== undefined) patch.status = String(body.status).trim();
+    if (body.status_date !== undefined) patch.status_date = String(body.status_date).trim() || null;
+    if (body.handler_name !== undefined) patch.handler_name = String(body.handler_name).trim();
+    if (body.source !== undefined) patch.source = String(body.source).trim();
     if (body.pdf_url !== undefined) patch.pdf_url = String(body.pdf_url).trim();
+    if (body.created_at !== undefined) patch.created_at = String(body.created_at).trim() || null;
     if (!Object.keys(patch).length) {
       return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลที่ต้องการแก้ไข" });
     }
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const { data, error } = await supab.supabase
-      .from("tickets")
-      .update(patch)
-      .eq("ticket_no", ticketNo)
-      .select()
-      .single();
-    if (error || !data) {
-      return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+    
+    if (adapter.mode === "supabase") {
+      const { data, error } = await adapter.supabase
+        .from("tickets")
+        .update(patch)
+        .eq("ticket_no", ticketNo)
+        .select()
+        .single();
+      if (error || !data) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+      res.json({ ok: true, ticket: data });
+    } else {
+      const keys = Object.keys(patch);
+      const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+      const values = keys.map(k => patch[k]);
+      values.push(ticketNo);
+      const result = await adapter.pool.query(
+        `UPDATE tickets SET ${setClause} WHERE ticket_no = $${keys.length + 1} RETURNING *`,
+        values
+      );
+      if (!result.rows[0]) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+      res.json({ ok: true, ticket: result.rows[0] });
     }
-    res.json({ ok: true, ticket: data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -550,19 +870,31 @@ app.put("/api/tickets/:ticketNo", async (req, res) => {
 
 app.delete("/api/tickets/:ticketNo", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const { data, error } = await supab.supabase
-      .from("tickets")
-      .delete()
-      .eq("ticket_no", ticketNo)
-      .select("id");
-    if (error || !data || !data.length) {
-      return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+    
+    if (adapter.mode === "supabase") {
+      const { data, error } = await adapter.supabase
+        .from("tickets")
+        .delete()
+        .eq("ticket_no", ticketNo)
+        .select("id");
+      if (error || !data || !data.length) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+    } else {
+      const result = await adapter.pool.query(
+        `DELETE FROM tickets WHERE ticket_no = $1 RETURNING id`,
+        [ticketNo]
+      );
+      if (!result.rows || !result.rows.length) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
     }
-    res.json({ ok: true, ticketNo });
+res.json({ ok: true, ticketNo });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -571,44 +903,73 @@ app.delete("/api/tickets/:ticketNo", async (req, res) => {
 
 app.post("/api/tickets/:ticketNo/status", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
     const status = String((req.body || {}).status || "").trim();
     if (!["new", "working", "done"].includes(status)) {
       return res.status(400).json({ ok: false, message: "สถานะไม่ถูกต้อง" });
     }
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
     const patch = { status };
     const approvedAt = new Date().toISOString();
     if (status === "working") patch.approved_at = approvedAt;
-    let { data, error } = await supab.supabase
-      .from("tickets")
-      .update(patch)
-      .eq("ticket_no", ticketNo)
-      .select("*, ticket_photos(id, cloud_url)")
-      .single();
-    if (error && status === "working" && /approved_at/.test(error.message)) {
-      patch.approved_at = undefined;
-      const retry = await supab.supabase
+    
+    let data;
+    if (adapter.mode === "supabase") {
+      let { data: result, error } = await adapter.supabase
         .from("tickets")
-        .update({ status })
+        .update(patch)
         .eq("ticket_no", ticketNo)
         .select("*, ticket_photos(id, cloud_url)")
         .single();
-      data = retry.data;
-      error = retry.error;
+      if (error && status === "working" && /approved_at/.test(error.message)) {
+        patch.approved_at = undefined;
+        const retry = await adapter.supabase
+          .from("tickets")
+          .update({ status })
+          .eq("ticket_no", ticketNo)
+          .select("*, ticket_photos(id, cloud_url)")
+          .single();
+        result = retry.data;
+        error = retry.error;
+      }
+      if (error || !result) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+      data = result;
+    } else {
+      const keys = Object.keys(patch);
+      const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+      const values = keys.map(k => patch[k]);
+      values.push(ticketNo);
+      const result = await adapter.pool.query(
+        `UPDATE tickets SET ${setClause} WHERE ticket_no = $${keys.length + 1} RETURNING *`,
+        values
+      );
+      if (!result.rows[0]) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
+      data = result.rows[0];
     }
-    if (error || !data) {
-      return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
-    }
+    
     if (status === "working") {
       try {
-        const dev = await supab.supabase
-          .from("user_devices")
-          .select("ip")
-          .eq("last_ticket_no", data.ticket_no)
-          .maybeSingle();
+        let dev;
+        if (adapter.mode === "supabase") {
+          dev = await adapter.supabase
+            .from("user_devices")
+            .select("ip")
+            .eq("last_ticket_no", data.ticket_no)
+            .maybeSingle();
+        } else {
+          const result = await adapter.pool.query(
+            `SELECT ip FROM user_devices WHERE last_ticket_no = $1`,
+            [data.ticket_no]
+          );
+          dev = { data: result.rows[0] };
+        }
         if (dev && dev.data && dev.data.ip) {
           notif.pushToIp(dev.data.ip, {
             type: "approved",
@@ -624,7 +985,7 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
     if (status === "done") {
       try {
         const { buffer } = await archive.buildArchiveBuffer(data);
-        await supab.updateArchive(ticketNo, buffer.toString("base64"), buffer.length);
+        await adapter.updateArchive(ticketNo, buffer.toString("base64"), buffer.length);
         console.log(`[Archive] งาน ${ticketNo} จัดเก็บแล้ว (บีบอัด ${buffer.length} bytes)`);
       } catch (err) {
         console.warn("[Archive] ข้ามจัดเก็บ (ยังไม่ได้รัน SQL เพิ่มคอลัมน์ archive): " + err.message);
@@ -640,21 +1001,170 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
 
 app.get("/api/tickets/:ticketNo/archive", async (req, res) => {
   try {
+    const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
-    if (!supab.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่า Supabase ใน .env" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const { data, error } = await supab.supabase
-      .from("tickets")
-      .select("ticket_no, archive_base64, archive_size")
-      .eq("ticket_no", ticketNo)
-      .single();
-    if (error || !data || !data.archive_base64) {
-      return res.status(404).json({ ok: false, message: "ยังไม่มีข้อมูลบีบอัดสำหรับงานนี้" });
+    let data;
+    if (adapter.mode === "supabase") {
+      const { data: result, error } = await adapter.supabase
+        .from("tickets")
+        .select("ticket_no, archive_base64, archive_size")
+        .eq("ticket_no", ticketNo)
+        .single();
+      if (error || !result || !result.archive_base64) {
+        return res.status(404).json({ ok: false, message: "ยังไม่มีข้อมูลบีบอัดสำหรับงานนี้" });
+      }
+      data = result;
+    } else {
+      const result = await adapter.pool.query(
+        `SELECT ticket_no, archive_base64, archive_size FROM tickets WHERE ticket_no = $1`,
+        [ticketNo]
+      );
+      if (!result.rows[0] || !result.rows[0].archive_base64) {
+        return res.status(404).json({ ok: false, message: "ยังไม่มีข้อมูลบีบอัดสำหรับงานนี้" });
+      }
+      data = result.rows[0];
     }
-    res.setHeader("Content-Type", "application/gzip");
+res.setHeader("Content-Type", "application/gzip");
     res.setHeader("Content-Disposition", `attachment; filename="${ticketNo}-archive.gz"`);
     res.send(Buffer.from(data.archive_base64, "base64"));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- Database Switch API ----------
+app.get("/api/admin/db-status", async (req, res) => {
+  try {
+    const mode = db.getCurrentMode();
+    const adapter = db.getAdapter();
+    res.json({ ok: true, mode, ready: adapter.ready });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/db-switch", async (req, res) => {
+  try {
+    const { mode, host, port, database, user, password, ssl } = req.body || {};
+    if (!mode || !["supabase", "postgres"].includes(mode)) {
+      return res.status(400).json({ ok: false, message: "โหมดไม่ถูกต้อง" });
+    }
+    const result = await db.switchDatabase(mode, { host, port, database, user, password, ssl });
+    if (result.ok) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- Data Migration ----------
+const migrate = require("./db-migrate");
+
+app.post("/api/admin/migrate/start", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (adapter.mode !== "supabase") {
+      return res.status(400).json({ ok: false, message: "ต้องอยู่ในโหมด Supabase ก่อนถึงจะโอนย้ายได้" });
+    }
+    if (!adapter.ready) {
+      return res.status(400).json({ ok: false, message: "Supabase ยังไม่พร้อม" });
+    }
+    
+    const { host, port, database, user, password, ssl, continueOnError } = req.body || {};
+    if (!host || !database || !user) {
+      return res.status(400).json({ ok: false, message: "กรุณาระบุ PostgreSQL connection details" });
+    }
+    
+    const pgOptions = { host, port, database, user, password, ssl };
+    const jobId = migrate.createMigrationJob(pgOptions);
+    const job = migrate.getJobStatus(jobId);
+    if (job) job.continueOnError = continueOnError !== false;
+    
+    res.json({ ok: true, jobId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/migrate/status/:jobId", async (req, res) => {
+  try {
+    const job = migrate.getJobStatus(req.params.jobId);
+    if (!job) {
+      return res.status(404).json({ ok: false, message: "ไม่พบ job นี้" });
+    }
+    res.json({ ok: true, job: {
+      id: job.id,
+      status: job.status,
+      currentTable: job.currentTable,
+      progress: job.progress,
+      tableResults: job.tableResults,
+      verification: job.verification,
+      totalRows: job.totalRows,
+      duration: job.duration,
+      error: job.error,
+      logs: job.logs.slice(-100), // last 100 logs
+    }});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/migrate/cancel/:jobId", async (req, res) => {
+  try {
+    migrate.cancelJob(req.params.jobId);
+    res.json({ ok: true, message: "ส่งสัญญาณยกเลิกแล้ว" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/migrate/verify", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (adapter.mode !== "postgres") {
+      return res.status(400).json({ ok: false, message: "ต้องอยู่ในโหมด PostgreSQL" });
+    }
+    
+    const { host, port, database, user, password, ssl } = req.body || {};
+    if (!host || !database || !user) {
+      return res.status(400).json({ ok: false, message: "กรุณาระบุ PostgreSQL connection details" });
+    }
+    
+    const { createClient } = require("@supabase/supabase-js");
+    const { Pool } = require("pg");
+    
+    const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY || config.SUPABASE_SECRET_KEY);
+    const pgPool = new Pool({
+      host, port: port || 5432, database, user, password: password || "",
+      ssl: ssl ? { rejectUnauthorized: false } : false,
+    });
+    
+    const results = {};
+    let allMatch = true;
+    
+    for (const table of migrate.TABLE_ORDER) {
+      const { count: srcCount } = await supabase.from(table).select("*", { count: "exact", head: true });
+      const { rows } = await pgPool.query(`SELECT COUNT(*) FROM "${table}"`);
+      const dstCount = parseInt(rows[0].count);
+      const match = srcCount === dstCount;
+      if (!match) allMatch = false;
+      results[table] = { source: srcCount, target: dstCount, match };
+    }
+    
+    await pgPool.end();
+    res.json({ ok: true, allMatch, tables: results });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });

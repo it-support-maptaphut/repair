@@ -118,6 +118,36 @@
     pop = overlay;
   }
 
+  function showAccepted(payload) {
+    var id = payload && (payload.id !== undefined ? payload.id : payload.at);
+    if (id !== undefined && id !== null && shown.has(String(id))) return;
+    if (id !== undefined && id !== null) remember(String(id));
+
+    injectStyle();
+    closePopup();
+
+    var overlay = document.createElement("div");
+    overlay.className = "notify-pop";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "IT SUPPORT รับเรื่องแล้ว");
+
+    overlay.innerHTML =
+      '<div class="notify-card">' +
+      '<button class="notify-close" type="button" aria-label="ปิด">&times;</button>' +
+      '<div class="notify-badge">IT SUPPORT</div>' +
+      '<div class="notify-title">รับเรื่องแล้ว &bull; กำลังตรวจสอบ</div>' +
+      (payload && payload.ticketNo ? '<div class="notify-tno">รหัสแจ้งซ่อม ' + payload.ticketNo + "</div>" : "") +
+      '<p class="notify-sub">ทีม IT ได้รับใบแจ้งซ่อมของคุณแล้ว<br/>โปรดรอการติดต่อกลับจากทีมงาน</p>' +
+      '<button class="notify-btn" type="button">ตกลง</button>' +
+      "</div>";
+
+    overlay.querySelector(".notify-close").addEventListener("click", closePopup);
+    overlay.querySelector(".notify-btn").addEventListener("click", closePopup);
+    document.body.appendChild(overlay);
+    pop = overlay;
+  }
+
   if (window.EventSource) {
     var es = new EventSource("/api/notify/stream");
     es.onmessage = function (ev) {
@@ -127,9 +157,10 @@
       } catch (e) {
         return;
       }
-      if (!d || d.type !== "approved") return;
+      if (!d) return;
       if (ev.lastEventId) d.id = ev.lastEventId;
-      showApproved(d);
+      if (d.type === "approved") showApproved(d);
+      else if (d.type === "accepted") showAccepted(d);
     };
   }
 })();

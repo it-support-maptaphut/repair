@@ -74,7 +74,7 @@ function statusView(t, isSingle) {
         '<div class="card-row"><span class="k">สาขา</span><span class="v">' + esc(loc.branch) + "</span></div>" +
         '<div class="card-row"><span class="k">ตำแหน่ง</span><span class="v">' + esc(loc.position) + "</span></div>" +
         (t.status === "done" ? '<div class="card-row"><span class="k">เสร็จสิ้น</span><span class="v">' + esc(fmtDate(t.approved_at)) + "</span></div>" : "") +
-        '<div class="card-row"><span class="k">อาการ</span><span class="v">' + esc(t.symptom || "-") + "</span></div>" +
+        '<div class="card-row"><span class="k">รายละเอียด</span><span class="v">' + esc(t.symptom || "-") + "</span></div>" +
       "</div>" +
       '<div class="card-msg ' + st.cls + '"><span class="strong">' + st.label + "</span> — " + st.msg + "</div>" +
       cardActions +

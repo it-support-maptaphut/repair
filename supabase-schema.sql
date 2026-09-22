@@ -15,9 +15,20 @@ create table if not exists public.tickets (
   reporter_phone text default '',
   reporter_line_id text default '',
   status text default 'new',
-  approved_at timestamptz,
+  handler_name text default '',     -- ผู้ดำเนินการ (เช่น บาส IT support / พี่เอ็ม IT support)
+  status_date date,                 -- วันที่ของสถานะ (กรอกในขั้นตอนบันทึกสถานะ)
+  source text default 'external',   -- 'external'=แจ้งจากข้างนอก (Line OA) / 'internal'=บันทึกจากระบบภายใน
+  approved_at timestamptz,          -- ตั้งเมื่อ IT กด "อนุมัติ/กำลังดำเนินการ" (สถานะ working)
+  accepted_at timestamptz,          -- ตั้งเมื่อ IT กด "ตอบรับ" งานในกล่องข้อความ (NULL = ยังรอตอบรับ ยังไม่เข้าระบบ)
   created_at timestamptz default now()
 );
+
+-- เพิ่มคอลัมน์ใหม่ให้ตารางที่มีอยู่แล้ว (ถ้ายังไม่มี) — รันซ้ำได้ ไม่ลบข้อมูลเดิม
+alter table public.tickets add column if not exists handler_name text default '';
+alter table public.tickets add column if not exists status_date date;
+alter table public.tickets add column if not exists source text default 'external';
+alter table public.tickets add column if not exists accepted_at timestamptz;
+alter table public.tickets add column if not exists audio_url text default '';
 
 create table if not exists public.ticket_photos (
   id bigint generated always as identity primary key,
@@ -55,7 +66,7 @@ alter table public.device_categories enable row level security;
 
 -- หมวดเริ่มต้น (admin เพิ่มเองได้ในฟอร์ม)
 insert into public.device_categories (name) values
-  ('คอมพิวเตอร์'), ('โน้ตบุ๊ก'), ('เครื่องพิมพ์'), ('จอภาพ'), ('เครือข่าย'), ('โปรแกรม'), ('อื่นๆ')
+   ('คอมพิวเตอร์'), ('โน้ตบุ๊ก'), ('เครื่องพิมพ์'), ('จอภาพ'), ('เครือข่าย'), ('โปรแกรม'), ('อื่นๆ'), ('งานทั่วไป')
 on conflict (name) do nothing;
 
 -- ---------- รายการอุปกรณ์ที่จดไว้ ----------
@@ -70,7 +81,7 @@ create table if not exists public.device_entries (
   warranty_no text default '',            -- เลขประกันสินค้า
   claim_company text default '',          -- บริษัทที่เคลม (จำอัตโนมัติ)
   warranty_expire_date date,              -- วันที่หมดประกัน (แสดงเมื่อกรอกเลขประกันแล้ว)
-  status text not null default 'claim',   -- 'claim'=กำลังส่งเคลม / 'repair'=อยู่ระหว่างซ่อมบำรุง / 'done'=เสร็จแล้ว
+  status text not null default 'claim',   -- 'claim'=กำลังส่งเคลม / 'repair'=อยู่ระหว่างซ่อมบำรุง / 'done'=เสร็จแล้ว / 'ok'=ปกติ
   broken_date date,                       -- วันที่พัง
   claim_date date,                        -- วันที่ส่งเคลม (เฉพาะสถานะ 'กำลังส่งเคลม')
   asset_code text default '',             -- รหัสทรัพย์สินบริษัท
@@ -155,3 +166,35 @@ alter table public.warranty_checks enable row level security;
 
 create index if not exists warranty_checks_serial_idx on public.warranty_checks (serial);
 create index if not exists warranty_checks_created_idx on public.warranty_checks (created_at);
+
+-- ============================================================
+-- โน๊ตแจ้งซ่อม (Repair Notes) — จดบันทึกงานแต่ละใบแจ้งซ่อม
+-- ช่อง ticket_no ผูกกับ tickets.ticket_no แล้ว ข้อมูลจะซิงค์
+-- ไปยังหน้าระบบวิเคราะห์การแจ้งซ่อมโดยอัตโนมัติ
+-- ============================================================
+create table if not exists public.repair_notes (
+  id bigint generated always as identity primary key,
+  ticket_no text not null,             -- เลขใบแจ้งซ่อม (tickets.ticket_no)
+  category text default '',            -- หมวดโน้ต เช่น ซ่อม / เคลม / อัปเดต / อื่นๆ
+  content text not null default '',    -- เนื้อหาโน้ต
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.repair_notes enable row level security;
+
+-- FK → tickets เพื่อให้ดึงข้อมูลใบแจ้งซ่อม (อุปกรณ์/อาการ) มาแสดงได้
+-- (Postgres ไม่รองรับ ADD CONSTRAINT IF NOT EXISTS จึงใช้ DO block แทน)
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'repair_notes_ticket_no_fk'
+  ) then
+    alter table public.repair_notes
+      add constraint repair_notes_ticket_no_fk
+      foreign key (ticket_no) references public.tickets(ticket_no) on delete cascade;
+  end if;
+end $$;
+
+create index if not exists repair_notes_ticket_idx on public.repair_notes (ticket_no);
+create index if not exists repair_notes_created_idx on public.repair_notes (created_at);
