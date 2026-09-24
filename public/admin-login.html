@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b7a43">
+<title>เข้าสู่ระบบ — Admin IT</title>
+<link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="ticket.css">
+<style>
+  body.ticket-page.admin-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+  }
+  .admin-login-wrap { width: 100%; max-width: 410px; }
+  .admin-login-box {
+    background: var(--tk-card);
+    border: 1px solid var(--tk-line);
+    border-radius: var(--tk-radius);
+    box-shadow: var(--tk-shadow);
+    padding: 30px 26px 26px;
+    animation: ticketPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .admin-login-title { margin: 0 0 6px; font-size: 20px; color: var(--tk-ink); font-weight: 700; text-align: center; }
+  .admin-login-sub { margin: 0 0 24px; font-size: 13.5px; line-height: 1.6; color: var(--tk-muted); text-align: center; }
+  .admin-login-field { margin-bottom: 16px; }
+  .admin-login-field label { display: block; font-size: 13.5px; font-weight: 700; color: var(--tk-ink); margin: 0 0 7px; }
+  .admin-login-field .verify-input { margin-bottom: 0; }
+  .admin-login-err { margin: 0 0 12px; font-size: 13px; color: #d4382f; text-align: center; }
+  .admin-login-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 15px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(180deg, var(--tk-accent), var(--tk-green));
+    color: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgba(11, 122, 67, 0.34);
+    transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    will-change: transform;
+  }
+  .admin-login-btn:hover { box-shadow: 0 10px 26px rgba(11, 122, 67, 0.42); }
+  .admin-login-btn:active { transform: scale(0.98); }
+  .admin-login-btn:disabled { opacity: 0.65; cursor: default; }
+  </style>
+  <!-- ธีมย้อนยุค 90s (แยกไฟล์) — ใช้ค่าเดียวกับที่หน้าผู้ดูแลตั้งไว้ -->
+  <link id="retroThemeLink" rel="stylesheet" href="admin-retro.css">
+  <script>
+    try { if (localStorage.getItem("adminTheme") !== "retro") document.getElementById("retroThemeLink").disabled = true; } catch (e) { }
+  </script>
+</head>
+<body class="ticket-page admin-login-page">
+
+<div class="admin-login-wrap">
+  <div class="admin-login-box">
+    <h1 class="admin-login-title">เข้าสู่ระบบ</h1>
+    <p class="admin-login-sub">ยืนยันตัวตนสำหรับผู้ดูแลระบบก่อนเข้าใช้งาน</p>
+
+    <p id="loginErr" class="admin-login-err hidden" role="alert"></p>
+
+    <div class="admin-login-field">
+      <label for="loginUser">ชื่อผู้ใช้</label>
+      <input type="text" id="loginUser" class="verify-input" maxlength="60" placeholder="admin" autocomplete="username" autocapitalize="none" spellcheck="false">
+    </div>
+
+    <div class="admin-login-field">
+      <label for="loginPass">รหัสผ่าน</label>
+      <input type="password" id="loginPass" class="verify-input" maxlength="120" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button id="loginBtn" class="admin-login-btn" type="button">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var errEl = document.getElementById("loginErr");
+  var userEl = document.getElementById("loginUser");
+  var passEl = document.getElementById("loginPass");
+  var btn = document.getElementById("loginBtn");
+  var busy = false;
+
+  function fail(msg) {
+    errEl.textContent = msg;
+    errEl.classList.remove("hidden");
+  }
+
+  function clearErr() {
+    errEl.classList.add("hidden");
+  }
+
+  function submit() {
+    if (busy) return;
+    var user = userEl.value.trim();
+    var pass = passEl.value;
+    if (!user || !pass) { fail("กรอกชื่อผู้ใช้และรหัสผ่าน"); return; }
+    clearErr();
+    busy = true;
+    btn.disabled = true;
+    btn.textContent = "กำลังเข้าสู่ระบบ...";
+    fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user: user, pass: pass })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) {
+          busy = false;
+          btn.disabled = false;
+          btn.textContent = "เข้าสู่ระบบ";
+          fail(res.d.message || "เข้าสู่ระบบไม่สำเร็จ");
+          passEl.select();
+          return;
+        }
+        window.location.href = "/admin.html";
+      })
+      .catch(function () {
+        busy = false;
+        btn.disabled = false;
+        btn.textContent = "เข้าสู่ระบบ";
+        fail("เครือข่ายขัดข้อง กรุณาลองใหม่");
+      });
+  }
+
+  btn.addEventListener("click", submit);
+  passEl.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+  userEl.addEventListener("input", clearErr);
+  passEl.addEventListener("input", clearErr);
+
+  // ผู้ดูแลที่ Authed อยู่แล้ว → เข้าไปได้เลย
+  fetch("/api/auth/me")
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (d && d.ok && d.authed) window.location.replace("/admin.html"); })
+    .catch(function () {});
+
+  setTimeout(function () { userEl.focus(); }, 60);
+})();
+</script>
+</body>
+</html>

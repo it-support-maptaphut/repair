@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบแจ้งซ่อม IT — จัดการงาน</title>
+  <title>ระบบแจ้งซ่อม IT — จัดการงาน (มือถือ)</title>
   <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -2767,170 +2767,70 @@
        ให้ลบบรรทัด <link> นี้เส้นเดียว (ไม่แตะระบบอื่น)
        ============================================================ -->
   <link id="retroThemeLink" rel="stylesheet" href="admin-retro.css">
+  <link rel="stylesheet" href="admin-mobile.css">
   <script>
     try { if (localStorage.getItem("adminTheme") !== "retro") document.getElementById("retroThemeLink").disabled = true; } catch (e) { }
-    (function () {
-      if (window.location.search.indexOf("full=1") > -1) return;
-      var mq = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
-      if (mq && mq.matches) window.location.replace("/admin-mobile.html");
-    })();
   </script>
 </head>
-<body>
+<body class="mobile-admin">
+  <div class="mob-topbar">
+    <button class="mob-menu-btn" id="mobMenuBtn" type="button" aria-label="เปิด/ปิดเมนู" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="mob-title">ระบบแจ้งซ่อม<small>IT Support</small></div>
+  </div>
+  <div class="mob-backdrop" id="mobBackdrop"></div>
   <div class="layout">
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="side-brand">
-          <div class="side-brand-text">
-            <div class="side-title">System Admin IT</div>
-            <div class="side-sub">Dashboard IT Support</div>
-          </div>
-        </div>
-        <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="ปิด/เปิดเมนู (กด Tab เมื่อโฟกัสอยู่ที่เมนู)" title="ปิด/เปิดเมนู (กด Tab)" tabindex="0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
+      <div class="mob-side-title">ระบบแจ้งซ่อม IT<small>Admin</small></div>
+      <div class="mob-cats" id="mobCats">
+        <button class="mob-cat is-active" data-cat="tickets" type="button">ระบบแจ้งซ่อม</button>
+        <button class="mob-cat" data-cat="care" type="button">ดูแลอุปกรณ์</button>
+        <button class="mob-cat" data-cat="notes" type="button">โน้ต</button>
+        <button class="mob-cat" data-cat="settings" type="button">ตั้งค่า</button>
       </div>
-
       <nav class="side-nav" id="adminTabs" aria-label="เมนูหลัก">
-        <div class="side-group" data-group="repairLog">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupRepairLog">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            <span class="side-group-label">ระบบบันทึกการซ่อมภายใน</span>
-            <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="mob-cat-body" data-cat-body="tickets">
+          <button class="side-btn is-active" data-tab="tickets" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            <span>รายการแจ้งซ่อม</span>
           </button>
-          <div class="side-group-items" id="admGroupRepairLog">
-            <div class="side-group-inner">
-              <button class="side-btn" data-tab="repairNotes" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h2M18 22H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8l6 6v7"/><path d="M14 2v6h6M9 13h6M9 17h3"/></svg>
-                <span>บันทึกการแจ้งซ่อม</span>
-              </button>
-              <button class="side-btn is-active" data-tab="tickets" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                <span>ระบบบันทึกรายการแจ้งซ่อม</span>
-              </button>
-            </div>
-          </div>
         </div>
-
-        <div class="side-group" data-group="tickets">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupTickets">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            <span class="side-group-label">ระบบบันทึก IP ADDRESS</span>
-            <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="mob-cat-body" data-cat-body="care" hidden>
+          <button class="side-btn" data-tab="deviceNotes" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg>
+            <span>ข้อมูลอุปกรณ์</span>
           </button>
-          <div class="side-group-items" id="admGroupTickets">
-            <div class="side-group-inner">
-              <button class="side-btn" data-tab="devices" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span>บันทึก IP ADDRESS</span>
-              </button>
-              <button class="side-btn" data-tab="visitors" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span>ระบบจดจำผู้ใช้งานภายนอก</span>
-              </button>
-            </div>
-          </div>
+          <button class="side-btn" data-tab="maintenance" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span>ระบบ maintenance</span>
+          </button>
+          <button class="side-btn" data-tab="warranty" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>ตรวจสอบประกัน</span>
+          </button>
         </div>
-
-        <div class="side-group" data-group="maintenance">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupMaintenance">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            <span class="side-group-label">ระบบดูแลรักษาอุปกรณ์และบันทึก</span>
-            <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="mob-cat-body" data-cat-body="notes" hidden>
+          <button class="side-btn" data-tab="workNotes" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+            <span>โน้ตขั้นตอนการทำงาน</span>
           </button>
-          <div class="side-group-items" id="admGroupMaintenance">
-            <div class="side-group-inner">
-              <button class="side-btn" data-tab="deviceNotes" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg>
-                <span>ข้อมูลอุปกรณ์</span>
-              </button>
-              <button class="side-btn" data-tab="maintenance" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                <span>ระบบ maintenance อุปกรณ์ขององค์กร</span>
-              </button>
-              <button class="side-btn" data-tab="warranty" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <span>ตรวจสอบประกัน</span>
-              </button>
-            </div>
-          </div>
         </div>
-
-        <div class="side-group" data-group="notes">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupNotes">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-            <span class="side-group-label">ระบบโน้ต</span>
-            <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="mob-cat-body" data-cat-body="settings" hidden>
+          <button class="side-btn theme-opt" type="button" data-theme="normal" onclick="setTheme('normal')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+            <span>ธีมปกติ</span>
           </button>
-          <div class="side-group-items" id="admGroupNotes">
-            <div class="side-group-inner">
-              <button class="side-btn" data-tab="workNotes" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
-                <span>โน้ตขั้นตอนการดำเนินงาน</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="side-group" data-group="analytics">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupAnalytics">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-            <span class="side-group-label">วิเคราะห์</span>
-            <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <button class="side-btn theme-opt" type="button" data-theme="retro" onclick="setTheme('retro')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span>ธีม 90S</span>
           </button>
-          <div class="side-group-items" id="admGroupAnalytics">
-            <div class="side-group-inner">
-              <button class="side-btn" data-tab="analytics" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-                <span>วิเคราะห์การแจ้งซ่อม</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="side-group" data-group="worklog">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupWorklog">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5.5A2.5 2.5 0 0 1 3 18.5z"/></svg>
-            <span class="side-group-label">ระบบบันทึกการทำงาน</span>
-            <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="side-group-items" id="admGroupWorklog">
-            <div class="side-group-inner">
-              <button class="side-btn" data-tab="worklog" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                <span>รายการงานทั้งหมด</span>
-              </button>
-            </div>
-          </div>
         </div>
       </nav>
-
-      <div class="side-group theme-group" data-group="themes">
-        <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupThemes">
-          <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-          <span class="side-group-label">ตั้งค่าธีม</span>
-          <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="side-group-items" id="admGroupThemes">
-          <div class="side-group-inner">
-            <button class="side-btn theme-opt" type="button" data-theme="normal" onclick="setTheme('normal')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20c-1.5-2-2-4.5-2-7s.5-5 2-7zM12 2a10 10 0 0 1 0 20c1.5-2 2-4.5 2-7s-.5-5-2-7z" transform="rotate(90 12 12)"/></svg>
-              <span>ธีมสไตล์ปกติ</span>
-            </button>
-            <button class="side-btn theme-opt" type="button" data-theme="retro" onclick="setTheme('retro')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-              <span>ธีมสไตล์ 90S</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="side-group" data-group="logout">
-        <button class="side-group-head" type="button" data-no-toggle onclick="adminLogout()" style="border-top:1px solid var(--line);">
-          <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          <span class="side-group-label">ออกจากระบบ</span>
-        </button>
-      </div>
+      <button class="mob-logout" type="button" onclick="adminLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>ออกจากระบบ</span>
+      </button>
     </aside>
 
     <div class="main">
@@ -3560,49 +3460,49 @@
 
               <div class="det-grid">
                 <div class="det-item">
-                  <div class="det-k">วัน / เวลา</div>
+                  <div class="det-k">วันที่</div>
                   <div class="det-v" id="detDate">-</div>
                 </div>
                 <div class="det-item">
-                  <div class="det-k">หมวด / อุปกรณ์</div>
+                  <div class="det-k">ประเภท</div>
                   <div class="det-v" id="detDevice">-</div>
                 </div>
                 <div class="det-item">
-                  <div class="det-k">สาขา</div>
+                  <div class="det-k">สถานที่</div>
                   <div class="det-v" id="detBranch">-</div>
                 </div>
-                <div class="det-item">
+                <div class="det-item mob-hide">
                   <div class="det-k">ตำแหน่ง / สถานที่</div>
                   <div class="det-v" id="detPosition">-</div>
                 </div>
-                <div class="det-item">
+                <div class="det-item mob-hide">
                   <div class="det-k">เบอร์โทรติดต่อ</div>
                   <div class="det-v" id="detPhone">-</div>
                 </div>
-                <div class="det-item">
+                <div class="det-item mob-hide">
                   <div class="det-k">บัญชี Line (ผู้แจ้ง)</div>
                   <div class="det-v" id="detLineId">-</div>
                 </div>
                 <div class="det-item">
-                  <div class="det-k">ผู้ดำเนินการ</div>
+                  <div class="det-k">ผู้รับผิดชอบ</div>
                   <div class="det-v" id="detHandler">-</div>
                 </div>
-                <div class="det-item">
+                <div class="det-item mob-hide">
                   <div class="det-k">วันที่สถานะ</div>
                   <div class="det-v" id="detStatusDate">-</div>
                 </div>
                 <div class="det-item full">
-                  <div class="det-k">อาการเสีย</div>
+                  <div class="det-k">รายละเอียด</div>
                   <div class="det-v symptom" id="detSymptom">-</div>
                 </div>
               </div>
 
-              <div class="form-field">
+              <div class="form-field mob-hide">
                 <label>รูปภาพ · สภาพอุปกรณ์</label>
                 <div class="ph-grid" id="detPhotos"></div>
               </div>
 
-              <div class="form-field">
+              <div class="form-field mob-hide">
                 <label>รูปสถานที่ / โซน</label>
                 <div class="ph-grid" id="detZonePhotos"></div>
               </div>
@@ -5649,32 +5549,11 @@
         var loc = parseLocation(t.location);
         return (
           '<tr class="ticket-card" data-no="' + esc(t.ticket_no) + '">' +
-          '<td data-c="no" data-label="เลขที่ซ่อม"><span class="tno">' + esc(t.ticket_no) + "</span></td>" +
-          '<td data-c="date" data-label="เวลา / วันที่"><span class="t-date">' + esc(fmtDate(t.created_at)) + "</span></td>" +
-          '<td data-c="device" data-label="หมวด">' + fmtDevices(t.device) + "</td>" +
-          '<td data-c="symptom" data-label="อาการ"><span class="cell-trunc" title="' + esc(t.symptom) + '">' + fmtSymptoms(t.symptom) + "</span></td>" +
-          '<td data-c="loc" data-label="สถานที่"><span class="cell-loc" data-label="สถานที่">' + esc(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</span></td>" +
-          '<td data-c="user" data-label="ชื่อผู้รับผิดชอบ" class="cell-user">' + esc(t.handler_name || "-") + "</td>" +
-          '<td data-c="status" data-label="สถานะ">' +
-          '<span class="badge ' + st.cls + '">' + st.label + "</span>" +
-          "</td>" +
-          '<td data-c="actions" data-label="จัดการ">' +
-            '<div class="row-actions" style="justify-content:flex-end">' +
-            statusButtons(t, i) +
-            '<button class="icon-btn share" data-act="share" data-i="' + i + '" title="แชร์เป็น PDF">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>' +
-            "</button>" +
-            '<button class="icon-btn edit" data-act="edit" data-i="' + i + '" title="แก้ไข">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"/></svg>' +
-            "</button>" +
-            '<button class="icon-btn del" data-act="del" data-i="' + i + '" title="ลบ">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>' +
-            "</button>" +
-            '<button class="icon-btn" data-act="detail" data-i="' + i + '" title="รายละเอียด">' +
-              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>' +
-            "</button>" +
-            "</div>" +
-          "</td>" +
+          '<td data-c="date" data-label="วันที่">' + esc(fmtDate(t.created_at)) + "</td>" +
+          '<td data-c="device" data-label="ประเภท">' + fmtDevices(t.device) + "</td>" +
+          '<td data-c="symptom" data-label="รายละเอียด"><span class="cell-trunc">' + fmtSymptoms(t.symptom) + "</span></td>" +
+          '<td data-c="loc" data-label="สถานที่">' + esc(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</td>" +
+          '<td data-c="user" data-label="ผู้รับผิดชอบ">' + esc(t.handler_name || "-") + "</td>" +
           "</tr>"
         );
       }).join("");
@@ -5684,7 +5563,7 @@
       cards.forEach(function (tr2, idx) {
         tr2.addEventListener("click", function (e) {
           if (e.target.closest("button, a, .icon-btn, .status-btn, .pdf-chip")) return;
-          openDetail(pageRows[idx]);
+          window.openDetailMobile(pageRows[idx]);
         });
       });
 
@@ -5842,6 +5721,38 @@
       showView("detailView");
       openModal();
     }
+
+    /* --- ฉบับมือถือ: แสดงข้อมูลรอบเดียว (วันที่/ประเภท/รายละเอียด/สถานที่/ผู้รับผิดชอบ) --- */
+    function openDetailMobile(row) {
+      currentRow = row;
+      var st = statusInfo(row);
+      document.getElementById("detNo").textContent = row.ticket_no;
+      var badge = document.getElementById("detStatus");
+      badge.className = "badge " + st.cls;
+      badge.textContent = st.label;
+      var loc = parseLocation(row.location);
+      document.getElementById("detDate").textContent = fmtDate(row.created_at);
+      document.getElementById("detDevice").innerHTML = fmtDevices(row.device) || "-";
+      document.getElementById("detBranch").textContent = loc.branch ? loc.branch + (loc.position && loc.position !== "-" ? " · " + loc.position : "") : "-";
+      document.getElementById("detPosition").textContent = loc.position && loc.position !== "-" ? loc.position : "-";
+      document.getElementById("detPhone").textContent = row.reporter_phone || "-";
+      document.getElementById("detLineId").textContent = row.reporter_line_id || "-";
+      document.getElementById("detHandler").textContent = row.handler_name || "ยังไม่ระบุ";
+      document.getElementById("detStatusDate").textContent = "-";
+      document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
+      var detPhotos = document.getElementById("detPhotos");
+      var detZonePhotos = document.getElementById("detZonePhotos");
+      if (fillPhotoGrid) { fillPhotoGrid(detPhotos, []); fillPhotoGrid(detZonePhotos, []); }
+      else { detPhotos.innerHTML = ""; detZonePhotos.innerHTML = ""; }
+      document.getElementById("detArchiveWrap").hidden = true;
+      document.getElementById("detPdfWrap").hidden = true;
+      document.getElementById("btnApprove").hidden = true;
+      document.getElementById("btnFinish").hidden = true;
+      showView("detailView");
+      openModal();
+    }
+    window.openDetail = openDetailMobile;
+    window.openDetailMobile = openDetailMobile;
 
     function setStatus(row, status) {
       if (!row) return;
@@ -8000,13 +7911,50 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
   head.setAttribute("aria-expanded", open ? "true" : "false");
 });
 
-/* เริ่มต้น: หุบหมวดเมนูย่อยทั้งหมดไว้ เหลือแค่หมวดหมู่
-   (ผู้ใช้คลิกหัวหมวดเพื่อเปิด/ปิดเอง) */
+/* เริ่มต้น: ไม่ต้องเปิดหมวดใด เพราะลิ้นชักมือถือใช้หมวดหมู่แนวนอน (mob-cats)
+   หมวดแรก "ระบบแจ้งซ่อม" แสดงอยู่แล้วใน HTML */
+
+/* ---------- ลิ้นชักเมนูบนมือถือ ---------- */
 (function () {
-  document.querySelectorAll("#adminTabs .side-group").forEach(function (g) {
-    g.classList.remove("open");
-    var head = g.querySelector(".side-group-head");
-    if (head) head.setAttribute("aria-expanded", "false");
+  var sidebar = document.getElementById("sidebar");
+  var btn = document.getElementById("mobMenuBtn");
+  var backdrop = document.getElementById("mobBackdrop");
+  if (!sidebar || !btn) return;
+  function setOpen(open) {
+    sidebar.classList.toggle("mob-open", open);
+    if (backdrop) backdrop.classList.toggle("show", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  btn.addEventListener("click", function () {
+    setOpen(!sidebar.classList.contains("mob-open"));
+  });
+  if (backdrop) backdrop.addEventListener("click", function () { setOpen(false); });
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".mob-menu-btn") &&
+        !e.target.closest(".sidebar") &&
+        sidebar.classList.contains("mob-open")) {
+      setOpen(false);
+    }
+  });
+  document.getElementById("sidebar").addEventListener("click", function (e) {
+    if (e.target.closest(".side-btn") || e.target.closest(".mob-logout")) setOpen(false);
+  });
+})();
+
+/* ---------- หมวดหมู่เมนูแนวนอน (ลิ้นชักมือถือ) ---------- */
+(function () {
+  var cats = document.getElementById("mobCats");
+  if (!cats) return;
+  cats.addEventListener("click", function (e) {
+    var cat = e.target.closest(".mob-cat");
+    if (!cat) return;
+    var name = cat.getAttribute("data-cat");
+    document.querySelectorAll("#mobCats .mob-cat").forEach(function (c) {
+      c.classList.toggle("is-active", c === cat);
+    });
+    document.querySelectorAll("#adminTabs .mob-cat-body").forEach(function (b) {
+      b.hidden = b.getAttribute("data-cat-body") !== name;
+    });
   });
 })();
 
@@ -8876,6 +8824,50 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     applyThemeActive(initTheme);
   })();
 })();
+</script>
+
+<script>
+/* ================================
+   MOBILE: แสดงทุกตารางแบบบล็อก (เฉพาะมือถือ)
+   เติม data-label ลง td จาก thead แล้ว CSS แสดง block
+   ================================ */
+function mobBlockifyTables() {
+  document.querySelectorAll("table").forEach(function (tbl) {
+    if (tbl.id === "ticketsTable") return;
+    var head = tbl.querySelector("thead");
+    if (!head) return;
+    var cells = head.querySelectorAll("th");
+    var labels = [];
+    for (var c = 0; c < cells.length; c++) {
+      var t = (cells[c].textContent || "").replace(/\s+/g, " ").trim();
+      labels.push(t);
+    }
+    var rows = tbl.tBodies[0] ? tbl.tBodies[0].rows : [];
+    for (var r = 0; r < rows.length; r++) {
+      var tds = rows[r].cells;
+      for (var d = 0; d < tds.length; d++) {
+        if (!tds[d].getAttribute("data-label") && labels[d]) {
+          tds[d].setAttribute("data-label", labels[d]);
+        }
+      }
+    }
+  });
+}
+function mobBlockifyNow() {
+  mobBlockifyTables();
+}
+if ("MutationObserver" in window) {
+  var mobObsTimer = null;
+  var mobObs = new MutationObserver(function () {
+    clearTimeout(mobObsTimer);
+    mobObsTimer = setTimeout(mobBlockifyNow, 120);
+  });
+  ["ticketsBody", "devicesBody", "visitorsBody", "deviceBody", "maintenanceBody", "workNoteBody", "wDeviceBody"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) mobObs.observe(el, { childList: true, subtree: true });
+  });
+}
+window.addEventListener("load", mobBlockifyNow);
 </script>
 </body>
 </html>

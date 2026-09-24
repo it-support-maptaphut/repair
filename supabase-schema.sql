@@ -17,6 +17,7 @@ create table if not exists public.tickets (
   status text default 'new',
   handler_name text default '',     -- ผู้ดำเนินการ (เช่น บาส IT support / พี่เอ็ม IT support)
   status_date date,                 -- วันที่ของสถานะ (กรอกในขั้นตอนบันทึกสถานะ)
+  status_time text default '',      -- เวลาของสถานะ (กรอกในขั้นตอนบันทึกสถานะ เช่น 07:00)
   source text default 'external',   -- 'external'=แจ้งจากข้างนอก (Line OA) / 'internal'=บันทึกจากระบบภายใน
   approved_at timestamptz,          -- ตั้งเมื่อ IT กด "อนุมัติ/กำลังดำเนินการ" (สถานะ working)
   accepted_at timestamptz,          -- ตั้งเมื่อ IT กด "ตอบรับ" งานในกล่องข้อความ (NULL = ยังรอตอบรับ ยังไม่เข้าระบบ)
@@ -26,6 +27,7 @@ create table if not exists public.tickets (
 -- เพิ่มคอลัมน์ใหม่ให้ตารางที่มีอยู่แล้ว (ถ้ายังไม่มี) — รันซ้ำได้ ไม่ลบข้อมูลเดิม
 alter table public.tickets add column if not exists handler_name text default '';
 alter table public.tickets add column if not exists status_date date;
+alter table public.tickets add column if not exists status_time text default '';
 alter table public.tickets add column if not exists source text default 'external';
 alter table public.tickets add column if not exists accepted_at timestamptz;
 alter table public.tickets add column if not exists audio_url text default '';
@@ -46,6 +48,41 @@ create table if not exists public.user_devices (
   ticket_count int default 0,
   created_at timestamptz default now()
 );
+
+-- ============================================================
+-- ระบบจดจำผู้ใช้งานภายนอก (ยืนยันตัวตนเบื้องต้นหน้าแจ้งซ่อม)
+-- ผู้ใช้กรอก "ชื่อ + ตำแหน่ง" ครั้งแรก ระบบเก็บเป็น cookie token
+-- ครั้งต่อมาถ้าเจอ IP เดิม หรือ cookie เดิม ก็ผ่านเลยไม่ต้องกรอกใหม่
+-- ============================================================
+create table if not exists public.external_visitors (
+  id bigint generated always as identity primary key,
+  name text not null default '',           -- ชื่อผู้แจ้ง (ชื่อเล่น)
+  position text not null default '',       -- ตำแหน่งในบริษัท
+  ip text not null default '',             -- IP ล่าสุด (อัปเดตเมื่อเจอเครือข่ายใหม่)
+  token text not null default '',          -- รหัสจำเบราว์เซอร์ (cookie)
+  ticket_count int default 0,              -- จำนวนครั้งที่แจ้งซ่อม
+  last_seen_at timestamptz default now(),  -- เข้าใช้งานล่าสุด
+  created_at timestamptz default now()
+);
+
+alter table public.external_visitors enable row level security;
+create index if not exists external_visitors_ip_idx on public.external_visitors (ip);
+create index if not exists external_visitors_token_idx on public.external_visitors (token);
+
+-- ประวัติ IP ทั้งหมดของแต่ละผู้ใช้ (บันทึกทุกครั้งที่เจอ)
+-- เผื่อผู้ใช้ไปใช้เน็ตใหม่แล้วสงสัย "ทำไมต้องกรอกใหม่" admin ดูได้ว่าใช้เน็ตอะไรบ้าง
+create table if not exists public.visitor_ips (
+  id bigint generated always as identity primary key,
+  visitor_id bigint not null references public.external_visitors(id) on delete cascade,
+  ip text not null,
+  first_seen_at timestamptz default now(),
+  last_seen_at timestamptz default now(),
+  visit_count int default 1,
+  unique (visitor_id, ip)
+);
+
+alter table public.visitor_ips enable row level security;
+create index if not exists visitor_ips_visitor_idx on public.visitor_ips (visitor_id);
 
 alter table public.tickets enable row level security;
 alter table public.ticket_photos enable row level security;
@@ -85,6 +122,8 @@ create table if not exists public.device_entries (
   broken_date date,                       -- วันที่พัง
   claim_date date,                        -- วันที่ส่งเคลม (เฉพาะสถานะ 'กำลังส่งเคลม')
   asset_code text default '',             -- รหัสทรัพย์สินบริษัท
+  branch text default '',                 -- รหัสสาขา '1'(บขสเก่า) '3'(รพ.กรุงเทพระยอง) '4'(มาบตาพุด) '5'(บ้านฉาง)
+  position text default '',               -- ตำแหน่งที่ตั้งของอุปกรณ์ในสาขา (พิมพ์เอง)
   notes text default '',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -102,6 +141,8 @@ alter table public.device_entries add column if not exists warranty_expire_date 
 alter table public.device_entries add column if not exists broken_date date;
 alter table public.device_entries add column if not exists claim_date date;
 alter table public.device_entries add column if not exists asset_code text default '';
+alter table public.device_entries add column if not exists branch text default '';
+alter table public.device_entries add column if not exists position text default '';
 alter table public.device_entries add column if not exists notes text default '';
 alter table public.device_entries add column if not exists updated_at timestamptz default now();
 
@@ -198,3 +239,57 @@ end $$;
 
 create index if not exists repair_notes_ticket_idx on public.repair_notes (ticket_no);
 create index if not exists repair_notes_created_idx on public.repair_notes (created_at);
+
+-- ============================================================
+-- ระบบ maintenance อุปกรณ์ขององค์กร — บันทึกการตรวจสอบอุปกรณ์
+-- ทุกครั้งที่กด "ตรวจสอบอุปกรณ์" จะเก็บประวัติที่นี่ + ซิงก์สถานะ
+-- กลับไปยัง device_entries.status
+-- ============================================================
+create table if not exists public.device_maintenance_logs (
+  id bigint generated always as identity primary key,
+  entry_id bigint not null references public.device_entries(id) on delete cascade,
+  checked_date date not null,             -- วันที่ตรวจสอบ
+  status text not null default 'ok',      -- สถานะตอนตรวจ (ซิงก์ๆ ไป device_entries)
+  notes text default '',                  -- หมายเหตุ (ไม่บังคับ)
+  created_at timestamptz default now()
+);
+
+alter table public.device_maintenance_logs enable row level security;
+
+create index if not exists device_maintenance_logs_entry_idx on public.device_maintenance_logs (entry_id);
+create index if not exists device_maintenance_logs_checked_idx on public.device_maintenance_logs (checked_date);
+
+-- ============================================================
+-- คลังอุปกรณ์สำหรับ wizard แจ้งซ่อมภายใน (ขั้นตอนที่ 1 เลือกอุปกรณ์)
+-- admin เพิ่ม/แก้/ลบได้ พร้อมไอคอน (ถ้าไม่มี icon_url ใช้ไอคอนตามหมวด)
+-- ============================================================
+create table if not exists public.device_options (
+  id bigint generated always as identity primary key,
+  category text not null,                  -- 'Hardware' / 'Software' / 'Disk'
+  name text not null,                      -- ชื่ออุปกรณ์ เช่น 'เครื่องชั่ง'
+  icon_url text default '',                -- ลิงก์ไอคอน (ว่าง = ใช้ไอคอนพื้นฐานตามหมวด)
+  sort_order int not null default 0,
+  created_at timestamptz default now(),
+  unique (category, name)
+);
+
+alter table public.device_options enable row level security;
+
+create index if not exists device_options_cat_idx on public.device_options (category, sort_order);
+
+-- อุปกรณ์เริ่มต้น (อิมพอร์ตจากรายการเดิมที่เคย hardcode ใน wizard)
+insert into public.device_options (category, name, sort_order) values
+   ('Hardware', 'เครื่องปริ้น', 1),
+   ('Hardware', 'คอมพิวเตอร์', 2),
+   ('Hardware', 'เครื่อง POS', 3),
+   ('Hardware', 'กล้อง CCTV', 4),
+   ('Hardware', 'เซิร์ฟเวอร์', 5),
+   ('Software', 'Excel', 1),
+   ('Software', 'Word', 2),
+   ('Software', 'PowerPoint', 3),
+   ('Disk', 'เข้าถึงดิสไม่ได้', 1),
+   ('Disk', 'ไม่มีสิทธิ์เข้าใช้งาน', 2),
+   ('Disk', 'โฟลเดอร์แชร์ไม่ขึ้น', 3),
+   ('Disk', 'โอนไฟล์ช้า/ค้าง', 4),
+   ('Disk', 'ดิสเต็ม/เซฟไม่ได้', 5)
+on conflict (category, name) do nothing;

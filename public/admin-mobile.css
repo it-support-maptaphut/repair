@@ -1,0 +1,660 @@
+/* ============================================================
+   admin-mobile.css — โหมดมือถือของตัวโคลน admin (admin-mobile.html)
+   ------------------------------------------------------------
+   ไฟล์นี้ใช้เฉพาะหน้า admin-mobile.html (body class="mobile-admin")
+   - ไม่แตะ admin.html / admin-retro.css เดิมเลย
+   - แสดงแค่เมนูที่จำเป็นผ่าน sidebar เป็นลิ้นชัก + แถบบน (topbar)
+   ============================================================ */
+
+body.mobile-admin {
+  --mobile-top: 56px;
+}
+
+/* ---------- แถบบนสุด (topbar) คงที่ ---------- */
+.mob-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--mobile-top);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: linear-gradient(180deg, var(--green), var(--green-dark));
+  color: #fff;
+  z-index: 60;
+  box-shadow: 0 2px 10px rgba(11, 61, 37, 0.25);
+}
+.mob-topbar .mob-menu-btn {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.mob-topbar .mob-menu-btn:active { background: rgba(255,255,255,0.28); }
+.mob-topbar .mob-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mob-topbar .mob-title small {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* ---------- ซ่อน content ที่ใช้ desktop เท่านั้น ---------- */
+body.mobile-admin .sidebar-header {
+  display: none !important;
+}
+body.mobile-admin .side-brand {
+  display: flex;
+  padding: 10px 8px 14px;
+  margin-bottom: 10px;
+}
+body.mobile-admin .side-title { font-size: 15px; }
+body.mobile-admin .side-sub { font-size: 11.5px; }
+
+/* ---------- Sidebar กลายเป็นลิ้นชัก ---------- */
+body.mobile-admin .sidebar {
+  position: fixed;
+  top: var(--mobile-top);
+  left: 0;
+  height: calc(100dvh - var(--mobile-top));
+  width: 286px;
+  max-width: 86vw;
+  flex: none;
+  background: #fff;
+  border-right: 1px solid var(--line);
+  box-shadow: none;
+  padding: 16px 12px 20px;
+  overflow-y: auto;
+  transform: translateX(-108%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 55;
+}
+body.mobile-admin .sidebar.mob-open {
+  transform: translateX(0);
+  box-shadow: 4px 0 22px rgba(11, 61, 37, 0.18);
+}
+body.mobile-admin .mob-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 27, 19, 0.42);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  z-index: 54;
+}
+body.mobile-admin .mob-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---------- ลิ้นชักมือถือ: หมวดหมู่เรียงแนวนอน (chips) ---------- */
+body.mobile-admin #sidebar .sidebar-header { display: none !important; }
+body.mobile-admin #sidebar .mob-side-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 12px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--green-dark);
+  line-height: 1.25;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+body.mobile-admin #sidebar .mob-side-title small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+body.mobile-admin #sidebar .mob-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 2px 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+body.mobile-admin #sidebar .mob-cat {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: #2f6b4f;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+body.mobile-admin #sidebar .mob-cat.is-active {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+  color: #fff;
+}
+body.mobile-admin #sidebar .mob-cat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 2px;
+}
+body.mobile-admin #sidebar .side-nav {
+  display: flex;
+  flex-direction: column !important;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+}
+body.mobile-admin #sidebar .mob-cat-body[hidden] { display: none; }
+body.mobile-admin #sidebar .side-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #2f6b4f;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+body.mobile-admin #sidebar .side-btn svg { width: 16px; height: 16px; flex: none; }
+body.mobile-admin #sidebar .side-btn.is-active {
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-weight: 800;
+}
+body.mobile-admin #sidebar .mob-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--red, #b91c1c);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+body.mobile-admin #sidebar .mob-logout svg { width: 16px; height: 16px; }
+
+/* ---------- Layout กลายเป็นคอลัมน์เดียว ---------- */
+body.mobile-admin .layout {
+  display: block;
+  min-height: 0;
+}
+body.mobile-admin .main {
+  padding: calc(var(--mobile-top) + 12px) 12px 56px;
+  width: 100%;
+}
+
+/* ---------- ปุ่มเมนูให้แตะง่าย ---------- */
+body.mobile-admin .mob-topbar { padding: 0 8px; }
+body.mobile-admin .mob-topbar .mob-title small { display: none; }
+body.mobile-admin .mob-topbar .mob-title {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.mobile-admin .mob-menu-btn { width: 38px; height: 38px; }
+body.mobile-admin .side-group-head {
+  min-height: 46px;
+  border-radius: 10px;
+}
+body.mobile-admin .side-group-items .side-btn {
+  min-height: 46px;
+  border-radius: 10px;
+  padding: 10px 12px 10px 36px;
+}
+body.mobile-admin .side-btn.is-active {
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-weight: 700;
+}
+body.mobile-admin .theme-opt {
+  min-height: 46px;
+  border-radius: 10px;
+}
+
+/* ---------- Stat cards : ตัวกรองแบบปุ่มเล็ก (chips) ---------- */
+body.mobile-admin .stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+body.mobile-admin .stat-card {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 999px;
+}
+body.mobile-admin .stat-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+body.mobile-admin .stat-icon svg { width: 14px; height: 14px; }
+body.mobile-admin .stat-num { font-size: 14px; }
+body.mobile-admin .stat-label { font-size: 9.5px; }
+body.mobile-admin .stats-actions {
+  flex-basis: 100%;
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  justify-content: flex-end;
+}
+body.mobile-admin .stats-actions > button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  gap: 4px !important;
+  background: var(--green-soft) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--green-dark) !important;
+  cursor: pointer;
+}
+body.mobile-admin .stats-actions > button span { font-size: 12px !important; }
+body.mobile-admin .stats-actions > button svg { width: 14px; height: 14px; }
+body.mobile-admin .sttats-actions .inbox-badge { position: static; margin-left: 2px; }
+
+/* ---------- ปุ่มทั่วไปให้เล็ก/กะทัดรัด ---------- */
+body.mobile-admin .btn { min-height: 40px; padding: 8px 12px; font-size: 13px; border-radius: 10px; }
+body.mobile-admin .btn-sm { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+body.mobile-admin .btn-refresh { padding: 7px 10px; font-size: 12px; border-radius: 999px; gap: 5px; }
+body.mobile-admin .btn-inbox { padding: 7px 10px; font-size: 12px; border-radius: 999px; gap: 5px; }
+
+/* ---------- detail modal: อ่านอย่างเดียว (ซ่อนปุ่มจัดการ) ---------- */
+body.mobile-admin .mob-hide { display: none !important; }
+body.mobile-admin #detailView .modal-no { display: none !important; }
+body.mobile-admin #detailView .modal-actions .btn-edit,
+body.mobile-admin #detailView .modal-actions .btn-approve,
+body.mobile-admin #detailView .modal-actions .btn-finish,
+body.mobile-admin #detailView .modal-actions .btn-share { display: none !important; }
+
+/* ---------- ตารางเลื่อนซ้าย-ขวาได้ บนมือถือ ---------- */
+body.mobile-admin .table-wrap { overflow: visible; }
+body.mobile-admin .table-wrap thead { display: none; }
+
+/* สรุปแจ้งซ่อม: เป็นการ์ดข้อมูลล้วน 5 ฟิลด์ */
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="symptom"] {
+  background: var(--green-soft);
+  border-radius: 10px;
+  padding: 9px 12px !important;
+  margin-bottom: 6px;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="no"],
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="status"],
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="actions"] { display: none !important; }
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="date"],
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="device"],
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="loc"],
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="user"],
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="symptom"] {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 6px 12px;
+  border: none;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c]::before {
+  content: attr(data-label);
+  flex: 0 0 auto;
+  min-width: 84px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c] * {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td .tno { display: none; }
+
+/* ตารางทั่วไป -> การ์ดบล็อก (label จาก data-label) */
+body.mobile-admin table:not(#ticketsTable) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+body.mobile-admin table:not(#ticketsTable) thead { display: none; }
+body.mobile-admin table:not(#ticketsTable) tbody { display: block; width: 100%; }
+body.mobile-admin table:not(#ticketsTable) tbody tr {
+  display: block;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+body.mobile-admin table:not(#ticketsTable) tbody td {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border: none;
+  border-bottom: 1px dashed var(--line);
+  font-size: 13.5px;
+}
+body.mobile-admin table:not(#ticketsTable) tbody td:last-child { border-bottom: none; }
+body.mobile-admin table:not(#ticketsTable) tbody td::before {
+  content: attr(data-label);
+  flex: 0 0 auto;
+  min-width: 96px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+body.mobile-admin table:not(#ticketsTable) tbody td[colspan] {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 0;
+}
+body.mobile-admin table:not(#ticketsTable) tbody td[colspan]::before { content: none; }
+body.mobile-admin .table-wrap {
+  overflow: visible;
+}
+
+/* ---------- แต่ให้หน้า ticket เป็นการ์ด (เหมือน admin เดิม) ---------- */
+@media (max-width: 767px) {
+  body.mobile-admin #ticketsBody tr.ticket-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    position: relative;
+    background: var(--card);
+    border-radius: 0;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    animation: cardIn 0.25s ease both;
+    cursor: pointer;
+  }
+}
+
+/* ---------- ลดความกว้าง input/ปุ่มในฟอร์ม ---------- */
+body.mobile-admin input.form-field,
+body.mobile-admin select.form-field,
+body.mobile-admin textarea,
+body.mobile-admin .form-field input,
+body.mobile-admin .form-field select,
+body.mobile-admin .form-field textarea {
+  font-size: 16px;
+}
+
+/* ============================================================
+   ส่วนที่ 2 — ปรับ layout ทั้งหน้าให้กะทัดรัด ใช้งานง่ายบนจอเล็ก
+   ============================================================ */
+
+/* modal กลายเป็น sheets ปัดขึ้นจากล่าง เต็มความกว้าง */
+body.mobile-admin .modal-mask {
+  align-items: flex-end;
+}
+body.mobile-admin .modal {
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  border-radius: 16px 16px 0 0;
+  animation: mobSheetUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+body.mobile-admin .modal-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(11, 61, 37, 0.08);
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+}
+body.mobile-admin .modal-body { padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); }
+body.mobile-admin .modal-title {
+  font-size: 16px;
+  padding-right: 40px;
+  line-height: 1.4;
+}
+@keyframes mobSheetUp {
+  from { transform: translateY(24px); opacity: 0.6; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ฟอร์ม: ทุกแถวเป็นคอลัมน์เดียว เต็มกว้าง */
+body.mobile-admin .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+body.mobile-admin .form-row > .form-field { width: 100%; }
+body.mobile-admin .form-field { width: 100%; }
+body.mobile-admin .form-field label {
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+body.mobile-admin .form-field input,
+body.mobile-admin .form-field select,
+body.mobile-admin .form-field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 16px;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+/* ปุ่มในแถว action ให้ใหญ่พอแตะและเรียงกันพอดี */
+body.mobile-admin .modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+body.mobile-admin .modal-actions .btn {
+  flex: 1;
+  min-height: 46px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+body.mobile-admin .modal-actions.tf-actions { flex-wrap: wrap; }
+
+/* กล่องผ้าเช็ค/radio และ hint ให้ชัด */
+body.mobile-admin input[type="checkbox"],
+body.mobile-admin input[type="radio"] { width: 20px; height: 20px; }
+body.mobile-admin .tf-field-hint { font-size: 12px; }
+
+/* ตาราง: อ่านง่าย ไม่แออัด — พอดีความกว้างจอเสมอ */
+body.mobile-admin .table-wrap {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  overflow: visible;
+}
+body.mobile-admin .table-wrap table {
+  min-width: 0;
+  width: 100%;
+}
+body.mobile-admin .table-wrap th,
+body.mobile-admin .table-wrap td {
+  padding: 9px 10px;
+  font-size: 13px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+body.mobile-admin .table-wrap th { font-size: 12px; }
+
+/* การ์ดรายการงาน (ticket) ไม่ใหญ่เกินไป */
+body.mobile-admin #ticketsBody tr.ticket-card {
+  margin-bottom: 10px;
+  border-radius: 12px;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+/* header ของหน้า/section ให้กระชับ */
+body.mobile-admin .main > section { padding: 0; }
+body.mobile-admin h1, body.mobile-admin h2, body.mobile-admin h3 { line-height: 1.35; }
+
+/* ปุ่มทั่วไปให้แตะง่ายขึ้นในคอนเทนต์ */
+body.mobile-admin .btn {
+  min-height: 42px;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+body.mobile-admin .ticket-top-btn { min-height: 42px; }
+body.mobile-admin .devices-toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+body.mobile-admin .devices-toolbar .btn { flex: 1 1 auto; min-height: 44px; }
+body.mobile-admin .toolbar-toggle { min-height: 42px; }
+body.mobile-admin .table-wrap table { min-width: 0; width: 100%; }
+body.mobile-admin .mbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+body.mobile-admin .mbar input {
+  flex: 1 1 100%;
+  min-height: 44px;
+  font-size: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+body.mobile-admin .w-input-row { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+body.mobile-admin .w-input-row input, body.mobile-admin .w-input-row .w-sel-wrap { flex: 1 1 100%; min-height: 44px; }
+body.mobile-admin .w-btn { min-height: 44px; padding: 10px 14px; border-radius: 10px; }
+body.mobile-admin .w-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+body.mobile-admin .w-label { width: 100%; }
+
+/* ============================================================
+   ส่วนที่ 3 — บังคับไม่ให้เกินหน้าจอ มือถือ ไม่ต้องเลื่อนแนวนอน
+   ============================================================ */
+body.mobile-admin {
+  overflow-x: hidden;
+}
+body.mobile-admin,
+body.mobile-admin *,
+body.mobile-admin *::before,
+body.mobile-admin *::after {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+body.mobile-admin .main,
+body.mobile-admin .main > section,
+body.mobile-admin .table-wrap {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body.mobile-admin .main {
+  overflow-x: hidden;
+}
+body.mobile-admin .main > section {
+  width: 100%;
+  min-width: 0;
+}
+body.mobile-admin tbody td,
+body.mobile-admin #main > section,
+body.mobile-admin .det-grid,
+body.mobile-admin .ph-grid {
+  min-width: 0;
+}
+body.mobile-admin .model-cell,
+body.mobile-admin .loc-entry,
+body.mobile-admin .w-search-wrap,
+body.mobile-admin .tf-cat-body {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+body.mobile-admin .row-actions {
+  flex-wrap: wrap;
+  white-space: normal;
+}
+body.mobile-admin .cell-trunc {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+body.mobile-admin .spec-line {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+body.mobile-admin .spec-line .v { overflow-wrap: anywhere; word-break: break-word; }
+body.mobile-admin .mt-last, body.mobile-admin .mt-h-item {
+  flex-wrap: wrap;
+}
+body.mobile-admin table:not(#ticketsTable) tbody td {
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+body.mobile-admin table:not(#ticketsTable) tbody td .row-actions {
+  margin-left: auto;
+}
+body.mobile-admin [style*="min-width: 180px"],
+body.mobile-admin [style*="min-width:200px"],
+body.mobile-admin [style*="min-width: 200px"],
+body.mobile-admin [style*="min-width:170px"] {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+/* modal และ inbox ให้ไม่เกินจอ */
+body.mobile-admin .modal {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body.mobile-admin .det-grid {
+  grid-template-columns: 1fr;
+}
+body.mobile-admin .det-grid .det-item.full { grid-column: 1 / -1; }
+body.mobile-admin .wc-wrap, body.mobile-admin .tf-modal-body {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
+}

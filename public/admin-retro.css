@@ -288,6 +288,8 @@ td[data-c="symptom"] .cell-trunc { color: #000 !important; }
 .b-new { background: #fff1b3 !important; color: #7a5c00 !important; }
 .b-working { background: #cfe2ff !important; color: #00338d !important; }
 .b-done { background: #c6e8c6 !important; color: #0a5a0a !important; }
+.b-broken { background: #f7c4c4 !important; color: #7f0000 !important; }
+.b-ok { background: #d8f5e8 !important; color: #0f7a4d !important; }
 
 /* แท็กหมวดอุปกรณ์ */
 .dev-tag {
@@ -474,3 +476,55 @@ input::placeholder { color: #666; }
   .stat-card { padding: 8px 10px !important; }
   .sidebar { padding: 8px 6px !important; }
 }
+
+/* ---------- หน้าเข้าสู่ระบบ Admin (ธีม 90s) ---------- */
+body.admin-login-page {
+  background: #008080 !important;
+}
+.admin-login-page .admin-login-box {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 12px 14px 14px !important;
+  animation: none !important;
+}
+.admin-login-page .admin-login-box::before {
+  content: "SYSTEM ADMIN IT";
+  display: block;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-family: var(--r-font);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  margin: -12px -14px 12px;
+  border-bottom: 1px solid #000;
+}
+.admin-login-page .admin-login-title,
+.admin-login-page .admin-login-sub { text-align: left; }
+.admin-login-page .admin-login-title { color: #000080 !important; font-size: 15px !important; font-weight: 700 !important; margin: 0 0 2px; }
+.admin-login-page .admin-login-sub { color: #000 !important; font-size: 11px !important; margin: 0 0 12px; }
+.admin-login-page .admin-login-field label { color: #000 !important; font-weight: 700 !important; font-size: 12px !important; }
+.admin-login-page .admin-login-field .verify-input {
+  border: 2px inset #808080 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  font-family: var(--r-font) !important;
+}
+.admin-login-page .admin-login-field .verify-input:focus { outline: 1px dotted #000; }
+.admin-login-page .admin-login-btn {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-weight: 400 !important;
+  transition: none !important;
+}
+.admin-login-page .admin-login-btn:hover { color: #000 !important; }
+.admin-login-page .admin-login-btn:active { border-color: #404040 #fff #fff #404040 !important; }
+.admin-login-page .admin-login-btn:disabled { color: #666 !important; }

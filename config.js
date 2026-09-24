@@ -3,6 +3,9 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 module.exports = {
   PORT: process.env.PORT || 3000,
+  ADMIN_USER: process.env.ADMIN_USER || "",
+  ADMIN_PASS: process.env.ADMIN_PASS || "",
+  ADMIN_SECRET: process.env.ADMIN_SECRET || "",
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",

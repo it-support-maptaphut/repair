@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fsSync = require("fs");
+const crypto = require("crypto");
 
 const config = require("./config");
 const db = require("./db-adapter");
@@ -24,9 +25,121 @@ function clientIp(req) {
   return (req.socket && req.socket.remoteAddress) || "";
 }
 
+// ---------- cookie (ไม่ใช้ library — แปลง header เอง) ----------
+function parseCookies(req) {
+  const out = {};
+  const raw = req.headers.cookie;
+  if (!raw) return out;
+  String(raw).split(";").forEach(function (pair) {
+    const i = pair.indexOf("=");
+    if (i < 0) return;
+    const k = pair.slice(0, i).trim();
+    const v = pair.slice(i + 1).trim();
+    if (k) out[k] = decodeURIComponent(v);
+  });
+  return out;
+}
+
+function setVisitorCookie(res, token) {
+  res.set("Set-Cookie", "visitor_token=" + encodeURIComponent(token) + "; Path=/; Max-Age=31536000; SameSite=Lax");
+}
+
+// ======================================================
+// ระบบล็อกอินหน้า Admin (server-side, HttpOnly cookie)
+// ======================================================
+
+app.use(express.json());
+
+const ADMIN_USER = config.ADMIN_USER || "admin";
+const ADMIN_PASS = config.ADMIN_PASS;
+const ADMIN_SECRET = config.ADMIN_SECRET;
+const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
+
+function signAdminToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", ADMIN_SECRET).update(body).digest("base64url");
+  return body + "." + sig;
+}
+
+function verifyAdminToken(token) {
+  if (!token) return null;
+  try {
+    const [bodyB64, sig] = String(token).split(".");
+    if (!bodyB64 || !sig) return null;
+    const expect = crypto.createHmac("sha256", ADMIN_SECRET).update(bodyB64).digest("base64url");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expect);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const payload = JSON.parse(Buffer.from(bodyB64, "base64url").toString("utf8"));
+    if (!payload || payload.e !== "admin" || !payload.exp) return null;
+    if (Date.now() > payload.exp) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setAdminCookie(res, token) {
+  res.set("Set-Cookie", "admin_token=" + encodeURIComponent(token) + "; HttpOnly; Path=/; Max-Age=28800; SameSite=Lax");
+}
+
+function clearAdminCookie(res) {
+  res.set("Set-Cookie", "admin_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
+}
+
+function isAdminAuthed(req) {
+  return !!verifyAdminToken(parseCookies(req).admin_token);
+}
+
+// กัน API ทั้งหมดในหมวด /api/admin/* (login ไม่มีในหมวดนี้)
+app.use("/api/admin", (req, res, next) => {
+  if (req.path.startsWith("/login")) return next();
+  if (isAdminAuthed(req)) return next();
+  return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อนใช้งาน" });
+});
+
+app.post("/api/auth/login", (req, res) => {
+  const user = String(((req.body || {}).user || "")).trim();
+  const pass = String(((req.body || {}).pass || ""));
+  if (!user || !pass) {
+    return res.status(400).json({ ok: false, message: "กรอกชื่อผู้ใช้และรหัสผ่าน" });
+  }
+  if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
+    return res.status(401).json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+  }
+  const token = signAdminToken({ e: "admin", exp: Date.now() + ADMIN_SESSION_TTL });
+  setAdminCookie(res, token);
+  res.json({ ok: true, user: ADMIN_USER });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  clearAdminCookie(res);
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/me", (req, res) => {
+  const authed = isAdminAuthed(req);
+  res.json({ ok: true, authed: authed, user: authed ? "admin" : null });
+});
+
+// เปิดหน้า /admin.html ได้เฉพาะผู้ที่ Authed แล้ว (ไม่เช่นนั้นไปหน้า login)
+// วางก่อน express.static เพื่อไม่ให้ static serve admin.html ข้าม gate
+function serveAdminPage(req, res, next) {
+  if (isAdminAuthed(req)) return next();
+  return res.redirect("/admin-login.html");
+}
+
+app.get("/admin", serveAdminPage, (req, res) => res.redirect("/admin.html"));
+app.get("/admin.html", serveAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+app.get("/admin-mobile.html", serveAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin-mobile.html"));
+});
+
 app.use(express.json());
 app.use(function (req, res, next) {
-  if (req.path === "/admin" || req.path === "/admin.html") {
+  if (req.path === "/admin" || req.path === "/admin.html" || req.path === "/admin-mobile.html") {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
@@ -53,6 +166,7 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
     const handlerName = String(body.handler_name || "").trim();
     const statusDateRaw = String(body.status_date || "").trim();
     const statusDate = /^\d{4}-\d{2}-\d{2}$/.test(statusDateRaw) ? statusDateRaw : null;
+    const statusTime = String(body.status_time || "").trim();
     const statusValue = String(body.status || "new").trim();
     const status = ["new", "working", "done"].includes(statusValue) ? statusValue : "new";
     const sourceRaw = String(body.source || "external").trim();
@@ -63,12 +177,18 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
     if (!symptom || !location) {
       return res.status(400).json({ ok: false, message: "ข้อมูลไม่ครบ" });
     }
-    if (source !== "internal" && !name) {
-      return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อผู้แจ้ง (ชื่อเล่น)" });
-    }
     const adapter = db.getAdapter();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+
+    // ใบแจ้งจากภายนอกต้องยืนยันตัวตนก่อน (ผ่านระบบจดจำผู้ใช้งานภายนอก)
+    let visitor = null;
+    if (source !== "internal") {
+      visitor = await resolveVisitor(req);
+      if (!visitor) {
+        return res.status(403).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน กรุณากรอกชื่อและตำแหน่งก่อนแจ้งซ่อม" });
+      }
     }
 
     const ticketNo = await adapter.genTicketNo(device);
@@ -100,18 +220,20 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
       device,
       symptom,
       location,
-      reporterName: name,
+      reporterName: (visitor && (visitor.name + (visitor.position ? (" · " + visitor.position) : ""))) || name,
       reporterPhone: phone,
       reporterLineId,
       status,
       handlerName,
       statusDate,
+      statusTime,
       source,
       acceptedAt,
       audioUrl
     });
     await adapter.addPhotos(ticketId, urls);
     await adapter.recordDevice({ ip: clientIp(req), ticketNo });
+    if (visitor && visitor.id) await adapter.bumpVisitorTicket(visitor.id);
 
     if (source === "internal") {
       try {
@@ -132,8 +254,6 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
     res.status(500).json({ ok: false, message: "server error" });
   }
 });
-
-app.get("/admin", (req, res) => res.redirect("/admin.html"));
 
 app.get("/api/notify/stream", (req, res) => {
   notif.handleStream(req, res, clientIp(req));
@@ -286,6 +406,126 @@ app.delete("/api/admin/users/:ip", async (req, res) => {
 });
 
 
+// ---------- ระบบจดจำผู้ใช้งานภายนอก (ยืนยันตัวตนเบื้องต้น) ----------
+
+// ตรวจว่า visitor นี้ผ่านแล้วหรือยัง (cookie token หรือ IP ก็ได้)
+async function resolveVisitor(req) {
+  const adapter = db.getAdapter();
+  if (!adapter.ready) return null;
+  const token = parseCookies(req).visitor_token || "";
+  const ip = clientIp(req);
+  return adapter.findVisitor({ ip, token });
+}
+
+// GET /api/visitors/me — เช็กตัวเองว่าผ่านแล้วหรือยัง
+app.get("/api/visitors/me", async (req, res) => {
+  try {
+    const visitor = await resolveVisitor(req);
+    if (!visitor) return res.json({ ok: true, registered: false });
+    res.json({ ok: true, registered: true, visitor });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// POST /api/visitors — ลงทะเบียนครั้งแรก (ชื่อ + ตำแหน่ง)
+app.post("/api/visitors", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const body = req.body || {};
+    const name = String(body.name || "").trim();
+    const position = String(body.position || "").trim();
+    if (!name) return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อ" });
+    if (!position) return res.status(400).json({ ok: false, message: "กรุณากรอกตำแหน่ง" });
+    const ip = clientIp(req);
+    const token = crypto.randomBytes(24).toString("hex");
+    const visitor = await adapter.createVisitor({ name, position, ip, token });
+    setVisitorCookie(res, token);
+    res.json({ ok: true, visitor });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// GET /api/admin/visitors — รายการผู้ใช้ภายนอกทั้งหมด
+app.get("/api/admin/visitors", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const visitors = await adapter.listVisitors();
+    res.json({ ok: true, visitors });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// GET /api/admin/visitors/:id/ips — ประวัติ IP ของผู้ใช้คนนี้
+app.get("/api/admin/visitors/:id/ips", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const ips = await adapter.listVisitorIps(Number(req.params.id));
+    res.json({ ok: true, ips });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// PATCH /api/admin/visitors/:id — แก้ชื่อ / ตำแหน่ง
+app.patch("/api/admin/visitors/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const id = Number(req.params.id);
+    const body = req.body || {};
+    const patch = {};
+    if (body.name !== undefined) patch.name = String(body.name).trim();
+    if (body.position !== undefined) patch.position = String(body.position).trim();
+    if (!Object.keys(patch).length) {
+      return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลที่แก้" });
+    }
+    const visitor = await adapter.updateVisitor(id, patch);
+    if (!visitor) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+    res.json({ ok: true, visitor });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// DELETE /api/admin/visitors/:id — ลบผู้ใช้ (เช่น IP แยกคนออกไปแล้ว)
+app.delete("/api/admin/visitors/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const id = Number(req.params.id);
+    const data = await adapter.removeVisitor(id);
+    if (!data || !data.length) {
+      return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+    }
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+
 // ---------- โน้ตอุปกรณ์ (Device Notebook) ----------
 app.post("/api/admin/upload-device-photo", upload.single("photo"), async (req, res) => {
   try {
@@ -327,6 +567,76 @@ app.post("/api/admin/device-categories", async (req, res) => {
   }
 });
 
+// ---------- คลังอุปกรณ์สำหรับ wizard แจ้งซ่อมภายใน ----------
+app.get("/api/admin/device-options", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const options = await adapter.listDeviceOptions();
+    res.json({ ok: true, options });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/device-options", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    const name = String(body.name || "").trim();
+    const category = String(body.category || "Hardware").trim();
+    if (!name) return res.status(400).json({ ok: false, message: "กรอกชื่ออุปกรณ์" });
+    if (!["Hardware", "Software", "Disk"].includes(category)) return res.status(400).json({ ok: false, message: "หมวดไม่ถูกต้อง" });
+    const option = await adapter.addDeviceOption({ category, name, iconUrl: body.icon_url, sortOrder: Number(body.sort_order) });
+    res.json({ ok: true, option });
+  } catch (err) {
+    console.error(err);
+    const msg = (err.message || "").includes("duplicate") ? "อุปกรณ์นี้มีอยู่แล้วในหมวดนี้" : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.put("/api/admin/device-options/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    if (body.name !== undefined && !String(body.name).trim()) return res.status(400).json({ ok: false, message: "กรอกชื่ออุปกรณ์" });
+    if (body.category !== undefined && !["Hardware", "Software", "Disk"].includes(String(body.category))) return res.status(400).json({ ok: false, message: "หมวดไม่ถูกต้อง" });
+    const option = await adapter.updateDeviceOption(id, {
+      category: body.category !== undefined ? String(body.category) : undefined,
+      name: body.name !== undefined ? String(body.name) : undefined,
+      iconUrl: body.icon_url !== undefined ? String(body.icon_url) : undefined,
+      sortOrder: body.sort_order !== undefined ? Number(body.sort_order) : undefined
+    });
+    if (!option) return res.status(404).json({ ok: false, message: "ไม่พบอุปกรณ์นี้" });
+    res.json({ ok: true, option });
+  } catch (err) {
+    console.error(err);
+    const msg = (err.message || "").includes("duplicate") ? "อุปกรณ์นี้มีอยู่แล้วในหมวดนี้" : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.delete("/api/admin/device-options/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteDeviceOption(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบอุปกรณ์นี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 app.get("/api/admin/device-entries", async (req, res) => {
   try {
     const adapter = db.getAdapter();
@@ -360,6 +670,8 @@ app.post("/api/admin/device-entries", async (req, res) => {
       brokenDate: String((req.body || {}).broken_date || "").trim() || null,
       claimDate: String((req.body || {}).claim_date || "").trim() || null,
       assetCode: String((req.body || {}).asset_code || ""),
+      branch: String((req.body || {}).branch || "").trim(),
+      position: String((req.body || {}).position || "").trim(),
       notes: String((req.body || {}).notes || "")
     });
     res.json({ ok: true, id, entry_no: entryNo });
@@ -377,7 +689,7 @@ app.put("/api/admin/device-entries/:id", async (req, res) => {
     if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     const body = req.body || {};
     const patch = {};
-    ["category","model","spec_json","spec_source","spec_url","warranty_no","claim_company","status","asset_code","notes"].forEach(function (k) {
+    ["category","model","spec_json","spec_source","spec_url","warranty_no","claim_company","status","asset_code","branch","position","notes"].forEach(function (k) {
       if (body[k] != null) patch[k] = String(body[k]).trim();
     });
     if (body.warranty_expire_date != null) patch.warranty_expire_date = String(body.warranty_expire_date).trim() || null;
@@ -418,6 +730,77 @@ app.post("/api/admin/device-entries/:id/photos", async (req, res) => {
     if (!urls.length) return res.status(400).json({ ok: false, message: "ไม่มีรูป" });
     await adapter.addEntryPhotos(id, urls);
     res.json({ ok: true, count: urls.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- Maintenance อุปกรณ์ขององค์กร (ซิงก์กับระบบข้อมูลอุปกรณ์) ----------
+app.get("/api/admin/maintenance", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const rows = await adapter.listDeviceMaintenance();
+    res.json({ ok: true, count: rows.length, entries: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/maintenance/:entryId/logs", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.entryId);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const logs = await adapter.listMaintenanceChecks(id);
+    res.json({ ok: true, count: logs.length, logs });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/maintenance/log/:logId", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const logId = Number(req.params.logId);
+    if (!Number.isFinite(logId)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const data = await adapter.deleteMaintenanceCheck(logId);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบประวัติการตรวจสอบนี้" });
+    res.json({ ok: true, id: logId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/maintenance/:entryId/check", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.entryId);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const body = req.body || {};
+    const checkedDate = String(body.checked_date || "").trim();
+    const status = String(body.status || "").trim();
+    const notes = String(body.notes || "").trim();
+    if (!checkedDate) return res.status(400).json({ ok: false, message: "กรุณาเลือกวันที่ตรวจสอบ" });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkedDate)) return res.status(400).json({ ok: false, message: "รูปแบบวันที่ไม่ถูกต้อง" });
+    if (!status) return res.status(400).json({ ok: false, message: "กรุณาเลือกสถานะ" });
+    const logId = await adapter.createMaintenanceCheck({ entryId: id, checkedDate, status, notes });
+    res.json({ ok: true, log_id: logId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -826,6 +1209,7 @@ app.put("/api/tickets/:ticketNo", async (req, res) => {
     if (body.reporter_line_id !== undefined) patch.reporter_line_id = String(body.reporter_line_id).trim();
     if (body.status !== undefined) patch.status = String(body.status).trim();
     if (body.status_date !== undefined) patch.status_date = String(body.status_date).trim() || null;
+    if (body.status_time !== undefined) patch.status_time = String(body.status_time).trim() || "";
     if (body.handler_name !== undefined) patch.handler_name = String(body.handler_name).trim();
     if (body.source !== undefined) patch.source = String(body.source).trim();
     if (body.pdf_url !== undefined) patch.pdf_url = String(body.pdf_url).trim();

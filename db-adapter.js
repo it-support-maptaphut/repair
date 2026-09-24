@@ -58,6 +58,34 @@ function createSupabaseAdapter() {
     async removeDevice(ip) {
       return supabaseModule.removeDevice(ip);
     },
+
+    async findVisitor({ ip, token }) {
+      return supabaseModule.findVisitor({ ip, token });
+    },
+
+    async createVisitor(data) {
+      return supabaseModule.createVisitor(data);
+    },
+
+    async listVisitors(limit = 300) {
+      return supabaseModule.listVisitors(limit);
+    },
+
+    async updateVisitor(id, patch) {
+      return supabaseModule.updateVisitor(id, patch);
+    },
+
+    async removeVisitor(id) {
+      return supabaseModule.removeVisitor(id);
+    },
+
+    async listVisitorIps(visitorId) {
+      return supabaseModule.listVisitorIps(visitorId);
+    },
+
+    async bumpVisitorTicket(id) {
+      return supabaseModule.bumpVisitorTicket(id);
+    },
     
     async genDeviceNo() {
       return supabaseModule.genDeviceNo();
@@ -71,6 +99,22 @@ function createSupabaseAdapter() {
       return supabaseModule.addDeviceCategory(name);
     },
     
+    async listDeviceOptions() {
+      return supabaseModule.listDeviceOptions();
+    },
+    
+    async addDeviceOption(data) {
+      return supabaseModule.addDeviceOption(data);
+    },
+    
+    async updateDeviceOption(id, patch) {
+      return supabaseModule.updateDeviceOption(id, patch);
+    },
+    
+    async deleteDeviceOption(id) {
+      return supabaseModule.deleteDeviceOption(id);
+    },
+
     async listDeviceEntries(limit = 500) {
       return supabaseModule.listDeviceEntries(limit);
     },
@@ -89,6 +133,22 @@ function createSupabaseAdapter() {
     
     async addEntryPhotos(entryId, cloudUrls) {
       return supabaseModule.addEntryPhotos(entryId, cloudUrls);
+    },
+    
+    async listDeviceMaintenance(limit = 1000) {
+      return supabaseModule.listDeviceMaintenance(limit);
+    },
+    
+    async createMaintenanceCheck(data) {
+      return supabaseModule.createMaintenanceCheck(data);
+    },
+    
+    async listMaintenanceChecks(entryId) {
+      return supabaseModule.listMaintenanceChecks(entryId);
+    },
+    
+    async deleteMaintenanceCheck(logId) {
+      return supabaseModule.deleteMaintenanceCheck(logId);
     },
     
     async listWorkNotes(limit = 500) {
@@ -215,6 +275,7 @@ function createPostgresAdapter() {
     status: row.status,
     handler_name: row.handler_name,
     status_date: row.status_date,
+    status_time: row.status_time || "",
     source: row.source,
     approved_at: row.approved_at,
     accepted_at: row.accepted_at,
@@ -267,15 +328,15 @@ function createPostgresAdapter() {
       return prefix + String(seq).padStart(3, "0");
     },
     
-    async createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, source, acceptedAt, audioUrl }) {
+    async createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl }) {
       const acceptedAtVal = acceptedAt || null;
       const audioUrlVal = audioUrl || "";
       const tryInsert = () =>
         query(
-          `INSERT INTO tickets (ticket_no, device, symptom, location, reporter_name, reporter_phone, reporter_line_id, status, handler_name, status_date, source, approved_at, accepted_at, audio_url)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          `INSERT INTO tickets (ticket_no, device, symptom, location, reporter_name, reporter_phone, reporter_line_id, status, handler_name, status_date, status_time, source, approved_at, accepted_at, audio_url)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
            RETURNING id`,
-          [ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status || "new", handlerName || "", statusDate || null, source || "external", status === "working" ? new Date() : null, acceptedAtVal, audioUrlVal]
+          [ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status || "new", handlerName || "", statusDate || null, statusTime || "", source || "external", status === "working" ? new Date() : null, acceptedAtVal, audioUrlVal]
         );
       try {
         const result = await tryInsert();
@@ -287,7 +348,16 @@ function createPostgresAdapter() {
             // ใบแจ้งจากภายนอกต้องเข้ากล่องข้อความก่อนเสมอ — ห้าม bypass
             throw new Error("ระบบกล่องข้อความยังไม่พร้อม: ต้องรัน SQL เพิ่มคอลัมน์ accepted_at");
           }
-          return this.insertWithoutColumns({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, source, audioUrlVal }, ["accepted_at", "audio_url"]);
+          return this.insertWithoutColumns({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, audioUrlVal }, ["accepted_at", "audio_url"]);
+        }
+        if (/status_time/.test(e.message)) {
+          const retry = await query(
+            `INSERT INTO tickets (ticket_no, device, symptom, location, reporter_name, reporter_phone, reporter_line_id, status, handler_name, status_date, source, approved_at, accepted_at, audio_url)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+             RETURNING id`,
+            [ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status || "new", handlerName || "", statusDate || null, source || "external", status === "working" ? new Date() : null, acceptedAtVal, audioUrlVal]
+          );
+          return retry.rows[0].id;
         }
         if (/audio_url/.test(e.message)) {
           const retry = await query(
@@ -302,9 +372,10 @@ function createPostgresAdapter() {
       }
     },
     
-    async insertWithoutColumns({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, source, audioUrlVal }, skip) {
+    async insertWithoutColumns({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, audioUrlVal }, skip) {
       const cols = [], vals = [], params = [];
       const push = (col, val) => { cols.push(col); vals.push("$" + (params.length + 1)); params.push(val); };
+      if (!skip.includes("status_time")) push("status_time", statusTime || "");
       if (!skip.includes("accepted_at")) push("accepted_at", null);
       if (!skip.includes("audio_url")) push("audio_url", audioUrlVal);
       if (!skip.includes("approved_at")) push("approved_at", status === "working" ? new Date() : null);
@@ -432,6 +503,90 @@ function createPostgresAdapter() {
       const result = await query(`DELETE FROM user_devices WHERE ip = $1 RETURNING id`, [ip]);
       return result.rows;
     },
+
+    async findVisitor({ ip, token }) {
+      let row = null;
+      if (token) {
+        const r = await query(`SELECT * FROM external_visitors WHERE token = $1 LIMIT 1`, [token]);
+        row = r.rows[0] || null;
+      }
+      if (!row && ip) {
+        const r = await query(`SELECT * FROM external_visitors WHERE ip = $1 ORDER BY last_seen_at DESC LIMIT 1`, [ip]);
+        row = r.rows[0] || null;
+      }
+      if (!row) return null;
+      if (ip && row.ip !== ip) {
+        await query(`UPDATE external_visitors SET ip = $1, last_seen_at = now() WHERE id = $2`, [ip, row.id]);
+        row.ip = ip;
+      } else {
+        await query(`UPDATE external_visitors SET last_seen_at = now() WHERE id = $1`, [row.id]);
+      }
+      if (ip) await this._touchVisitorIps(row.id, ip);
+      return row;
+    },
+
+    async _touchVisitorIps(visitorId, ip) {
+      if (!visitorId || !ip) return;
+      await query(
+        `INSERT INTO visitor_ips (visitor_id, ip, first_seen_at, last_seen_at, visit_count)
+         VALUES ($1, $2, now(), now(), 1)
+         ON CONFLICT (visitor_id, ip)
+         DO UPDATE SET last_seen_at = now(), visit_count = visitor_ips.visit_count + 1`,
+        [visitorId, ip]
+      );
+    },
+
+    async createVisitor({ name, position, ip, token }) {
+      const result = await query(
+        `INSERT INTO external_visitors (name, position, ip, token, ticket_count, last_seen_at)
+         VALUES ($1, $2, $3, $4, 0, now())
+         RETURNING id, name, position, ip, token, ticket_count, last_seen_at, created_at`,
+        [name || "", position || "", ip || "", token || ""]
+      );
+      const row = result.rows[0];
+      if (ip) await this._touchVisitorIps(row.id, ip);
+      return row;
+    },
+
+    async listVisitors(limit = 300) {
+      const result = await query(`SELECT * FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`, [limit]);
+      return result.rows;
+    },
+
+    async updateVisitor(id, patch) {
+      const keys = Object.keys(patch);
+      if (!keys.length) return null;
+      const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+      const values = keys.map(k => patch[k]);
+      values.push(id);
+      const result = await query(
+        `UPDATE external_visitors SET ${setClause} WHERE id = $${keys.length + 1}
+         RETURNING id, name, position, ip, token, ticket_count, last_seen_at, created_at`,
+        values
+      );
+      return result.rows[0] || null;
+    },
+
+    async removeVisitor(id) {
+      const result = await query(`DELETE FROM external_visitors WHERE id = $1 RETURNING id`, [id]);
+      return result.rows;
+    },
+
+    async listVisitorIps(visitorId) {
+      const result = await query(
+        `SELECT * FROM visitor_ips WHERE visitor_id = $1 ORDER BY last_seen_at DESC`,
+        [visitorId]
+      );
+      return result.rows;
+    },
+
+    async bumpVisitorTicket(id) {
+      if (!id) return;
+      await query(
+        `UPDATE external_visitors SET ticket_count = ticket_count + 1, last_seen_at = now() WHERE id = $1`,
+        [id]
+      );
+    },
     
     async genDeviceNo() {
       const result = await query(`SELECT entry_no FROM device_entries WHERE entry_no LIKE 'DEV-%' ORDER BY id DESC LIMIT 1`);
@@ -451,6 +606,44 @@ function createPostgresAdapter() {
       return result.rows[0];
     },
     
+    async listDeviceOptions() {
+      const result = await query(`SELECT * FROM device_options ORDER BY category, sort_order, name`);
+      return result.rows;
+    },
+    
+    async addDeviceOption({ category, name, iconUrl, sortOrder }) {
+      const result = await query(
+        `INSERT INTO device_options (category, name, icon_url, sort_order)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, category, name, icon_url, sort_order`,
+        [String(category || "Hardware").trim(), String(name || "").trim(), String(iconUrl || "").trim(), Number.isFinite(sortOrder) ? sortOrder : 0]
+      );
+      return result.rows[0];
+    },
+    
+    async updateDeviceOption(id, { category, name, iconUrl, sortOrder }) {
+      const sets = [];
+      const params = [];
+      const push = (sql, val) => { params.push(val); sets.push(sql); };
+      if (category !== undefined) push(`category = $${params.length + 1}`, String(category).trim());
+      if (name !== undefined && name !== null) push(`name = $${params.length + 1}`, String(name).trim());
+      if (iconUrl !== undefined && iconUrl !== null) push(`icon_url = $${params.length + 1}`, String(iconUrl).trim());
+      if (sortOrder !== undefined && Number.isFinite(sortOrder)) push(`sort_order = $${params.length + 1}`, sortOrder);
+      if (!sets.length) return null;
+      params.push(id);
+      const result = await query(
+        `UPDATE device_options SET ${sets.join(", ")} WHERE id = $${params.length}
+         RETURNING id, category, name, icon_url, sort_order`,
+        params
+      );
+      return result.rows[0];
+    },
+    
+    async deleteDeviceOption(id) {
+      const result = await query(`DELETE FROM device_options WHERE id = $1 RETURNING id`, [id]);
+      return result.rows;
+    },
+    
     async listDeviceEntries(limit = 500) {
       const result = await query(
         `SELECT de.*, 
@@ -467,9 +660,9 @@ function createPostgresAdapter() {
     
     async createDeviceEntry(data) {
       const result = await query(
-        `INSERT INTO device_entries (entry_no, category, model, spec_json, spec_source, spec_url, warranty_no, claim_company, warranty_expire_date, status, broken_date, claim_date, asset_code, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
-        [data.entryNo, data.category, data.model, data.specJson, data.specSource, data.specUrl, data.warrantyNo, data.claimCompany, data.warrantyExpireDate || null, data.status || "claim", data.brokenDate || null, data.claimDate || null, data.assetCode, data.notes]
+        `INSERT INTO device_entries (entry_no, category, model, spec_json, spec_source, spec_url, warranty_no, claim_company, warranty_expire_date, status, broken_date, claim_date, asset_code, branch, position, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
+        [data.entryNo, data.category, data.model, data.specJson, data.specSource, data.specUrl, data.warrantyNo, data.claimCompany, data.warrantyExpireDate || null, data.status || "claim", data.brokenDate || null, data.claimDate || null, data.assetCode, data.branch || "", data.position || "", data.notes]
       );
       return result.rows[0].id;
     },
@@ -495,6 +688,47 @@ function createPostgresAdapter() {
       const params = [entryId, ...cloudUrls, ...cloudUrls.map((_, i) => i)];
       await query(`INSERT INTO device_entry_photos (entry_id, cloud_url, sort_order) VALUES ${values}`, params);
       return [];
+    },
+    
+    async listDeviceMaintenance(limit = 1000) {
+      const result = await query(
+        `SELECT de.*,
+                COALESCE(json_agg(DISTINCT jsonb_build_object('id', dep.id, 'cloud_url', dep.cloud_url, 'sort_order', dep.sort_order))
+                   FILTER (WHERE dep.id IS NOT NULL), '[]') AS photos,
+                COALESCE((SELECT MAX(lc.checked_date) FROM device_maintenance_logs lc WHERE lc.entry_id = de.id)::text, '') AS last_check_date,
+                COALESCE((SELECT lc2.status FROM device_maintenance_logs lc2 WHERE lc2.entry_id = de.id
+                          ORDER BY lc2.checked_date DESC LIMIT 1), '') AS last_check_status
+         FROM device_entries de
+         LEFT JOIN device_entry_photos dep ON dep.entry_id = de.id
+         GROUP BY de.id
+         ORDER BY de.created_at DESC
+         LIMIT $1`,
+        [limit]
+      );
+      return result.rows.map(r => ({ ...r, photos: typeof r.photos === "string" ? JSON.parse(r.photos) : (r.photos || []) }));
+    },
+    
+    async createMaintenanceCheck({ entryId, checkedDate, status, notes }) {
+      const result = await query(
+        `INSERT INTO device_maintenance_logs (entry_id, checked_date, status, notes) VALUES ($1, $2, $3, $4) RETURNING id`,
+        [entryId, checkedDate, status || "ok", notes || ""]
+      );
+      await query(`UPDATE device_entries SET status = $2, updated_at = now() WHERE id = $1`, [entryId, status || "ok"]);
+      return result.rows[0].id;
+    },
+    
+    async listMaintenanceChecks(entryId) {
+      const result = await query(
+        `SELECT id, checked_date, status, notes, created_at FROM device_maintenance_logs
+         WHERE entry_id = $1 ORDER BY checked_date DESC, id DESC LIMIT 500`,
+        [entryId]
+      );
+      return result.rows;
+    },
+    
+    async deleteMaintenanceCheck(logId) {
+      const result = await query(`DELETE FROM device_maintenance_logs WHERE id = $1 RETURNING id`, [logId]);
+      return result.rows;
     },
     
     async listWorkNotes(limit = 500) {
