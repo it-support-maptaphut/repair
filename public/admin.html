@@ -2538,10 +2538,10 @@
 
     .tf-status-group { display: flex; flex-direction: column; gap: 8px; }
     .tf-status-group .tf-loc-option { border-radius: 8px; }
-    .tf-status-group .tf-loc-option::before { display: none; }
+    .tf-status-group .tf-loc-option::before { display: none !important; }
     .tf-status-group .tf-loc-option { justify-content: flex-start; }
     .tf-status-group input:checked + .tf-loc-option { background: var(--green-soft); border-color: var(--green); color: var(--green-dark); font-weight: 600; }
-    .tf-status-group input:checked + .tf-loc-option::before { border-color: var(--green); background: var(--green); box-shadow: inset 0 0 0 3px #fff; }
+    .tf-status-group input:checked + .tf-loc-option::before { display: none !important; }
 
     .tf-select {
       flex: 1;
