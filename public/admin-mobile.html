@@ -2882,10 +2882,9 @@
               <th>เลขที่ซ่อม</th>
               <th>เวลา / วันที่</th>
               <th>หมวด</th>
-              <th>อาการ</th>
+              <th>รายละเอียด</th>
               <th>สถานที่</th>
               <th>ชื่อผู้รับผิดชอบ</th>
-              <th>สถานะ</th>
               <th style="text-align:right">จัดการข้อมูล</th>
             </tr>
           </thead>
@@ -3475,21 +3474,9 @@
                   <div class="det-k">ตำแหน่ง / สถานที่</div>
                   <div class="det-v" id="detPosition">-</div>
                 </div>
-                <div class="det-item mob-hide">
-                  <div class="det-k">เบอร์โทรติดต่อ</div>
-                  <div class="det-v" id="detPhone">-</div>
-                </div>
-                <div class="det-item mob-hide">
-                  <div class="det-k">บัญชี Line (ผู้แจ้ง)</div>
-                  <div class="det-v" id="detLineId">-</div>
-                </div>
                 <div class="det-item">
                   <div class="det-k">ผู้รับผิดชอบ</div>
                   <div class="det-v" id="detHandler">-</div>
-                </div>
-                <div class="det-item mob-hide">
-                  <div class="det-k">วันที่สถานะ</div>
-                  <div class="det-v" id="detStatusDate">-</div>
                 </div>
                 <div class="det-item full">
                   <div class="det-k">รายละเอียด</div>
@@ -3502,14 +3489,13 @@
                 <div class="ph-grid" id="detPhotos"></div>
               </div>
 
-              <div class="form-field mob-hide">
-                <label>รูปสถานที่ / โซน</label>
-                <div class="ph-grid" id="detZonePhotos"></div>
-              </div>
-
-              <div class="archive-box hidden" id="detArchiveWrap">
-                <span class="archive-size" id="archiveSize"></span>
-                <a class="pdf-chip" id="archiveDownload" href="#" target="_blank" rel="noopener">ดาวน์โหลดไฟล์จัดเก็บ</a>
+              <div class="form-field" id="detDoneWrap">
+                <label>บันทึกรายละเอียดเมื่อเสร็จงาน</label>
+                <div class="det-item" style="margin-bottom:8px">
+                  <div class="det-k">วันที่ / เวลา</div>
+                  <div class="det-v" id="detFinishAt">-</div>
+                </div>
+                <div class="ph-grid" id="detDonePhotos"></div>
               </div>
 
               <div class="archive-box hidden" id="detPdfWrap" style="margin-top:10px">
@@ -3521,7 +3507,7 @@
                 <button class="btn btn-ghost" type="button" onclick="closeModal()">ปิด</button>
                 <button class="btn btn-edit" type="button" onclick="openEditView()">แก้ไข</button>
                 <button class="btn btn-approve" type="button" id="btnApprove" onclick="setStatus(currentRow, 'working')">อนุมัติงาน</button>
-                <button class="btn btn-finish" type="button" id="btnFinish" onclick="setStatus(currentRow, 'done')">ปิดงาน / เสร็จสิ้น</button>
+                <button class="btn btn-finish" type="button" id="btnFinish" onclick="openFinishView(currentRow)">ปิดงาน / เสร็จสิ้น</button>
                 <button class="btn btn-share" type="button" onclick="openPdfChoice(currentRow)">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1ZM10 12h4"/></svg>
                   แชร์เป็น PDF
@@ -3538,7 +3524,7 @@
             <input id="editDevice" placeholder="เช่น Hardware · เครื่องปริ้น">
           </div>
           <div class="form-field">
-            <label>อาการเสีย</label>
+            <label>รายละเอียด</label>
             <textarea id="editSymptom"></textarea>
           </div>
           <div class="form-row">
@@ -3571,6 +3557,32 @@
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
             <button class="btn btn-danger" onclick="doDelete()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+        <!-- ยืนยันการเสร็จสิ้น -->
+        <div id="finishView" hidden>
+          <h3 class="modal-title">ยืนยันการเสร็จสิ้น</h3>
+          <div class="modal-no"><span class="tno" id="finishNo"></span></div>
+          <div class="form-field">
+            <label>เสร็จเมื่อวันที่ / เวลา</label>
+            <input type="datetime-local" id="finishAt">
+          </div>
+          <div class="form-field">
+            <label>ภาพแนบหลักฐานการเสร็จสิ้น <small>(ไม่เกิน 3 รูป)</small></label>
+            <input type="file" id="finishPhotoInput" accept="image/*" capture="environment" multiple hidden>
+            <button class="btn btn-ghost" type="button" id="finishPhotoBtn" style="width:100%">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              ถ่ายภาพ / เลือกรูป
+            </button>
+            <div class="ph-grid" id="finishPhotoPreview" style="margin-top:8px"></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" type="button" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-finish" type="button" onclick="saveFinish()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              บันทึกเสร็จสิ้น
+            </button>
           </div>
         </div>
 
@@ -4830,11 +4842,9 @@
       var h = '<span class="symp-list">';
       lines.forEach(function (l) {
         var i = l.indexOf(":");
-        var label = i > -1 ? l.slice(0, i).trim() : "";
         var body = i > -1 ? l.slice(i + 1).trim() : l;
         h +=
           '<span class="symp-item">' +
-          (label ? '<span class="symp-label">' + esc(label) + "</span>" : "") +
           '<span class="symp-text">' + esc(body) + "</span>" +
           "</span>";
       });
@@ -5512,11 +5522,7 @@
         h += '<button class="status-btn approve" data-act="approve" data-i="' + i + '" title="อนุมัติงานแล้ว กดเพื่อเปลี่ยนสถานะ">อนุมัติแล้ว</button>';
       }
       if (t.status === "new" || t.status === "working") {
-        h += '<button class="status-btn finish" data-act="finish" data-i="' + i + '" title="งานเสร็จสิ้น + สร้าง PDF เก็บใน Drive">เสร็จสิ้น</button>';
-      }
-      if (t.archive_size) {
-        var kb = t.archive_size < 1024 ? t.archive_size + " B" : Math.round(t.archive_size / 1024) + " KB";
-        h += '<a class="pdf-chip" href="/api/tickets/' + encodeURIComponent(t.ticket_no) + '/archive" title="ดาวน์โหลดข้อมูลบีบอัด (' + kb + ')">ไฟล์ ' + kb + "</a>";
+        h += '<button class="status-btn finish" data-act="finish" data-i="' + i + '" title="ปิดงาน / บันทึกเสร็จสิ้น พร้อมแนบรูปหลักฐาน">เสร็จสิ้น</button>';
       }
       if (t.pdf_url) {
         h += '<a class="pdf-chip" href="' + esc(t.pdf_url) + '" target="_blank" rel="noopener" title="เปิด PDF">PDF</a>';
@@ -5554,6 +5560,7 @@
           '<td data-c="symptom" data-label="รายละเอียด"><span class="cell-trunc">' + fmtSymptoms(t.symptom) + "</span></td>" +
           '<td data-c="loc" data-label="สถานที่">' + esc(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</td>" +
           '<td data-c="user" data-label="ผู้รับผิดชอบ">' + esc(t.handler_name || "-") + "</td>" +
+          '<td data-c="actions" data-label="จัดการ">' + statusButtons(t, i) + "</td>" +
           "</tr>"
         );
       }).join("");
@@ -5576,7 +5583,7 @@
           else if (act === "share") openPdfChoice(row);
           else if (act === "del") openConfirm(row);
           else if (act === "approve") setStatus(row, "working");
-          else if (act === "finish") setStatus(row, "done");
+          else if (act === "finish") openFinishView(row);
         });
       });
 
@@ -5628,6 +5635,7 @@
       document.getElementById("editView").hidden = true;
       document.getElementById("confirmView").hidden = true;
       document.getElementById("confirmUserView").hidden = true;
+      document.getElementById("finishView").hidden = true;
       document.getElementById("pdfChoiceView").hidden = true;
       document.getElementById("deviceFormView").hidden = true;
       document.getElementById("deviceConfirmView").hidden = true;
@@ -5649,12 +5657,14 @@
     function splitPhotos(list) {
       var zone = [];
       var problem = [];
+      var done = [];
       (list || []).forEach(function (p) {
         var name = String(p.cloud_url || "").split("/").pop() || "";
-        if (/-z\d+\.[a-z0-9]+$/i.test(name)) zone.push(p);
+        if (/-d\d+\.[a-z0-9]+$/i.test(name)) done.push(p);
+        else if (/-z\d+\.[a-z0-9]+$/i.test(name)) zone.push(p);
         else problem.push(p);
       });
-      return { problem: problem, zone: zone };
+      return { problem: problem, zone: zone, done: done };
     }
 
     function fillPhotoGrid(id, photos) {
@@ -5690,29 +5700,23 @@
       document.getElementById("detDevice").innerHTML = fmtDevices(row.device) || "-";
       document.getElementById("detBranch").textContent = loc.branch;
       document.getElementById("detPosition").textContent = loc.position;
-      document.getElementById("detPhone").textContent = row.reporter_phone || "-";
-      document.getElementById("detLineId").textContent = row.reporter_line_id || "-";
       document.getElementById("detHandler").textContent = row.handler_name || "ยังไม่ระบุ";
-      var stDate = row.status_date ? fmtDateOnly(row.status_date) : "-";
-      if (row.status_date && row.status_time) stDate += " " + row.status_time + " น.";
-      document.getElementById("detStatusDate").textContent = stDate;
       document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
 
       var groups = splitPhotos(row.ticket_photos);
       fillPhotoGrid("detPhotos", groups.problem);
-      fillPhotoGrid("detZonePhotos", groups.zone);
+      var doneWrap = document.getElementById("detDoneWrap");
+      if (row.status === "done") {
+        var stDate = row.status_date ? fmtDateOnly(row.status_date) : "-";
+        if (row.status_date && row.status_time) stDate += " " + row.status_time + " น.";
+        document.getElementById("detFinishAt").textContent = stDate;
+        doneWrap.hidden = false;
+        fillPhotoGrid("detDonePhotos", groups.done);
+      } else {
+        doneWrap.hidden = true;
+      }
       document.getElementById("btnApprove").hidden = row.status !== "new";
       document.getElementById("btnFinish").hidden = row.status === "done";
-
-      var archiveWrap = document.getElementById("detArchiveWrap");
-      if (row.archive_size) {
-        archiveWrap.hidden = false;
-        var kb = row.archive_size < 1024 ? row.archive_size + " B" : Math.round(row.archive_size / 1024) + " KB";
-        document.getElementById("archiveSize").textContent = "จัดเก็บแล้ว · " + kb;
-        document.getElementById("archiveDownload").href = "/api/tickets/" + encodeURIComponent(row.ticket_no) + "/archive";
-      } else {
-        archiveWrap.hidden = true;
-      }
 
       var pdfWrap = document.getElementById("detPdfWrap");
       pdfWrap.hidden = !row.pdf_url;
@@ -5735,19 +5739,31 @@
       document.getElementById("detDevice").innerHTML = fmtDevices(row.device) || "-";
       document.getElementById("detBranch").textContent = loc.branch ? loc.branch + (loc.position && loc.position !== "-" ? " · " + loc.position : "") : "-";
       document.getElementById("detPosition").textContent = loc.position && loc.position !== "-" ? loc.position : "-";
-      document.getElementById("detPhone").textContent = row.reporter_phone || "-";
-      document.getElementById("detLineId").textContent = row.reporter_line_id || "-";
       document.getElementById("detHandler").textContent = row.handler_name || "ยังไม่ระบุ";
-      document.getElementById("detStatusDate").textContent = "-";
       document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
       var detPhotos = document.getElementById("detPhotos");
-      var detZonePhotos = document.getElementById("detZonePhotos");
-      if (fillPhotoGrid) { fillPhotoGrid(detPhotos, []); fillPhotoGrid(detZonePhotos, []); }
-      else { detPhotos.innerHTML = ""; detZonePhotos.innerHTML = ""; }
-      document.getElementById("detArchiveWrap").hidden = true;
+      var detDonePhotos = document.getElementById("detDonePhotos");
+      if (fillPhotoGrid) {
+        fillPhotoGrid(detPhotos, []);
+        fillPhotoGrid(detDonePhotos, []);
+      } else {
+        detPhotos.innerHTML = "";
+        detDonePhotos.innerHTML = "";
+      }
+      var groups = splitPhotos(row.ticket_photos);
+      var doneWrap = document.getElementById("detDoneWrap");
+      if (row.status === "done") {
+        var stDate2 = row.status_date ? fmtDateOnly(row.status_date) : "-";
+        if (row.status_date && row.status_time) stDate2 += " " + row.status_time + " น.";
+        document.getElementById("detFinishAt").textContent = stDate2;
+        doneWrap.hidden = false;
+        fillPhotoGrid(detDonePhotos, groups.done);
+      } else {
+        doneWrap.hidden = true;
+      }
       document.getElementById("detPdfWrap").hidden = true;
       document.getElementById("btnApprove").hidden = true;
-      document.getElementById("btnFinish").hidden = true;
+      document.getElementById("btnFinish").hidden = row.status === "done";
       showView("detailView");
       openModal();
     }
@@ -5765,7 +5781,7 @@
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (res) {
           if (!res.ok) throw new Error(res.d.message || "เปลี่ยนสถานะไม่สำเร็จ");
-          toast(label + (status === "done" ? " · ข้อมูลจัดเก็บถาวร(บีบอัด)แล้ว" : ""));
+          toast(label);
           closeModal();
           return loadTickets();
         })
@@ -5796,6 +5812,108 @@
 
     window.openConfirmView = function () { openConfirm(currentRow); };
     window.closeModal = closeModal;
+
+    var finishFiles = [];
+    var finishPhotoBtn = document.getElementById("finishPhotoBtn");
+    var finishPhotoInput = document.getElementById("finishPhotoInput");
+    if (finishPhotoBtn && finishPhotoInput) {
+      finishPhotoBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        finishPhotoInput.click();
+      });
+      finishPhotoInput.addEventListener("change", function () {
+        var files = Array.prototype.slice.call(finishPhotoInput.files || []);
+        var remaining = 3 - finishFiles.length;
+        if (files.length > remaining) {
+          toast("แนบภาพได้ไม่เกิน 3 รูป (เหลืออีก " + remaining + ")");
+          files = files.slice(0, remaining);
+        }
+        files.forEach(function (f) { finishFiles.push(f); });
+        renderFinishPreview();
+        finishPhotoInput.value = "";
+      });
+      var finishPrevWrap = document.getElementById("finishPhotoPreview");
+      if (finishPrevWrap) {
+        finishPrevWrap.addEventListener("click", function (e) {
+          var del = e.target.closest("button[data-x]");
+          if (!del) return;
+          finishFiles.splice(parseInt(del.getAttribute("data-x"), 10), 1);
+          renderFinishPreview();
+        });
+      }
+    }
+
+    function renderFinishPreview() {
+      var wrap = document.getElementById("finishPhotoPreview");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      if (!finishFiles.length) {
+        wrap.style.display = "none";
+        return;
+      }
+      wrap.style.display = "grid";
+      finishFiles.forEach(function (f, i) {
+        var tile = document.createElement("div");
+        tile.className = "img-tile";
+        tile.style.cssText = "position:relative;border:1px solid var(--line);border-radius:0;overflow:hidden";
+        var img = document.createElement("img");
+        img.src = URL.createObjectURL(f);
+        img.style.cssText = "width:100%;aspect-ratio:1;object-fit:cover;display:block";
+        var x = document.createElement("button");
+        x.type = "button";
+        x.className = "icon-btn img-x";
+        x.setAttribute("data-x", String(i));
+        x.innerHTML = "&times;";
+        x.style.cssText = "position:absolute;top:4px;right:4px;z-index:2;width:24px;height:24px;padding:0;line-height:1";
+        tile.appendChild(img);
+        tile.appendChild(x);
+        wrap.appendChild(tile);
+      });
+    }
+
+    function openFinishView(row) {
+      if (!row) return;
+      currentRow = row;
+      finishFiles = [];
+      renderFinishPreview();
+      document.getElementById("finishNo").textContent = row.ticket_no;
+      var now = new Date();
+      var pad = function (n) { return String(n).padStart(2, "0"); };
+      document.getElementById("finishAt").value =
+        now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+        "T" + pad(now.getHours()) + ":" + pad(now.getMinutes());
+      showView("finishView");
+      openModal();
+    }
+
+    window.openFinishView = openFinishView;
+
+    function saveFinish() {
+      var row = currentRow;
+      if (!row) return;
+      var finishedAt = document.getElementById("finishAt").value;
+      if (!finishedAt) {
+        toast("กรุณาระบุวันที่และเวลาที่เสร็จสิ้น");
+        return;
+      }
+      var fd = new FormData();
+      fd.append("finished_at", finishedAt);
+      finishFiles.forEach(function (f) { fd.append("photos", f); });
+      fetch("/api/tickets/" + encodeURIComponent(row.ticket_no) + "/finish", {
+        method: "POST",
+        body: fd
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "บันทึกเสร็จสิ้นไม่สำเร็จ");
+          toast("บันทึกเสร็จสิ้นแล้ว");
+          closeModal();
+          return loadTickets();
+        })
+        .catch(function (e) { toast(e.message); });
+    }
+
+    window.saveFinish = saveFinish;
 
     function saveEdit() {
       var row = currentRow;
@@ -5901,7 +6019,7 @@
             "<tr><th>ตำแหน่ง / สถานที่</th><td>" + esc(loc.position) + "</td></tr>" +
             "<tr><th>เบอร์โทรติดต่อ</th><td>" + esc(row.reporter_phone || "-") + "</td></tr>" +
             "<tr><th>บัญชี Line (ผู้แจ้ง)</th><td>" + esc(row.reporter_line_id || "-") + "</td></tr>" +
-            "<tr><th>อาการเสีย</th><td>" + fmtSymptoms(row.symptom) + "</td></tr>" +
+            "<tr><th>รายละเอียด</th><td>" + fmtSymptoms(row.symptom) + "</td></tr>" +
           "</table>" +
         "</div></div>" +
         photosBlocksHtml("รูปภาพ · สภาพอุปกรณ์", groups.problem) +
