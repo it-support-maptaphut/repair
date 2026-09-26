@@ -55,12 +55,9 @@
   .admin-login-btn:active { transform: scale(0.98); }
   .admin-login-btn:disabled { opacity: 0.65; cursor: default; }
   </style>
-  <!-- ธีมย้อนยุค 90s (แยกไฟล์) — ใช้ค่าเดียวกับที่หน้าผู้ดูแลตั้งไว้ -->
-  <link id="retroThemeLink" rel="stylesheet" href="admin-retro.css">
-  <script>
-    try { if (localStorage.getItem("adminTheme") !== "retro") document.getElementById("retroThemeLink").disabled = true; } catch (e) { }
-  </script>
-</head>
+<!-- ธีมระบบ: 90S (กำหนดเป็นธีมหลักของระบบ) -->
+  <link rel="stylesheet" href="admin-retro.css">
+  </head>
 <body class="ticket-page admin-login-page">
 
 <div class="admin-login-wrap">
@@ -72,12 +69,12 @@
 
     <div class="admin-login-field">
       <label for="loginUser">ชื่อผู้ใช้</label>
-      <input type="text" id="loginUser" class="verify-input" maxlength="60" placeholder="admin" autocomplete="username" autocapitalize="none" spellcheck="false">
+      <input type="text" id="loginUser" class="verify-input" maxlength="60" autocomplete="username" autocapitalize="none" spellcheck="false">
     </div>
 
     <div class="admin-login-field">
       <label for="loginPass">รหัสผ่าน</label>
-      <input type="password" id="loginPass" class="verify-input" maxlength="120" placeholder="••••••••" autocomplete="current-password">
+      <input type="password" id="loginPass" class="verify-input" maxlength="120" autocomplete="current-password">
     </div>
 
     <button id="loginBtn" class="admin-login-btn" type="button">เข้าสู่ระบบ</button>
@@ -110,22 +107,36 @@
     busy = true;
     btn.disabled = true;
     btn.textContent = "กำลังเข้าสู่ระบบ...";
-    fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user: user, pass: pass })
-    })
-      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-      .then(function (res) {
-        if (!res.ok) {
-          busy = false;
-          btn.disabled = false;
-          btn.textContent = "เข้าสู่ระบบ";
-          fail(res.d.message || "เข้าสู่ระบบไม่สำเร็จ");
-          passEl.select();
+
+    function postLogin(route, body) {
+      return fetch(route, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(function (r) {
+        return r.json().then(function (d) { return { status: r.status, d: d }; });
+      });
+    }
+
+    postLogin("/api/auth/login", { user: user, pass: pass })
+      .then(function (adminRes) {
+        if (adminRes.status < 400) return null; // admin สำเร็จ
+        return postLogin("/api/auth/user-login", { username: user, password: pass });
+      })
+      .then(function (userRes) {
+        if (userRes === null) {
+          window.location.href = "/admin.html";
           return;
         }
-        window.location.href = "/admin.html";
+        if (userRes.status < 400) {
+          window.location.href = "/admin.html";
+          return;
+        }
+        busy = false;
+        btn.disabled = false;
+        btn.textContent = "เข้าสู่ระบบ";
+        fail((userRes.d && userRes.d.message) || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+        passEl.select();
       })
       .catch(function () {
         busy = false;
@@ -140,10 +151,16 @@
   userEl.addEventListener("input", clearErr);
   passEl.addEventListener("input", clearErr);
 
-  // ผู้ดูแลที่ Authed อยู่แล้ว → เข้าไปได้เลย
+  // ผู้ที่ Authed อยู่แล้ว (admin หรือ พนักงาน) → เข้าไปได้เลย
   fetch("/api/auth/me")
     .then(function (r) { return r.json(); })
-    .then(function (d) { if (d && d.ok && d.authed) window.location.replace("/admin.html"); })
+    .then(function (d) {
+      if (d && d.ok && d.authed) return window.location.replace("/admin.html");
+      return fetch("/api/auth/user-me").then(function (r) { return r.json(); });
+    })
+    .then(function (ud) {
+      if (ud && ud.ok && ud.authed) window.location.replace("/admin.html");
+    })
     .catch(function () {});
 
   setTimeout(function () { userEl.focus(); }, 60);

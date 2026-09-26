@@ -58,10 +58,10 @@
     <p class="verify-sub">ขอทราบว่าคุณคือใครในบริษัท ระบบจะจำไว้เพื่อครั้งต่อไปไม่ต้องกรอกใหม่<br><span class="verify-sub-note">(ครั้งต่อไปจากคอมหรือเน็ตเดิมจะเข้าระบบได้เลย)</span></p>
 
     <label for="verifyName" class="verify-label">ชื่อ</label>
-    <input type="text" id="verifyName" class="verify-input" maxlength="60" placeholder="เช่น บาส" autocomplete="given-name">
+    <input type="text" id="verifyName" class="verify-input" maxlength="60" autocomplete="given-name">
 
     <label for="verifyPosition" class="verify-label">ตำแหน่ง</label>
-    <input type="text" id="verifyPosition" class="verify-input" maxlength="120" placeholder="เช่น พนักงานแคชเชียร์ / พนักงานคลัง" autocomplete="organization-title">
+    <input type="text" id="verifyPosition" class="verify-input" maxlength="120" autocomplete="organization-title">
 
     <button id="verifySubmit" class="verify-btn" type="button">เข้าใช้งานระบบ</button>
     <p id="verifyErr" class="verify-err hidden"></p>
@@ -89,7 +89,7 @@
           </button>
         </div>
 
-        <textarea id="symptomText" class="text-input" rows="4" maxlength="2000" placeholder="เช่น เครื่องปริ้นหน้าจุดแคชเชียร์ปริ้นไม่ออก error เด้ง เดิม..."
+        <textarea id="symptomText" class="text-input" rows="4" maxlength="2000"
                   style="width:100%; resize:vertical; min-height:110px"></textarea>
 
         <div id="voicePanel" class="voice-panel hidden">
@@ -167,7 +167,7 @@
       <div class="field" id="positionField">
         <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="opt-hint">ไม่บังคับ</span></label>
         <p class="field-hint">ช่วยระบุจุดที่อุปกรณ์นี้อยู่ เพื่อให้ทีม IT หาเจอง่ายขึ้น</p>
-        <input type="text" id="positionText" class="text-input" maxlength="120" placeholder="เช่น จุดแคชเชียร์หน้าแรก / มุมหลังห้องเซิร์ฟเวอร์" autocomplete="off">
+        <input type="text" id="positionText" class="text-input" maxlength="120" autocomplete="off">
       </div>
 
       <input type="hidden" id="device" value="">

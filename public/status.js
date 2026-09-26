@@ -73,7 +73,11 @@ function statusView(t, isSingle) {
         '<div class="card-row"><span class="k">วันที่แจ้ง</span><span class="v">' + esc(fmtDate(t.created_at)) + "</span></div>" +
         '<div class="card-row"><span class="k">สาขา</span><span class="v">' + esc(loc.branch) + "</span></div>" +
         '<div class="card-row"><span class="k">ตำแหน่ง</span><span class="v">' + esc(loc.position) + "</span></div>" +
-        (t.status === "done" ? '<div class="card-row"><span class="k">เสร็จสิ้น</span><span class="v">' + esc(fmtDate(t.approved_at)) + "</span></div>" : "") +
+        (t.status === "done"
+          ? '<div class="card-row"><span class="k">เสร็จสิ้น</span><span class="v">' +
+            esc((t.status_date ? fmtDateOnly(t.status_date) : fmtDate(t.approved_at)) + (t.status_time ? " " + esc(t.status_time) + " น." : "")) +
+            "</span></div>"
+          : "") +
         '<div class="card-row"><span class="k">รายละเอียด</span><span class="v">' + esc(t.symptom || "-") + "</span></div>" +
       "</div>" +
       '<div class="card-msg ' + st.cls + '"><span class="strong">' + st.label + "</span> — " + st.msg + "</div>" +

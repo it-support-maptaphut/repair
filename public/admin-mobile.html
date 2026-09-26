@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>ระบบแจ้งซ่อม IT — จัดการงาน (มือถือ)</title>
   <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2709,16 +2709,6 @@
     /* ---------- FEATURE: ตั้งค่าธีม (เมนูล่างสุดของsidebar) ---------- */
     .sidebar { display: flex; flex-direction: column; }
     .side-nav { flex: 1; min-height: 0; }
-    .theme-group { margin-top: auto; border-top: 1px solid var(--line); padding-top: 6px; }
-    .theme-group .side-group-head { border-top: none; }
-    .theme-opt { font-size: 13px; }
-    .theme-opt.is-on {
-      background: var(--green-soft);
-      color: var(--green-dark);
-      font-weight: 700;
-      box-shadow: inset 3px 0 0 var(--green);
-    }
-    .theme-group .side-group-items { padding-bottom: 2px; }
 
     /* ห่างจากหมวด ระบบเช็คประกัน อีกหน่อย */
     .side-group[data-group="worklog"] { margin-top: 18px; }
@@ -2762,15 +2752,9 @@
     /* ระบบนี้ใช้ขอบเหลี่ยมทั้งหมด (ไม่มีขอบมน) */
     * { border-radius: 0 !important; }
   </style>
-  <!-- ============================================================
-       ธีมย้อนยุค 90s (แยกไฟล์) — ถ้าอยากกลับหน้าตาเดิม
-       ให้ลบบรรทัด <link> นี้เส้นเดียว (ไม่แตะระบบอื่น)
-       ============================================================ -->
-  <link id="retroThemeLink" rel="stylesheet" href="admin-retro.css">
+  <!-- ธีมระบบ: 90S (กำหนดเป็นธีมหลักของระบบ) -->
+  <link rel="stylesheet" href="admin-retro.css">
   <link rel="stylesheet" href="admin-mobile.css">
-  <script>
-    try { if (localStorage.getItem("adminTheme") !== "retro") document.getElementById("retroThemeLink").disabled = true; } catch (e) { }
-  </script>
 </head>
 <body class="mobile-admin">
   <div class="mob-topbar">
@@ -2782,48 +2766,44 @@
   <div class="mob-backdrop" id="mobBackdrop"></div>
   <div class="layout">
     <aside class="sidebar" id="sidebar">
-      <div class="mob-side-title">ระบบแจ้งซ่อม IT<small>Admin</small></div>
+      <div class="mob-side-title">ระบบแจ้งซ่อม IT<small id="mobUserLabel">Admin</small></div>
       <div class="mob-cats" id="mobCats">
         <button class="mob-cat is-active" data-cat="tickets" type="button">ระบบแจ้งซ่อม</button>
         <button class="mob-cat" data-cat="care" type="button">ดูแลอุปกรณ์</button>
+        <button class="mob-cat" data-cat="pwip" type="button">PASSWORD NOTE</button>
         <button class="mob-cat" data-cat="notes" type="button">โน้ต</button>
-        <button class="mob-cat" data-cat="settings" type="button">ตั้งค่า</button>
       </div>
       <nav class="side-nav" id="adminTabs" aria-label="เมนูหลัก">
         <div class="mob-cat-body" data-cat-body="tickets">
-          <button class="side-btn is-active" data-tab="tickets" type="button">
+          <button class="side-btn is-active" data-tab="tickets" data-perm="tickets" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
             <span>รายการแจ้งซ่อม</span>
           </button>
         </div>
         <div class="mob-cat-body" data-cat-body="care" hidden>
-          <button class="side-btn" data-tab="deviceNotes" type="button">
+          <button class="side-btn" data-tab="deviceNotes" data-perm="deviceNotes" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg>
             <span>ข้อมูลอุปกรณ์</span>
           </button>
-          <button class="side-btn" data-tab="maintenance" type="button">
+          <button class="side-btn" data-tab="maintenance" data-perm="maintenance" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
             <span>ระบบ maintenance</span>
           </button>
-          <button class="side-btn" data-tab="warranty" type="button">
+          <button class="side-btn" data-tab="warranty" data-perm="warranty" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span>ตรวจสอบประกัน</span>
           </button>
         </div>
-        <div class="mob-cat-body" data-cat-body="notes" hidden>
-          <button class="side-btn" data-tab="workNotes" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
-            <span>โน้ตขั้นตอนการทำงาน</span>
+        <div class="mob-cat-body" data-cat-body="pwip" hidden>
+          <button class="side-btn" data-tab="pwIP" data-perm="pwIP" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            <span>PASSWORD NOTE</span>
           </button>
         </div>
-        <div class="mob-cat-body" data-cat-body="settings" hidden>
-          <button class="side-btn theme-opt" type="button" data-theme="normal" onclick="setTheme('normal')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-            <span>ธีมปกติ</span>
-          </button>
-          <button class="side-btn theme-opt" type="button" data-theme="retro" onclick="setTheme('retro')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            <span>ธีม 90S</span>
+        <div class="mob-cat-body" data-cat-body="notes" hidden>
+          <button class="side-btn" data-tab="workNotes" data-perm="workNotes" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+            <span>โน้ตขั้นตอนการทำงาน</span>
           </button>
         </div>
       </nav>
@@ -2952,11 +2932,11 @@
           <h3 class="modal-title">แก้ข้อมูลผู้ใช้ภายนอก</h3>
           <div class="form-field">
             <label>ชื่อ</label>
-            <input id="visitorEditName" type="text" placeholder="เช่น บาส" />
+            <input id="visitorEditName" type="text" />
           </div>
           <div class="form-field">
             <label>ตำแหน่ง</label>
-            <input id="visitorEditPosition" type="text" placeholder="เช่น พนักงานแคชเชียร์" />
+            <input id="visitorEditPosition" type="text" />
           </div>
           <p class="tf-field-hint" id="visitorEditIpInfo"></p>
           <div class="modal-actions">
@@ -2987,7 +2967,7 @@
             <div class="form-field">
               <label>ตั้งชื่อ</label>
               <p class="tf-field-hint">ตั้งชื่อผู้ใช้ / เครื่องคอมพิวเตอร์ เช่น "เครื่องพี่เอ็ม" หรือ "คอมพี่บาส"</p>
-              <input id="ipName" type="text" placeholder="เช่น เครื่องพี่เอ็ม / คอมพี่บาส" />
+              <input id="ipName" type="text" />
             </div>
             <div class="modal-actions">
               <button class="btn btn-ghost" onclick="closeIpForm()">ยกเลิก</button>
@@ -3001,7 +2981,7 @@
             <div class="form-field">
               <label>IP Address</label>
               <p class="tf-field-hint">กรอกหมายเลข IP ของเครื่อง เช่น 192.168.1.50</p>
-              <input id="ipAddress" type="text" placeholder="เช่น 192.168.1.50" />
+              <input id="ipAddress" type="text" />
             </div>
             <div class="modal-actions">
               <button class="btn btn-ghost" onclick="ipGoStep(1)">ย้อนกลับ</button>
@@ -3198,7 +3178,7 @@
             <option value="ok">ปกติ</option>
             <option value="broken">พัง</option>
           </select>
-          <input id="dSearch" type="search" placeholder="ค้นหาหมวด / รุ่น / รหัส / เลขประกัน / ทรัพย์สิน..." oninput="renderDeviceNotes()" />
+          <input id="dSearch" type="search" oninput="renderDeviceNotes()" />
           <button class="btn btn-primary" onclick="openDeviceForm()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             จดอุปกรณ์ใหม่
@@ -3233,6 +3213,37 @@
           <p>ยังไม่มีโน้ตอุปกรณ์ — กด "จดอุปกรณ์ใหม่" เพื่อบันทึกอุปกรณ์ชำรุด</p>
         </div>
       </main>
+    </section>
+
+    <section id="pwIPView" hidden>
+      <div class="devices-toolbar" style="align-items:flex-start;gap:14px;">
+        <div>
+          <h3 class="tab-title" style="margin:0 0 4px;">PASSWORD NOTE</h3>
+          <p style="margin:0; color:var(--muted-text, #667);">บันทึก Password ต่างๆ — เฉพาะ USER admin เท่านั้น และต้องยืนยัน PIN เพื่อเข้าดู</p>
+        </div>
+        <button class="btn btn-primary" type="button" onclick="pnOpenCreate()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          สร้างรหัสผ่าน
+        </button>
+      </div>
+      <div class="pn-table-wrap">
+        <table id="pnTable">
+          <thead>
+            <tr>
+              <th>ชื่อรหัสผ่าน</th>
+              <th>Username</th>
+              <th>Password</th>
+              <th>บันทึกเมื่อ</th>
+              <th style="text-align:right">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="pnBody"></tbody>
+        </table>
+      </div>
+      <div id="pnEmpty" class="empty hidden">
+        <p>ยังไม่มีรหัสผ่านที่บันทึก — กดปุ่ม "สร้างรหัสผ่าน" เพื่อเริ่มต้น</p>
+      </div>
+      <div id="pnToast" style="display:none; position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:999; color:#fff; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.25);"></div>
     </section>
 
     <section id="maintenanceView" hidden>
@@ -3275,7 +3286,7 @@
             <option value="repairing">กำลังส่งซ่อม</option>
             <option value="broken">พัง</option>
           </select>
-          <input id="mtSearch" type="search" placeholder="ค้นหารุ่น / รหัสทรัพย์สิน..." oninput="renderMaintenance()" />
+          <input id="mtSearch" type="search" oninput="renderMaintenance()" />
         </div>
 
         <div class="table-wrap">
@@ -3312,7 +3323,7 @@
 
       <main>
         <div class="mbar">
-          <input id="wSearch" type="search" placeholder="ค้นหาหัวเรื่อง / ขั้นตอน / ข้อมูลเสริม..." oninput="renderWorkNotes()" />
+          <input id="wSearch" type="search" oninput="renderWorkNotes()" />
           <button class="btn btn-primary" onclick="openWorkNoteForm()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             เพิ่มโน้ต
@@ -3444,6 +3455,39 @@
     </div>
   </div>
 
+      <!-- ---------- DETAIL POPUP (มือถือ พอดีจอ) ---------- -->
+      <div class="det-simple-mask hidden" id="detSimpleMask" role="dialog" aria-modal="true" aria-label="รายละเอียดใบแจ้งซ่อม" onclick="if(event.target===this) closeModal()">
+        <div class="det-simple">
+          <div class="det-simple-head">
+            <span class="tno" id="detSNo"></span>
+            <span class="badge" id="detSBadge"></span>
+            <button class="modal-close" type="button" title="ปิด" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="det-grid">
+            <div class="det-item">
+              <div class="det-k">วันที่เวลา</div>
+              <div class="det-v" id="detSDate">-</div>
+            </div>
+            <div class="det-item">
+              <div class="det-k">ประเภท</div>
+              <div class="det-v" id="detSDevice">-</div>
+            </div>
+            <div class="det-item">
+              <div class="det-k">สถานที่</div>
+              <div class="det-v" id="detSLoc">-</div>
+            </div>
+            <div class="det-item">
+              <div class="det-k">ผู้รับผิดชอบ</div>
+              <div class="det-v" id="detSHandler">-</div>
+            </div>
+            <div class="det-item full">
+              <div class="det-k">รายละเอียด</div>
+              <div class="det-v symptom" id="detSSymptom">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ---------- TICKET MODAL ---------- -->
       <div class="modal-mask hidden" id="modalMask" role="dialog" aria-modal="true" aria-label="รายละเอียดใบแจ้งซ่อม" onclick="if(event.target===this) closeModal()">
         <div class="modal" id="modalBox">
@@ -3521,7 +3565,7 @@
           <div class="modal-no"><span class="tno" id="editNo"></span></div>
           <div class="form-field">
             <label>หมวด / อุปกรณ์</label>
-            <input id="editDevice" placeholder="เช่น Hardware · เครื่องปริ้น">
+            <input id="editDevice">
           </div>
           <div class="form-field">
             <label>รายละเอียด</label>
@@ -3530,11 +3574,11 @@
           <div class="form-row">
             <div class="form-field">
               <label>สถานที่</label>
-              <input id="editLocation" placeholder="เช่น โซนผัก">
+              <input id="editLocation">
             </div>
             <div class="form-field">
               <label>บัญชี Line (ผู้แจ้ง)</label>
-              <input id="editLineId" placeholder="U..." disabled>
+              <input id="editLineId" disabled>
             </div>
           </div>
           <div class="modal-actions">
@@ -3636,7 +3680,7 @@
               <option value="">— เลือกหมวด —</option>
             </select>
             <div style="margin-top:8px">
-              <input id="dfCategoryNew" type="text" placeholder="เพิ่มหมวดใหม่... เช่น บอร์ดสแกน, เครื่องสแกนราคา 150 บาท" style="display:none" />
+              <input id="dfCategoryNew" type="text" style="display:none" />
               <button class="btn btn-ghost btn-sm" id="dfCatAddBtn" type="button" onclick="toggleAddCategory()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                 เพิ่มหมวดเอง
@@ -3646,7 +3690,7 @@
 
           <div class="form-field" id="dfModelWrap">
             <label>รุ่นสินค้า * <span class="hint">(กรอกรุ่นแล้วระบบค้นหาสเปคจากเน็ตให้อัตโนมัติ)</span></label>
-            <input id="dfModel" type="text" placeholder="เช่น HP LaserJet Pro M404" oninput="deviceModelChanged()" />
+            <input id="dfModel" type="text" oninput="deviceModelChanged()" />
             <div id="dfSpecBox" hidden>
               <div class="spec-src" id="dfSpecSrc"></div>
               <pre id="dfSpecText" class="spec-text"></pre>
@@ -3660,12 +3704,12 @@
 
           <div class="form-field">
             <label>เลขประกันของสินค้า *</label>
-            <input id="dfWarranty" type="text" placeholder="เช่น SN-2024-0001234 หรือเลขบิล/ใบเสร็จ" />
+            <input id="dfWarranty" type="text" />
           </div>
 
           <div class="form-field">
             <label>บริษัทที่เคลม</label>
-            <input id="dfClaimCompany" type="text" list="claimCompanyList" placeholder="เช่น บริษัท จัสเทค จำกัด (เคยกรอกจะจำให้อัตโนมัติ)" />
+            <input id="dfClaimCompany" type="text" list="claimCompanyList" />
             <datalist id="claimCompanyList"></datalist>
           </div>
 
@@ -3703,7 +3747,7 @@
           <div class="form-row">
             <div class="form-field">
               <label>รหัสทรัพย์สินของบริษัท</label>
-              <input id="dfAsset" type="text" placeholder="เช่น AST-00123 (ถ้ามี)" />
+              <input id="dfAsset" type="text" />
             </div>
           </div>
 
@@ -3720,7 +3764,7 @@
             </div>
             <div class="form-field">
               <label>ตำแหน่งของอุปกรณ์</label>
-              <input id="dfPosition" type="text" placeholder="เช่น ชั้น 2 ห้องบัญชี โต๊ะ 03 (พิมพ์เองได้)" />
+              <input id="dfPosition" type="text" />
             </div>
           </div>
 
@@ -3740,7 +3784,7 @@
 
           <div class="form-field">
             <label>หมายเหตุ</label>
-            <textarea id="dfNotes" placeholder="เช่น อาการเสีย อุปกรณ์ประกอบ อะไหล่ที่ต้องใช้..."></textarea>
+            <textarea id="dfNotes"></textarea>
           </div>
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
@@ -3799,7 +3843,7 @@
 
           <div class="form-field">
             <label>หัวเรื่องโน้ตงาน *</label>
-            <input id="wnTitle" type="text" placeholder="เช่น โน้ตเรื่องขั้นตอนการส่งเคลม" />
+            <input id="wnTitle" type="text" />
           </div>
 
           <div id="wnNormalWrap">
@@ -3822,13 +3866,13 @@
 
           <div class="form-field hidden" id="wnJournalWrap">
             <label>ฟอร์มจดบันทึก <span class="hint">(ไม่มีกรอบ — พิมพ์บรรทัดละ 1 ตอน เว้นบรรทัดว่างเพื่ออ่านง่าย)</span></label>
-            <textarea id="wnJournalText" class="wn-journal-text" placeholder="พิมพ์บันทึกการทำงาน / ขั้นตอนการเคลม ลงตรงนี้...&#10;&#10;บรรทัดที่ 2 = ตอนถัดไป&#10;&#10;ข้อความยาวๆ กี่บรรทัดก็ได้" style="min-height:260px"></textarea>
+            <textarea id="wnJournalText" class="wn-journal-text" style="min-height:260px"></textarea>
             <p class="hint" style="margin-top:6px">เมื่อบันทึก แต่ละตอน (บรรทัด) จะถูกเว้นระยะเพื่อความอ่านง่าย</p>
           </div>
 
           <div class="form-field hidden" id="wnInfoWrap">
             <label>ข้อมูลเสริม <span class="hint">(เช่น รายละเอียดบริษัท, เลขทะเบียน — กรอกหลายบรรทัดได้)</span></label>
-            <textarea id="wnInfo" placeholder="เช่น รายละเอียดบริษัท, เลขทะเบียนนิติบุคคล, เบอร์ติดต่อ..." style="min-height:90px"></textarea>
+            <textarea id="wnInfo" style="min-height:90px"></textarea>
           </div>
 
           <div class="modal-actions">
@@ -3875,7 +3919,7 @@
 
           <div class="form-field">
             <label>รายละเอียดของงาน *</label>
-            <textarea id="rnContent" placeholder="เช่น สาเหตุที่พบ, วิธีแก้ที่ลงมือทำ, สิ่งที่เหลือต้องทำ..." style="min-height:120px"></textarea>
+            <textarea id="rnContent" style="min-height:120px"></textarea>
           </div>
 
           <div class="modal-actions">
@@ -3930,7 +3974,7 @@
 
             <div class="form-row">
               <label class="field-label" for="mtCheckNotes">หมายเหตุ</label>
-              <input type="text" id="mtCheckNotes" class="text-input" maxlength="300" placeholder="ไม่บังคับ เช่น พัดลมมีเสียงดัง, ขั้วหลวม..." />
+              <input type="text" id="mtCheckNotes" class="text-input" maxlength="300" />
             </div>
 
             <div class="mt-history" id="mtHistory">
@@ -4096,19 +4140,19 @@
                 <div class="tf-field">
                   <label for="tfPosition" class="tf-field-label">ตำแหน่ง / สถานที่ <span class="tf-req">*</span></label>
                   <p class="tf-field-hint">พิมพ์จุดที่อุปกรณ์ตั้งอยู่ เช่น จุดแคชเชียร์, หลังห้องเก็บของ, ชั้นวางสินค้า</p>
-                  <input type="text" id="tfPosition" class="tf-input" maxlength="120" placeholder="เช่น จุดแคชเชียร์หน้าแรก / มุมหลังห้องเซิร์ฟเวอร์">
+                  <input type="text" id="tfPosition" class="tf-input" maxlength="120">
                 </div>
 
                 <div class="tf-field">
                   <label for="tfPhone" class="tf-field-label">เบอร์โทรติดต่อ <span class="tf-opt-hint">ไม่บังคับ</span></label>
                   <p class="tf-field-hint">ใส่เบอร์โทรให้ทีม IT โทรติดต่อสอบถามได้ (ไม่บังคับ)</p>
-                  <input type="tel" id="tfPhone" class="tf-input" inputmode="tel" maxlength="10" placeholder="เช่น 0812345678">
+                  <input type="tel" id="tfPhone" class="tf-input" inputmode="tel" maxlength="10">
                 </div>
 
                 <div class="tf-field">
                   <label for="tfLineId" class="tf-field-label">ID LINE <span class="tf-opt-hint">ไม่บังคับ</span></label>
                   <p class="tf-field-hint">ใส่ ID LINE (ชื่อผู้ใช้ LINE) เพื่อให้ทีม IT หาข้อมูลผู้แจ้งได้ง่ายขึ้น</p>
-                  <input type="text" id="tfLineId" class="tf-input" maxlength="50" placeholder="เช่น itsupport123" autocomplete="off">
+                  <input type="text" id="tfLineId" class="tf-input" maxlength="50" autocomplete="off">
                 </div>
               </div>
 
@@ -4217,7 +4261,7 @@
             <div class="tf-custom">
               <button type="button" class="tf-custom-toggle" id="doptAddToggle">+ เพิ่มอุปกรณ์ใหม่</button>
               <div class="tf-custom-row hidden" id="doptFormRow">
-                <input type="text" id="doptName" class="tf-input" maxlength="60" placeholder="ชื่ออุปกรณ์ เช่น เครื่องชั่ง, โปรแกรมบัญชี...">
+                <input type="text" id="doptName" class="tf-input" maxlength="60">
                 <label class="dopt-file">
                   <input type="file" id="doptIconInput" accept="image/*" hidden>
                   <span id="doptIconLabel">ไอคอน (ไม่บังคับ)</span>
@@ -4437,6 +4481,7 @@
       document.getElementById("repairNotesView").hidden = tab !== "repairNotes";
       document.getElementById("warrantyView").hidden = tab !== "warranty";
       document.getElementById("worklogView").hidden = tab !== "worklog";
+      document.getElementById("pwIPView").hidden = tab !== "pwIP";
       if (tab === "tickets") {
         statusFilter = null;
         currentPage = 1;
@@ -5381,7 +5426,7 @@
           "</td>" +
           '<td style="text-align:right">' +
             '<div class="name-editor">' +
-            '<input class="name-input is-readonly" value="' + esc(u.name || "") + '" placeholder="ชื่อผู้ใช้" data-ip="' + esc(u.ip) + '" readonly onclick="editDeviceName(this)">' +
+            '<input class="name-input is-readonly" value="' + esc(u.name || "") + '" data-ip="' + esc(u.ip) + '" readonly onclick="editDeviceName(this)">' +
             '<button class="name-edit" type="button" onclick="editDeviceName(this)">แก้ไข</button>' +
             '<button class="name-save is-disabled" type="button" onclick="saveDeviceName(this)">บันทึก</button>' +
             '<button class="name-del" type="button" title="ลบผู้ใช้" onclick="deleteDevice(this)">ลบ</button>' +
@@ -5625,9 +5670,12 @@
     }
 
     function closeModal() {
-      document.getElementById("modalBox").classList.remove("wn-journal-modal");
-      document.getElementById("modalMask").classList.add("hidden");
-      document.getElementById("modalMask").style.display = "";
+      var box = document.getElementById("modalBox");
+      if (box) box.classList.remove("wn-journal-modal");
+      var mask = document.getElementById("modalMask");
+      if (mask) { mask.classList.add("hidden"); mask.style.display = ""; }
+      var sm = document.getElementById("detSimpleMask");
+      if (sm) { sm.classList.add("hidden"); sm.style.display = "none"; }
     }
 
     function showView(name) {
@@ -5668,7 +5716,8 @@
     }
 
     function fillPhotoGrid(id, photos) {
-      var el = document.getElementById(id);
+      var el = typeof id === "string" ? document.getElementById(id) : id;
+      if (!el) return;
       el.innerHTML = "";
       if (!photos.length) {
         el.innerHTML = '<div class="no-photo">ไม่มีรูปภาพ</div>';
@@ -5730,42 +5779,23 @@
     function openDetailMobile(row) {
       currentRow = row;
       var st = statusInfo(row);
-      document.getElementById("detNo").textContent = row.ticket_no;
-      var badge = document.getElementById("detStatus");
+      document.getElementById("detSNo").textContent = row.ticket_no;
+      var badge = document.getElementById("detSBadge");
       badge.className = "badge " + st.cls;
       badge.textContent = st.label;
+      document.getElementById("detSDate").textContent = fmtDate(row.created_at);
+      document.getElementById("detSDevice").innerHTML = fmtDevices(row.device) || "-";
+      document.getElementById("detSSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
       var loc = parseLocation(row.location);
-      document.getElementById("detDate").textContent = fmtDate(row.created_at);
-      document.getElementById("detDevice").innerHTML = fmtDevices(row.device) || "-";
-      document.getElementById("detBranch").textContent = loc.branch ? loc.branch + (loc.position && loc.position !== "-" ? " · " + loc.position : "") : "-";
-      document.getElementById("detPosition").textContent = loc.position && loc.position !== "-" ? loc.position : "-";
-      document.getElementById("detHandler").textContent = row.handler_name || "ยังไม่ระบุ";
-      document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
-      var detPhotos = document.getElementById("detPhotos");
-      var detDonePhotos = document.getElementById("detDonePhotos");
-      if (fillPhotoGrid) {
-        fillPhotoGrid(detPhotos, []);
-        fillPhotoGrid(detDonePhotos, []);
-      } else {
-        detPhotos.innerHTML = "";
-        detDonePhotos.innerHTML = "";
+      var locText = loc.branch && loc.branch !== "-" ? loc.branch : "-";
+      if (loc.position && loc.position !== "-") locText += " · " + loc.position;
+      document.getElementById("detSLoc").textContent = locText;
+      document.getElementById("detSHandler").textContent = row.handler_name || "ยังไม่ระบุ";
+      var mask = document.getElementById("detSimpleMask");
+      if (mask) {
+        mask.classList.remove("hidden");
+        mask.style.display = "flex";
       }
-      var groups = splitPhotos(row.ticket_photos);
-      var doneWrap = document.getElementById("detDoneWrap");
-      if (row.status === "done") {
-        var stDate2 = row.status_date ? fmtDateOnly(row.status_date) : "-";
-        if (row.status_date && row.status_time) stDate2 += " " + row.status_time + " น.";
-        document.getElementById("detFinishAt").textContent = stDate2;
-        doneWrap.hidden = false;
-        fillPhotoGrid(detDonePhotos, groups.done);
-      } else {
-        doneWrap.hidden = true;
-      }
-      document.getElementById("detPdfWrap").hidden = true;
-      document.getElementById("btnApprove").hidden = true;
-      document.getElementById("btnFinish").hidden = row.status === "done";
-      showView("detailView");
-      openModal();
     }
     window.openDetail = openDetailMobile;
     window.openDetailMobile = openDetailMobile;
@@ -5882,6 +5912,8 @@
       document.getElementById("finishAt").value =
         now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
         "T" + pad(now.getHours()) + ":" + pad(now.getMinutes());
+      var sm = document.getElementById("detSimpleMask");
+      if (sm) { sm.classList.add("hidden"); sm.style.display = "none"; }
       showView("finishView");
       openModal();
     }
@@ -6818,7 +6850,7 @@
       row.innerHTML =
         '<div class="wn-step-no" style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">ขั้นตอนที่ ' + (i + 1) + "</div>" +
         '<div style="display:flex;gap:8px;align-items:flex-start">' +
-          '<textarea class="wn-step-input" data-i="' + i + '" placeholder="พิมพ์ขั้นตอน..." style="flex:1;min-height:52px;width:auto" oninput="workStepTyped(this)"></textarea>' +
+          '<textarea class="wn-step-input" data-i="' + i + '" style="flex:1;min-height:52px;width:auto" oninput="workStepTyped(this)"></textarea>' +
           '<button class="icon-btn del wn-step-x" type="button" title="ลบขั้นตอน" onclick="removeWorkStep(' + i + ')">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>' +
           "</button>" +
@@ -8003,18 +8035,60 @@ loadTickets();
 
 /* ---------- Admin session (login/ออกจากระบบ) ---------- */
 function adminLogout() {
-  fetch("/api/auth/logout", { method: "POST" })
+  Promise.all([
+    fetch("/api/auth/logout", { method: "POST" }),
+    fetch("/api/auth/user-logout", { method: "POST" })
+  ])
     .then(function () { window.location.href = "/admin-login.html"; })
     .catch(function () { window.location.href = "/admin-login.html"; });
 }
 window.adminLogout = adminLogout;
 
+/* พนักงาน (system_users) บนมือถือ: ซ่อนหมวด/เมนูที่ไม่มีสิทธิ์ */
+function applyMobileSuUser(username, permissions) {
+  var perms = Array.isArray(permissions) ? permissions : [];
+  document.querySelectorAll("#adminTabs .side-btn[data-perm]").forEach(function (b) {
+    b.classList.toggle("hidden", perms.indexOf(b.getAttribute("data-perm")) === -1);
+  });
+  // PASSWORD NOTE: อนุญาตเฉพาะ USER admin เท่านั้น (พนักงานทุกคนมองไม่เห็น)
+  document.querySelectorAll('#adminTabs .side-btn[data-tab="pwIP"]').forEach(function (b) {
+    b.classList.add("hidden");
+  });
+  var catPerms = {
+    tickets: ["tickets"],
+    care: ["deviceNotes", "maintenance", "warranty"],
+    notes: ["workNotes"],
+    settings: ["settings"]
+  };
+  document.querySelectorAll("#mobCats .mob-cat").forEach(function (c) {
+    var key = (c.getAttribute("data-cat") || "").trim();
+    var keys = catPerms[key] || [];
+    var any = keys.some(function (k) { return perms.indexOf(k) !== -1; });
+    c.classList.toggle("hidden", !any);
+  });
+  var lab = document.getElementById("mobUserLabel");
+  if (lab) lab.textContent = username;
+  // ถ้าไม่มีสิทธิ์ดูหน้ารายการแจ้งซ่อม ให้สลับไปเมนูแรกที่มีสิทธิ์
+  var chosen = null;
+  document.querySelectorAll("#adminTabs .side-btn[data-tab]:not(.hidden)").forEach(function (b) {
+    if (!chosen) chosen = b;
+  });
+  if (chosen && chosen.getAttribute("data-tab") !== "tickets") chosen.click();
+}
+
 fetch("/api/auth/me")
   .then(function (r) { return r.json(); })
   .then(function (d) {
-    if (!d || !d.ok || !d.authed) {
+    if (d && d.ok && d.authed) return; // admin → เข้าถึงทุกเมนูตามเดิม
+    return fetch("/api/auth/user-me").then(function (r) { return r.json(); });
+  })
+  .then(function (ud) {
+    if (!ud) return;
+    if (!ud.ok || !ud.authed) {
       window.location.replace("/admin-login.html");
+      return;
     }
+    applyMobileSuUser(ud.user.username, ud.user.permissions);
   })
   .catch(function () { window.location.href = "/admin-login.html"; });
   
@@ -8255,7 +8329,6 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
       ta.className = "tf-input";
       ta.rows = 3;
       ta.maxLength = 500;
-      ta.placeholder = "พิมพ์รายละเอียดปัญหาของ " + d.label + " เช่น เปิดไม่ติด, ค้าง, error เด้ง";
       ta.value = tfProblems[k] || "";
       ta.addEventListener("input", function () {
         tfProblems[k] = this.value;
@@ -8916,31 +8989,6 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
       }).join("");
     }
   })();
-/* ---------- ตั้งค่าธีม: ปกติ / 90S ---------- */
-  var retroLink = document.getElementById("retroThemeLink");
-  function applyThemeActive(mode) {
-    var opts = document.querySelectorAll(".theme-opt");
-    for (var i = 0; i < opts.length; i++) {
-      var on = opts[i].getAttribute("data-theme") === mode;
-      opts[i].classList.toggle("is-on", on);
-    }
-  }
-  window.setTheme = function (mode) {
-    var on = mode === "retro";
-    if (retroLink) retroLink.disabled = !on;
-    try { localStorage.setItem("adminTheme", on ? "retro" : "normal"); } catch (e) { }
-    applyThemeActive(on ? "retro" : "normal");
-    toast(on ? "เปิดธีมสไตล์ 90S แล้ว" : "เปิดธีมสไตล์ปกติแล้ว");
-  };
-
-  (function () {
-    var initTheme = "normal";
-    try {
-      var v = localStorage.getItem("adminTheme");
-      if (v === "retro" || v === "normal") initTheme = v;
-    } catch (e) { }
-    applyThemeActive(initTheme);
-  })();
 })();
 </script>
 
@@ -8980,12 +9028,368 @@ if ("MutationObserver" in window) {
     clearTimeout(mobObsTimer);
     mobObsTimer = setTimeout(mobBlockifyNow, 120);
   });
-  ["ticketsBody", "devicesBody", "visitorsBody", "deviceBody", "maintenanceBody", "workNoteBody", "wDeviceBody"].forEach(function (id) {
+  ["ticketsBody", "devicesBody", "visitorsBody", "deviceBody", "maintenanceBody", "workNoteBody", "wDeviceBody", "pnBody"].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) mobObs.observe(el, { childList: true, subtree: true });
   });
 }
 window.addEventListener("load", mobBlockifyNow);
+</script>
+<script>
+/* ============ PASSWORD NOTE (เฉพาะ USER admin) ============ */
+(function () {
+  var pnRows = [];
+  var pnViewId = null;
+  var pnMask = null;
+
+  function pn$(id) { return document.getElementById(id); }
+
+  function pnEsc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function pnFmtDate(iso) {
+    if (!iso) return "-";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "-";
+    return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear() +
+      " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+
+  function pnMsg(msg, isErr) {
+    var el = pn$("pnToast");
+    if (!el) return;
+    el.textContent = msg;
+    el.style.background = isErr ? "#d4382f" : "#0b7a43";
+    el.style.display = "block";
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.style.display = "none"; }, 2200);
+  }
+
+  function pnOverlay(html) {
+    if (pnMask) { pnMask.remove(); pnMask = null; }
+    var mask = document.createElement("div");
+    mask.className = "pn-pop-mask";
+    mask.innerHTML = '<div class="pn-pop" role="dialog" aria-modal="true">' + html + "</div>";
+    var close = function () { if (mask && mask.parentNode) mask.remove(); pnMask = null; window.__pnClose = null; document.removeEventListener("keydown", onKey); };
+    var onKey = function (e) { if (e.key === "Escape") close(); };
+    mask.addEventListener("click", function (e) {
+      if (e.target === mask || e.target.classList.contains("pn-pop-close")) close();
+    });
+    document.body.appendChild(mask);
+    pnMask = mask;
+    window.__pnClose = close;
+    document.addEventListener("keydown", onKey);
+    return mask;
+  }
+
+  function pnLoad() {
+    return fetch("/api/admin/password-notes")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.ok) { pnRows = d.notes || []; pnRender(); return true; }
+        pnMsg((d && d.message) || "โหลดข้อมูลไม่สำเร็จ", true);
+        return false;
+      })
+      .catch(function () { pnMsg("โหลดข้อมูลไม่สำเร็จ", true); return false; });
+  }
+
+  function pnRender() {
+    var body = pn$("pnBody");
+    if (!body) return;
+    var empty = pn$("pnEmpty");
+    var table = pn$("pnTable");
+    if (empty) empty.classList.toggle("hidden", pnRows.length > 0);
+    if (table) table.hidden = pnRows.length === 0;
+    body.innerHTML = pnRows.map(function (r) {
+      var title = pnEsc(r.title);
+      return "<tr>" +
+        '<td><span style="font-weight:700;">' + title + "</span></td>" +
+        '<td class="pn-masked">********</td>' +
+        '<td class="pn-masked">********</td>' +
+        '<td class="pn-muted" style="white-space:nowrap;">' + pnEsc(pnFmtDate(r.created_at)) + "</td>" +
+        '<td style="text-align:right; white-space:nowrap;">' +
+          '<button class="btn" style="padding:4px 10px; font-size:12.5px; margin-right:6px;" type="button" onclick="pnOpenView(' + r.id + ')">เข้าดู</button>' +
+          '<button class="btn" style="padding:4px 10px; font-size:12.5px; background:#fde8e8; color:#b91c1c; border-color:#f1c7c7;" type="button" onclick="pnDelete(' + r.id + ')">ลบ</button>' +
+        "</td></tr>";
+    }).join("");
+    if (window.mobBlockifyNow) window.mobBlockifyNow();
+  }
+
+  window.pnOpenCreate = function () {
+    pnOverlay(
+      '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+      '<h3 class="pn-pop-title">สร้างรหัสผ่าน</h3>' +
+      '<p class="pn-pop-sub">ตั้งชื่อรหัสผ่านเพื่อให้รู้ว่ามันเอาไว้ทำอะไร แล้วกรอก username / password</p>' +
+      '<p class="pn-pop-err hidden" id="pnCreateErr"></p>' +
+      '<div class="pn-pop-field"><label for="pnTitle">ชื่อรหัสผ่าน (เอาไว้ทำอะไร)</label>' +
+        '<input id="pnTitle" type="text" maxlength="200" placeholder="เช่น Webmail, Wi-Fi สาขา, Router ..."></div>' +
+      '<div class="pn-pop-field"><label for="pnUser">Username</label>' +
+        '<input id="pnUser" type="text" maxlength="300" autocomplete="off" spellcheck="false"></div>' +
+      '<div class="pn-pop-field"><label for="pnPass">Password</label>' +
+        '<div class="pn-pass-wrap">' +
+          '<input id="pnPass" type="password" maxlength="500" autocomplete="new-password" spellcheck="false">' +
+          '<button class="pn-eye" type="button" onclick="pnTogglePass()" aria-label="แสดง/ซ่อนรหัสผ่าน">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+          "</button>" +
+        "</div></div>" +
+      '<div class="pn-pop-actions">' +
+        '<button class="pn-btn pn-btn-ghost" type="button" onclick="window.__pnClose&&window.__pnClose()">ยกเลิก</button>' +
+        '<button class="pn-btn pn-btn-primary" type="button" id="pnCreateBtn" onclick="pnSave()">บันทึก</button>' +
+      "</div>"
+    );
+    var t = pn$("pnTitle");
+    if (t) {
+      t.focus();
+      t.addEventListener("keydown", function (e) { if (e.key === "Enter") pnSave(); });
+    }
+    var u = pn$("pnUser");
+    if (u) u.addEventListener("keydown", function (e) { if (e.key === "Enter") { var p = pn$("pnPass"); if (p) p.focus(); } });
+    var p = pn$("pnPass");
+    if (p) p.addEventListener("keydown", function (e) { if (e.key === "Enter") pnSave(); });
+  };
+
+  window.pnTogglePass = function () {
+    var inp = pn$("pnPass");
+    if (!inp) return;
+    inp.type = inp.type === "password" ? "text" : "password";
+  };
+
+  window.pnSave = function () {
+    var err = pn$("pnCreateErr");
+    var fail = function (msg) {
+      if (err) { err.textContent = msg; err.classList.remove("hidden"); }
+    };
+    var title = pn$("pnTitle") ? pn$("pnTitle").value.trim() : "";
+    var username = pn$("pnUser") ? pn$("pnUser").value.trim() : "";
+    var password = pn$("pnPass") ? pn$("pnPass").value : "";
+    if (!title) return fail("กรอกชื่อรหัสผ่านก่อน");
+    if (!username) return fail("กรอก username ก่อน");
+    if (!password) return fail("กรอกรหัสผ่านก่อน");
+    var btn = pn$("pnCreateBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก..."; }
+    fetch("/api/admin/password-notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title, username: username, password: password })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+      .then(function (res) {
+        if (res.d && res.d.ok) {
+          if (window.__pnClose) window.__pnClose();
+          pnLoad();
+          pnMsg("บันทึกรหัสผ่านแล้ว");
+        } else {
+          if (btn) { btn.disabled = false; btn.textContent = "บันทึก"; }
+          fail((res.d && res.d.message) || "บันทึกไม่สำเร็จ");
+        }
+      })
+      .catch(function () {
+        if (btn) { btn.disabled = false; btn.textContent = "บันทึก"; }
+        fail("บันทึกไม่สำเร็จ (server error)");
+      });
+  };
+
+  window.pnOpenView = function (id) {
+    pnViewId = String(id == null ? "" : id);
+    pnOverlay(
+      '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+      '<h3 class="pn-pop-title">ยืนยันตัวตน</h3>' +
+      '<p class="pn-pop-sub">กรอกรหัสลับ (PIN) เพื่อเข้าดูและคัดลอกข้อมูลที่บันทึกไว้</p>' +
+      '<p class="pn-pop-err hidden" id="pnPinErr"></p>' +
+      '<div class="pn-pop-field"><label for="pnPinInput">รหัส PIN</label>' +
+        '<input id="pnPinInput" type="password" maxlength="20" inputmode="numeric" autocomplete="off" spellcheck="false"></div>' +
+      '<div class="pn-pop-actions">' +
+        '<button class="pn-btn pn-btn-ghost" type="button" onclick="window.__pnClose&&window.__pnClose()">ยกเลิก</button>' +
+        '<button class="pn-btn pn-btn-primary" type="button" id="pnPinBtn" onclick="pnVerifyPin()">ยืนยัน</button>' +
+      "</div>"
+    );
+    var inp = pn$("pnPinInput");
+    if (inp) {
+      inp.focus();
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") pnVerifyPin(); });
+    }
+  };
+
+  window.pnVerifyPin = function () {
+    var err = pn$("pnPinErr");
+    var fail = function (msg) {
+      if (err) { err.textContent = msg; err.classList.remove("hidden"); }
+      var inp = pn$("pnPinInput");
+      if (inp) inp.select();
+    };
+    var pin = pn$("pnPinInput") ? pn$("pnPinInput").value : "";
+    if (!pin) return fail("กรอกรหัส PIN ก่อน");
+    var btn = pn$("pnPinBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "กำลังตรวจสอบ..."; }
+    fetch("/api/admin/password-notes/reveal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: pin })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+      .then(function (res) {
+        var d = res.d;
+        if (d && d.ok) {
+          if (window.__pnClose) window.__pnClose();
+          var shown = (d.notes || []).filter(function (n) { return pnViewId ? String(n.id) === pnViewId : true; });
+          pnShowResult(shown);
+        } else {
+          if (btn) { btn.disabled = false; btn.textContent = "ยืนยัน"; }
+          fail((d && d.message) || "PIN ไม่ถูกต้อง");
+        }
+      })
+      .catch(function () {
+        if (btn) { btn.disabled = false; btn.textContent = "ยืนยัน"; }
+        fail("ตรวจสอบไม่สำเร็จ (server error)");
+      });
+  };
+
+  function pnShowResult(notes) {
+    if (!notes.length) {
+      pnOverlay(
+        '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+        '<h3 class="pn-pop-title">บันทึกรหัสผ่าน</h3>' +
+        '<p class="pn-pop-sub">ยังไม่มีรหัสผ่านที่บันทึกไว้</p>' +
+        '<div class="pn-pop-actions"><button class="pn-btn pn-btn-primary" type="button" onclick="window.__pnClose&&window.__pnClose()">ปิด</button></div>'
+      );
+      return;
+    }
+    var items = notes.map(function (n) {
+      return '<div class="pn-rec">' +
+        '<div class="pn-rec-head">' + pnEsc(n.title) + "</div>" +
+        '<div class="pn-rec-row"><span class="pn-rec-label">Username</span><span class="pn-rec-val" data-val="' + pnEsc(n.username) + '">' + pnEsc(n.username) + "</span>" +
+          '<button class="pn-copy-btn" type="button" onclick="pnCopy(this)">คัดลอก</button></div>' +
+        '<div class="pn-rec-row"><span class="pn-rec-label">Password</span><span class="pn-rec-val" data-val="' + pnEsc(n.password) + '">' + pnEsc(n.password) + "</span>" +
+          '<button class="pn-copy-btn" type="button" onclick="pnCopy(this)">คัดลอก</button></div>' +
+      "</div>";
+    }).join("");
+    pnOverlay(
+      '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+      '<h3 class="pn-pop-title">บันทึกรหัสผ่าน (' + notes.length + ")</h3>" +
+      '<p class="pn-pop-sub">กด "คัดลอก" เพื่อคัดลอกค่าไปใช้งาน</p>' +
+      items +
+      '<div class="pn-pop-actions"><button class="pn-btn pn-btn-primary" type="button" onclick="window.__pnClose&&window.__pnClose()">ปิด</button></div>'
+    );
+  }
+
+  window.pnCopy = function (btn) {
+    var val = btn.previousElementSibling ? (btn.previousElementSibling.getAttribute("data-val") || "") : "";
+    function done(ok) {
+      btn.textContent = ok ? "คัดลอกแล้ว" : "คัดลอก";
+      if (ok) setTimeout(function () { btn.textContent = "คัดลอก"; }, 1500);
+    }
+    function legacy() {
+      var ta = document.createElement("textarea");
+      ta.value = val;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { done(document.execCommand("copy")); } catch (e) { done(false); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(val).then(function () { done(true); }, function () { legacy(); });
+    } else legacy();
+  };
+
+  window.pnDelete = function (id) {
+    var row = null;
+    for (var i = 0; i < pnRows.length; i++) if (String(pnRows[i].id) === String(id)) row = pnRows[i];
+    var label = row ? row.title : "รายการนี้";
+    if (!window.confirm('ลบ "' + label + '" ?')) return;
+    fetch("/api/admin/password-notes/" + id, { method: "DELETE" })
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+      .then(function (res) {
+        if (res.d && res.d.ok) { pnLoad(); pnMsg("ลบแล้ว"); }
+        else pnMsg((res.d && res.d.message) || "ลบไม่สำเร็จ", true);
+      })
+      .catch(function () { pnMsg("ลบไม่สำเร็จ", true); });
+  };
+
+  /* ยืนยันตัวตนด้วยชื่อผู้ใช้/รหัสผ่านของ USER admin ก่อนเข้า PASSWORD NOTE */
+  var pnAuthed = false;
+
+  window.pnRequireAuth = function () {
+    pnOverlay(
+      '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+      '<h3 class="pn-pop-title">ยืนยันตัวตน</h3>' +
+      '<p class="pn-pop-sub">กรอกรหัสผ่านที่ตั้งไว้สำหรับเข้า PASSWORD NOTE</p>' +
+      '<p class="pn-pop-err hidden" id="pnAuthErr"></p>' +
+      '<div class="pn-pop-field"><label for="pnAuthPass">รหัสผ่าน</label>' +
+        '<div class="pn-pass-wrap">' +
+          '<input id="pnAuthPass" type="password" maxlength="200" autocomplete="current-password" spellcheck="false">' +
+          '<button class="pn-eye" type="button" onclick="pnAuthTogglePass()" aria-label="แสดง/ซ่อนรหัสผ่าน">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+          "</button>" +
+        "</div></div>" +
+      '<div class="pn-pop-actions">' +
+        '<button class="pn-btn pn-btn-ghost" type="button" onclick="window.__pnClose&&window.__pnClose()">ยกเลิก</button>' +
+        '<button class="pn-btn pn-btn-primary" type="button" id="pnAuthBtn" onclick="pnVerifyAuth()">ยืนยันตัวตน</button>' +
+      "</div>"
+    );
+    var p = pn$("pnAuthPass");
+    if (p) { p.focus(); p.addEventListener("keydown", function (e) { if (e.key === "Enter") pnVerifyAuth(); }); }
+  };
+
+  window.pnAuthTogglePass = function () {
+    var inp = pn$("pnAuthPass");
+    if (!inp) return;
+    inp.type = inp.type === "password" ? "text" : "password";
+  };
+
+  window.pnVerifyAuth = function () {
+    var err = pn$("pnAuthErr");
+    var fail = function (msg) {
+      if (err) { err.textContent = msg; err.classList.remove("hidden"); }
+      var inp = pn$("pnAuthPass");
+      if (inp) inp.select();
+    };
+    var pass = pn$("pnAuthPass") ? pn$("pnAuthPass").value : "";
+    if (!pass) return fail("กรอกรหัสผ่านก่อน");
+    var btn = pn$("pnAuthBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "กำลังตรวจสอบ..."; }
+    fetch("/api/admin/password-notes/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pass: pass })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+      .then(function (res) {
+        if (res.d && res.d.ok) {
+          pnAuthed = true;
+          if (window.__pnClose) window.__pnClose();
+          pnLoad();
+          pnMsg("ยืนยันตัวตนสำเร็จ");
+        } else {
+          if (btn) { btn.disabled = false; btn.textContent = "ยืนยันตัวตน"; }
+          fail((res.d && res.d.message) || "รหัสผ่านไม่ถูกต้อง");
+        }
+      })
+      .catch(function () {
+        if (btn) { btn.disabled = false; btn.textContent = "ยืนยันตัวตน"; }
+        fail("ตรวจสอบไม่สำเร็จ (server error)");
+      });
+  };
+
+  /* โหลดรายการเมื่อเข้าแท็บ PASSWORD NOTE */
+  (function () {
+    var adminTabs = document.getElementById("adminTabs");
+    if (!adminTabs) return;
+    var pnLoaded = false;
+    adminTabs.addEventListener("click", function (e) {
+      var btn = e.target.closest(".side-btn");
+      if (btn && btn.getAttribute("data-tab") === "pwIP") {
+        if (pnAuthed) {
+          if (!pnLoaded) { pnLoaded = true; pnLoad(); }
+        } else {
+          pnRequireAuth();
+        }
+      }
+    });
+  })();
+})();
 </script>
 </body>
 </html>

@@ -18,5 +18,8 @@ module.exports = {
   PG_DATABASE: process.env.PG_DATABASE || "",
   PG_USER: process.env.PG_USER || "",
   PG_PASSWORD: process.env.PG_PASSWORD || "",
-  PG_SSL: process.env.PG_SSL || "false"
+  PG_SSL: process.env.PG_SSL || "false",
+  PASSWORD_NOTE_KEY: process.env.PASSWORD_NOTE_KEY || "",
+  PASSWORD_NOTE_PIN: process.env.PASSWORD_NOTE_PIN || "741236",
+  PASSWORD_NOTE_PASS: process.env.PASSWORD_NOTE_PASS || "wan2024*"
 };

@@ -606,6 +606,37 @@ async function deleteWorkNote(id) {
   return data || [];
 }
 
+// ---------- PASSWORD NOTE (บันทึกรหัสผ่านเฉพาะ USER admin) ----------
+async function listPasswordNotes({ limit = 500, includeSecret = false } = {}) {
+  const { data, error } = await supabase
+    .from("password_notes")
+    .select(includeSecret ? "*" : "id, title, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function createPasswordNote({ title, encJson }) {
+  const { data, error } = await supabase
+    .from("password_notes")
+    .insert({ title: title || "", enc_json: encJson || "" })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function deletePasswordNote(id) {
+  const { data, error } = await supabase
+    .from("password_notes")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
 // ---------- โน๊ตแจ้งซ่อม (Repair Notes) ----------
 async function listRepairNotes(limit = 500) {
   const { data, error } = await supabase
@@ -658,6 +689,77 @@ async function deleteRepairNote(id) {
     .select("id");
   if (error) throw error;
   return data || [];
+}
+
+// ---------- ตั้งค่าสิทธิ์การเข้าใช้งานระบบ (System Users) ----------
+function parsePerms(row) {
+  if (!row) return null;
+  try {
+    row.permissions = JSON.parse(row.permissions || "[]");
+  } catch (err) {
+    row.permissions = [];
+  }
+  return row;
+}
+
+async function listSystemUsers() {
+  const { data, error } = await supabase
+    .from("system_users")
+    .select("id, username, permissions, note, created_at, updated_at")
+    .order("username", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(parsePerms);
+}
+
+async function createSystemUser({ username, password_hash, permissions, note }) {
+  const { data, error } = await supabase
+    .from("system_users")
+    .insert({
+      username,
+      password_hash,
+      permissions: JSON.stringify(permissions || []),
+      note: note || ""
+    })
+    .select("id, username, permissions, note, created_at, updated_at")
+    .single();
+  if (error) throw error;
+  return parsePerms(data);
+}
+
+async function updateSystemUser(username, patch) {
+  const { data, error } = await supabase
+    .from("system_users")
+    .update(patch)
+    .eq("username", username)
+    .select("id, username, permissions, note, created_at, updated_at")
+    .single();
+  if (error) throw error;
+  return parsePerms(data);
+}
+
+async function deleteSystemUser(username) {
+  const { data, error } = await supabase
+    .from("system_users")
+    .delete()
+    .eq("username", username)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+async function getSystemUserAuth(username) {
+  const { data: row, error } = await supabase
+    .from("system_users")
+    .select("username, password_hash, permissions")
+    .eq("username", username)
+    .maybeSingle();
+  if (error || !row) return null;
+  try {
+    row.permissions = JSON.parse(row.permissions || "[]");
+  } catch (err) {
+    row.permissions = [];
+  }
+  return row;
 }
 
 // ---------- ระบบตรวจสอบประกัน (Warranty Check) ----------
@@ -854,4 +956,4 @@ async function bumpVisitorTicket(id) {
   }
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket };
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket };

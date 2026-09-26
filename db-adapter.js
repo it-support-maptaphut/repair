@@ -187,6 +187,38 @@ function createSupabaseAdapter() {
       return supabaseModule.deleteRepairNote(id);
     },
     
+    async listSystemUsers() {
+      return supabaseModule.listSystemUsers();
+    },
+    
+    async createSystemUser(data) {
+      return supabaseModule.createSystemUser(data);
+    },
+    
+    async updateSystemUser(username, patch) {
+      return supabaseModule.updateSystemUser(username, patch);
+    },
+    
+    async deleteSystemUser(username) {
+      return supabaseModule.deleteSystemUser(username);
+    },
+    
+    async getSystemUserAuth(username) {
+      return supabaseModule.getSystemUserAuth(username);
+    },
+
+    async listPasswordNotes(opts) {
+      return supabaseModule.listPasswordNotes(opts || {});
+    },
+
+    async createPasswordNote(data) {
+      return supabaseModule.createPasswordNote(data);
+    },
+
+    async deletePasswordNote(id) {
+      return supabaseModule.deletePasswordNote(id);
+    },
+    
     async listWarrantyCheckSites() {
       return supabaseModule.listWarrantyCheckSites();
     },
@@ -796,6 +828,90 @@ function createPostgresAdapter() {
     
     async deleteRepairNote(id) {
       const result = await query(`DELETE FROM repair_notes WHERE id = $1 RETURNING id`, [id]);
+      return result.rows;
+    },
+    
+    async listSystemUsers() {
+      const result = await query(
+        `SELECT id, username, permissions, note, created_at, updated_at
+         FROM system_users ORDER BY username`
+      );
+      return result.rows.map((row) => ({
+        id: row.id,
+        username: row.username,
+        permissions: JSON.parse(row.permissions || "[]"),
+        note: row.note || "",
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      }));
+    },
+    
+    async createSystemUser({ username, password_hash, permissions, note }) {
+      const result = await query(
+        `INSERT INTO system_users (username, password_hash, permissions, note)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, username, permissions, note, created_at, updated_at`,
+        [username, password_hash || "", JSON.stringify(permissions || []), note || ""]
+      );
+      const row = result.rows[0];
+      return { ...row, permissions: JSON.parse(row.permissions || "[]") };
+    },
+    
+    async updateSystemUser(username, patch) {
+      const keys = Object.keys(patch);
+      if (!keys.length) return;
+      const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+      const values = keys.map((k) => patch[k]);
+      values.push(username);
+      const result = await query(
+        `UPDATE system_users SET ${setClause} WHERE username = $${keys.length + 1}
+         RETURNING id, username, permissions, note, created_at, updated_at`,
+        values
+      );
+      if (!result.rows.length) return null;
+      const row = result.rows[0];
+      return { ...row, permissions: JSON.parse(row.permissions || "[]") };
+    },
+    
+    async deleteSystemUser(username) {
+      const result = await query(`DELETE FROM system_users WHERE username = $1 RETURNING id`, [username]);
+      return result.rows;
+    },
+    
+    async getSystemUserAuth(username) {
+      const result = await query(
+        `SELECT username, password_hash, permissions FROM system_users WHERE username = $1`,
+        [username]
+      );
+      if (!result.rows.length) return null;
+      const row = result.rows[0];
+      try {
+        row.permissions = JSON.parse(row.permissions || "[]");
+      } catch (err) {
+        row.permissions = [];
+      }
+      return row;
+    },
+
+    async listPasswordNotes({ limit = 500, includeSecret = false } = {}) {
+      const selectCols = includeSecret ? "*" : "id, title, created_at";
+      const result = await query(
+        `SELECT ${selectCols} FROM password_notes ORDER BY created_at DESC LIMIT $1`,
+        [limit]
+      );
+      return result.rows;
+    },
+
+    async createPasswordNote({ title, encJson }) {
+      const result = await query(
+        `INSERT INTO password_notes (title, enc_json) VALUES ($1, $2) RETURNING id`,
+        [title || "", encJson || ""]
+      );
+      return result.rows[0].id;
+    },
+
+    async deletePasswordNote(id) {
+      const result = await query(`DELETE FROM password_notes WHERE id = $1 RETURNING id`, [id]);
       return result.rows;
     },
     

@@ -179,6 +179,21 @@ alter table public.work_notes enable row level security;
 create index if not exists work_notes_created_idx on public.work_notes (created_at);
 
 -- ============================================================
+-- PASSWORD NOTE — บันทึกรหัสผ่าน (เฉพาะ USER admin)
+-- username/password ถูกเข้ารหัส AES-256-GCM ฝั่ง server เก็บใน enc_json
+-- ============================================================
+create table if not exists public.password_notes (
+  id bigint generated always as identity primary key,
+  title text not null default '',
+  enc_json text default '',
+  created_at timestamptz default now()
+);
+
+alter table public.password_notes enable row level security;
+
+create index if not exists password_notes_created_idx on public.password_notes (created_at);
+
+-- ============================================================
 -- ระบบตรวจสอบประกัน (Warranty Check)
 -- ============================================================
 -- รายชื่อบริษัทตัวแทนจำหน่าย + หน้าเช็คประกัน (admin จัดการได้)
@@ -293,3 +308,20 @@ insert into public.device_options (category, name, sort_order) values
    ('Disk', 'โอนไฟล์ช้า/ค้าง', 4),
    ('Disk', 'ดิสเต็ม/เซฟไม่ได้', 5)
 on conflict (category, name) do nothing;
+
+-- ============================================================
+-- ผู้ใช้งานระบบภายใน + สิทธิ์การเข้าถึงเมนู admin (ตั้งค่าสิทธิ์การเข้าใช้งานระบบ)
+-- ============================================================
+create table if not exists public.system_users (
+  id bigint generated always as identity primary key,
+  username text unique not null,
+  password_hash text not null default '',
+  permissions text default '[]',      -- JSON array เช่น ["tickets","devices"]
+  note text default '',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.system_users enable row level security;
+
+create index if not exists system_users_username_idx on public.system_users (username);

@@ -446,6 +446,13 @@ input::placeholder { color: #666; }
 .ana-filter-label, .ana-card-title, .ana-tip-name, .ana-tip-row, .ana-total { color: #000 !important; }
 .ana-card-title { font-size: 13px !important; font-weight: 700 !important; }
 .ana-no-data { color: #000 !important; }
+.ana-tip {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  color: #000 !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35) !important;
+}
 .ana-device-chip {
   background: #000080 !important;
   color: #fff !important;
@@ -528,3 +535,48 @@ body.admin-login-page {
 .admin-login-page .admin-login-btn:hover { color: #000 !important; }
 .admin-login-page .admin-login-btn:active { border-color: #404040 #fff #fff #404040 !important; }
 .admin-login-page .admin-login-btn:disabled { color: #666 !important; }
+
+/* ---------- PASSWORD NOTE (ป็อปอัปสไตล์ 90S) ---------- */
+.pn-pop {
+  background: #c0c0c0 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4) !important;
+}
+.pn-pop-close { color: #000 !important; border-radius: 0 !important; }
+.pn-pop-close:hover { background: #a0a0a0 !important; }
+.pn-pop-title { color: #000080 !important; }
+.pn-pop-sub { color: #000 !important; }
+.pn-pop-field label { color: #000 !important; }
+.pn-pop-field input {
+  border: 2px inset #808080 !important; border-radius: 0 !important;
+  background: #fff !important; color: #000 !important; box-shadow: none !important;
+  font-family: Consolas, monospace !important;
+}
+.pn-pop-field input:focus { outline: 1px dotted #000 !important; box-shadow: none !important; }
+.pn-eye { color: #000 !important; }
+.pn-btn-primary, .pn-btn-ghost {
+  background: #c0c0c0 !important; color: #000 !important;
+  border: 2px solid !important; border-color: #fff #404040 #404040 #fff !important;
+  border-radius: 0 !important; font-weight: 400 !important;
+}
+.pn-btn-primary:hover, .pn-btn-ghost:hover { background: #d0d0d0 !important; opacity: 1 !important; }
+.pn-btn-primary:active, .pn-btn-ghost:active { border-color: #404040 #fff #fff #404040 !important; }
+.pn-pop-err { color: #000 !important; font-weight: 700 !important; }
+.pn-masked { color: #000 !important; }
+.pn-rec {
+  background: #c0c0c0 !important; border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important; border-radius: 0 !important;
+}
+.pn-rec-head { color: #000080 !important; }
+.pn-rec-row { border-top: 1px dashed #000 !important; }
+.pn-rec-label { color: #000 !important; }
+.pn-rec-val { color: #000 !important; }
+.pn-copy-btn {
+  background: #c0c0c0 !important; color: #000 !important;
+  border: 2px solid !important; border-color: #fff #404040 #404040 #fff !important;
+  border-radius: 0 !important; font-weight: 400 !important;
+}
+.pn-copy-btn:hover { background: #d0d0d0 !important; }
+.pn-empty, .pn-muted { color: #000 !important; }

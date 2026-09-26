@@ -7,7 +7,6 @@ const crypto = require("crypto");
 const config = require("./config");
 const db = require("./db-adapter");
 const cloud = require("./cloudinary");
-const archive = require("./archive");
 const notif = require("./notify");
 const devicePdf = require("./device-pdf");
 const workNotePdf = require("./work-note-pdf");
@@ -55,6 +54,47 @@ const ADMIN_PASS = config.ADMIN_PASS;
 const ADMIN_SECRET = config.ADMIN_SECRET;
 const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
 
+// ---------- PASSWORD NOTE: เข้ารหัส AES-256-GCM + PIN ยืนยันตัวตน ----------
+const PN_PIN = String(config.PASSWORD_NOTE_PIN || "741236");
+const PN_PASS = String(config.PASSWORD_NOTE_PASS || "wan2024*");
+const PN_KEY = (function () {
+  if (config.PASSWORD_NOTE_KEY) {
+    return Buffer.from(String(config.PASSWORD_NOTE_KEY), "base64");
+  }
+  return crypto
+    .createHash("sha256")
+    .update(String(ADMIN_SECRET) + ":password_note_master_v1")
+    .digest();
+})();
+
+function pnEncrypt(obj) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", PN_KEY, iv);
+  const pt = Buffer.from(JSON.stringify(obj), "utf8");
+  const ct = Buffer.concat([cipher.update(pt), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [iv.toString("base64"), tag.toString("base64"), ct.toString("base64")].join(".");
+}
+
+function pnDecrypt(blob) {
+  const parts = String(blob || "").split(".");
+  if (parts.length !== 3) throw new Error("ข้อมูลเข้ารหัสไม่ถูกต้อง");
+  const [ivB, tagB, ctB] = parts;
+  const decipher = crypto.createDecipheriv("aes-256-gcm", PN_KEY, Buffer.from(ivB, "base64"));
+  decipher.setAuthTag(Buffer.from(tagB, "base64"));
+  const pt = Buffer.concat([
+    decipher.update(Buffer.from(ctB, "base64")),
+    decipher.final()
+  ]);
+  return JSON.parse(pt.toString("utf8"));
+}
+
+function pnPinMatches(input) {
+  const a = crypto.createHash("sha256").update(String(input || "")).digest();
+  const b = crypto.createHash("sha256").update(PN_PIN).digest();
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 function signAdminToken(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = crypto.createHmac("sha256", ADMIN_SECRET).update(body).digest("base64url");
@@ -91,11 +131,106 @@ function isAdminAuthed(req) {
   return !!verifyAdminToken(parseCookies(req).admin_token);
 }
 
+// ---------- ล็อกอินพนักงาน (system_users จากตั้งค่าสิทธิ์ฯ) ----------
+const USER_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
+
+function signUserToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", ADMIN_SECRET).update(body).digest("base64url");
+  return body + "." + sig;
+}
+
+function verifyUserToken(token) {
+  if (!token) return null;
+  try {
+    const [bodyB64, sig] = String(token).split(".");
+    if (!bodyB64 || !sig) return null;
+    const expect = crypto.createHmac("sha256", ADMIN_SECRET).update(bodyB64).digest("base64url");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expect);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const payload = JSON.parse(Buffer.from(bodyB64, "base64url").toString("utf8"));
+    if (!payload || payload.e !== "user" || !payload.u || !payload.exp) return null;
+    if (Date.now() > payload.exp) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function isUserAuthed(req) {
+  const payload = verifyUserToken(parseCookies(req).su_token);
+  return payload ? payload.u : null;
+}
+
+function setUserCookie(res, token) {
+  res.set("Set-Cookie", "su_token=" + encodeURIComponent(token) + "; HttpOnly; Path=/; Max-Age=28800; SameSite=Lax");
+}
+
+function clearUserCookie(res) {
+  res.set("Set-Cookie", "su_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
+}
+
+// ดึงข้อมูลพนักงานจาก DB (สิทธิ์สดเสมอ ไม่เคยฝังใน token)
+async function loadSuUser(username) {
+  if (!username) return null;
+  const cred = await db.getAdapter().getSystemUserAuth(username);
+  if (!cred || !cred.password_hash) return null;
+  return { username: username, permissions: Array.isArray(cred.permissions) ? cred.permissions : [] };
+}
+
 // กัน API ทั้งหมดในหมวด /api/admin/* (login ไม่มีในหมวดนี้)
-app.use("/api/admin", (req, res, next) => {
+// admin → เข้าได้ทั้งหมด / พนักงาน (system_users) → ต้องมีสิทธิ์ตรงตามเมนู
+app.use("/api/admin", async (req, res, next) => {
   if (req.path.startsWith("/login")) return next();
   if (isAdminAuthed(req)) return next();
+  const username = isUserAuthed(req);
+  if (username) {
+    try {
+      const su = await loadSuUser(username);
+      if (su) {
+        req.suUser = su;
+        return next();
+      }
+    } catch (err) {
+      console.error("[auth] โหลดสิทธิ์พนักงานไม่สำเร็จ:", err.message);
+    }
+    return res.status(401).json({ ok: false, message: "บัญชีนี้ไม่มีสิทธิ์ใช้งานแล้ว" });
+  }
   return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อนใช้งาน" });
+});
+
+// ตรวจสิทธิ์ตาม API ที่พนักงานเรียก (admin ข้ามขั้นนี้)
+app.use("/api/admin", (req, res, next) => {
+  if (!req.suUser) return next();
+  const perms = req.suUser.permissions || [];
+  const path = req.path; // เช่น "/tickets", "/device-entries/5/pdf" (เทียบกับ mount /api/admin)
+  const has = (...keys) => keys.some((k) => perms.indexOf(k) !== -1);
+
+  if (/^\/system-users/.test(path)) return has("settings") ? next() : deny();
+  if (/^\/repair-notes\b/.test(path)) return has("repairNotes") ? next() : deny();
+  if (/^\/work-notes\b/.test(path)) return has("workNotes") ? next() : deny();
+  if (/^\/maintenance/.test(path)) return has("maintenance") ? next() : deny();
+  if (/^\/visitors/.test(path)) return has("visitors") ? next() : deny();
+  if (/^\/users(\/|$)/.test(path)) return has("devices") ? next() : deny();
+  if (/^\/device-categories/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
+  if (/^\/device-options/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
+  if (/^\/spec-search/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
+  if (/^\/upload-device-photo/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
+  if (/^\/device-entries/.test(path)) {
+    if (req.method === "GET") return has("devices", "deviceNotes", "warranty") ? next() : deny();
+    return has("devices", "deviceNotes") ? next() : deny();
+  }
+  if (/^\/tickets$/.test(path)) return has("tickets", "analytics", "worklog") ? next() : deny();
+  if (/^\/inbox\/.+/.test(path)) return has("tickets") ? next() : deny();
+  if (/^\/inbox$/.test(path)) return has("tickets", "analytics", "worklog") ? next() : deny();
+
+  // ส่วนที่เหลือ (migrate, db-*, ฯลฯ) อนุญาตเฉพาะ admin
+  return deny();
+
+  function deny() {
+    return res.status(403).json({ ok: false, message: "ไม่มีสิทธิ์เข้าถึงส่วนนี้" });
+  }
 });
 
 app.post("/api/auth/login", (req, res) => {
@@ -122,10 +257,60 @@ app.get("/api/auth/me", (req, res) => {
   res.json({ ok: true, authed: authed, user: authed ? "admin" : null });
 });
 
-// เปิดหน้า /admin.html ได้เฉพาะผู้ที่ Authed แล้ว (ไม่เช่นนั้นไปหน้า login)
+app.post("/api/auth/user-login", async (req, res) => {
+  try {
+    const username = String(((req.body || {}).username || "")).trim();
+    const password = String(((req.body || {}).password || ""));
+    if (!username || !password) {
+      return res.status(400).json({ ok: false, message: "กรอกชื่อผู้ใช้และรหัสผ่าน" });
+    }
+    const cred = await db.getAdapter().getSystemUserAuth(username);
+    if (!cred || !verifyPassword(password, cred.password_hash || "")) {
+      return res.status(401).json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
+    const token = signUserToken({ e: "user", u: username, exp: Date.now() + USER_SESSION_TTL });
+    setUserCookie(res, token);
+    res.json({
+      ok: true,
+      user: { username: username, permissions: Array.isArray(cred.permissions) ? cred.permissions : [] }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/auth/user-logout", (req, res) => {
+  clearUserCookie(res);
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/user-me", async (req, res) => {
+  const username = isUserAuthed(req);
+  if (!username) return res.json({ ok: true, authed: false, user: null });
+  try {
+    const su = await loadSuUser(username);
+    if (!su) return res.json({ ok: true, authed: false, user: null });
+    res.json({ ok: true, authed: true, user: su });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: true, authed: false, user: null });
+  }
+});
+
+// เปิดหน้า /admin.html ได้เฉพาะผู้ที่ Authed แล้ว (admin หรือ พนักงานที่มีสิทธิ์)
 // วางก่อน express.static เพื่อไม่ให้ static serve admin.html ข้าม gate
-function serveAdminPage(req, res, next) {
+async function serveAdminPage(req, res, next) {
   if (isAdminAuthed(req)) return next();
+  const username = isUserAuthed(req);
+  if (username) {
+    try {
+      const su = await loadSuUser(username);
+      if (su) return next();
+    } catch (err) {
+      console.error("[auth] ตรวจสิทธิ์หน้า admin ไม่สำเร็จ:", err.message);
+    }
+  }
   return res.redirect("/admin-login.html");
 }
 
@@ -979,6 +1164,220 @@ app.delete("/api/admin/repair-notes/:id", async (req, res) => {
   }
 });
 
+// ---------- PASSWORD NOTE (เฉพาะ USER admin เท่านั้น) ----------
+function requireAdminAuth(req, res, next) {
+  if (isAdminAuthed(req)) return next();
+  return res.status(401).json({ ok: false, message: "เฉพาะผู้ดูแลระบบ (USER admin) เท่านั้น" });
+}
+
+app.get("/api/admin/password-notes", requireAdminAuth, async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const rows = await adapter.listPasswordNotes({ limit: 500, includeSecret: false });
+    res.json({ ok: true, notes: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: err.message || "server error" });
+  }
+});
+
+app.post("/api/admin/password-notes", requireAdminAuth, async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const title = String((req.body || {}).title || "").trim();
+    const username = String((req.body || {}).username || "").trim();
+    const password = String((req.body || {}).password || "");
+    if (!title) return res.status(400).json({ ok: false, message: "กรอกชื่อรหัสผ่านก่อน" });
+    if (!username) return res.status(400).json({ ok: false, message: "กรอก username ก่อน" });
+    if (!password) return res.status(400).json({ ok: false, message: "กรอกรหัสผ่านก่อน" });
+    if (title.length > 200 || username.length > 300 || password.length > 500) {
+      return res.status(400).json({ ok: false, message: "ข้อมูลยาวเกินไป" });
+    }
+    const encJson = pnEncrypt({ u: username, p: password });
+    const id = await adapter.createPasswordNote({ title, encJson });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: err.message || "server error" });
+  }
+});
+
+app.post("/api/admin/password-notes/reveal", requireAdminAuth, async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    if (!pnPinMatches((req.body || {}).pin)) {
+      return res.status(401).json({ ok: false, message: "รหัส PIN ไม่ถูกต้อง" });
+    }
+    const rows = await adapter.listPasswordNotes({ limit: 500, includeSecret: true });
+    const out = rows.map((r) => {
+      try {
+        const d = pnDecrypt(r.enc_json);
+        return { id: r.id, title: r.title, username: d.u, password: d.p, created_at: r.created_at };
+      } catch (e) {
+        return { id: r.id, title: r.title, username: "", password: "", created_at: r.created_at };
+      }
+    });
+    res.json({ ok: true, notes: out });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: err.message || "server error" });
+  }
+});
+
+app.post("/api/admin/password-notes/verify", requireAdminAuth, (req, res) => {
+  const pass = String(((req.body || {}).pass || ""));
+  if (!pass) {
+    return res.status(400).json({ ok: false, message: "กรอกรหัสผ่านก่อน" });
+  }
+  const h1 = crypto.createHash("sha256").update(String(pass)).digest();
+  const h2 = crypto.createHash("sha256").update(PN_PASS).digest();
+  if (h1.length !== h2.length || !crypto.timingSafeEqual(h1, h2)) {
+    return res.status(401).json({ ok: false, message: "รหัสผ่านไม่ถูกต้อง" });
+  }
+  res.json({ ok: true });
+});
+
+app.delete("/api/admin/password-notes/:id", requireAdminAuth, async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deletePasswordNote(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบบันทึกรหัสผ่านนี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- ตั้งค่าสิทธิ์การเข้าใช้งานระบบ (System Users) ----------
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(String(password), salt, 64).toString("hex");
+  return "scrypt$" + salt + "$" + hash;
+}
+
+function verifyPassword(password, stored) {
+  try {
+    const parts = String(stored || "").split("$");
+    if (parts.length !== 3 || parts[0] !== "scrypt") return false;
+    const hash = crypto.scryptSync(String(password), parts[1], 64).toString("hex");
+    const a = Buffer.from(hash, "hex");
+    const b = Buffer.from(parts[2], "hex");
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch (err) {
+    return false;
+  }
+}
+
+const SYSTEM_PERMISSION_KEYS = [
+  "repairNotes", "tickets", "devices", "visitors", "deviceNotes",
+  "maintenance", "workNotes", "warranty", "analytics", "worklog", "settings"
+];
+
+function sanitizePermissions(raw) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const out = [];
+  raw.forEach((p) => {
+    const key = String(p).trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(key);
+  });
+  return out;
+}
+
+app.get("/api/admin/system-users", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const users = await adapter.listSystemUsers();
+    res.json({ ok: true, users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/system-users", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    const username = String(body.username || "").trim().replace(/\s+/g, "");
+    const password = String(body.password || "");
+    if (!username) return res.status(400).json({ ok: false, message: "กรอกชื่อผู้ใช้ก่อน" });
+    if (username.length > 50) return res.status(400).json({ ok: false, message: "ชื่อผู้ใช้ยาวเกินไป (สูงสุด 50 ตัว)" });
+    if (!password) return res.status(400).json({ ok: false, message: "กรอกรหัสผ่านก่อน" });
+    if (password.length < 4) return res.status(400).json({ ok: false, message: "รหัสผ่านสั้นเกินไป (อย่างน้อย 4 ตัว)" });
+    const permissions = sanitizePermissions(body.permissions);
+    const user = await adapter.createSystemUser({
+      username,
+      password_hash: hashPassword(password),
+      permissions,
+      note: String(body.note || "").trim()
+    });
+    res.json({ ok: true, user });
+  } catch (err) {
+    console.error(err);
+    if ((err && err.code === "23505") || /duplicate key|already exists/i.test(String(err && err.message))) {
+      return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้มีอยู่แล้วในระบบ" });
+    }
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/system-users/:username", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const username = String(req.params.username || "").trim();
+    if (!username) return res.status(400).json({ ok: false, message: "ชื่อผู้ใช้ไม่ถูกต้อง" });
+    const body = req.body || {};
+    const patch = {};
+    if (body.password != null && body.password !== "") {
+      const password = String(body.password);
+      if (password.length < 4) return res.status(400).json({ ok: false, message: "รหัสผ่านสั้นเกินไป (อย่างน้อย 4 ตัว)" });
+      patch.password_hash = hashPassword(password);
+    }
+    if (body.permissions != null) {
+      patch.permissions = JSON.stringify(sanitizePermissions(body.permissions));
+    }
+    if (body.note != null) {
+      patch.note = String(body.note).trim();
+    }
+    patch.updated_at = new Date().toISOString();
+    if (Object.keys(patch).length <= 1) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
+    const user = await adapter.updateSystemUser(username, patch);
+    if (!user) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้งานนี้" });
+    res.json({ ok: true, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/system-users/:username", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const username = String(req.params.username || "").trim();
+    if (!username) return res.status(400).json({ ok: false, message: "ชื่อผู้ใช้ไม่ถูกต้อง" });
+    const data = await adapter.deleteSystemUser(username);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้งานนี้" });
+    res.json({ ok: true, username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 // ---------- API ทดสอบการเชื่อมต่อฐานข้อมูล ----------
 app.get("/api/admin/db-test", async (req, res) => {
   const host = String(req.query.host || "").trim();
@@ -1195,7 +1594,25 @@ app.get("/api/tickets/:ticketNo/status", async (req, res) => {
   }
 });
 
-app.put("/api/tickets/:ticketNo", async (req, res) => {
+// พนักงานต้องมีสิทธิ์ "tickets" ถึงจะแก้สถานะ/ปิดงาน/ลบใบแจ้งซ่อมได้ (admin เข้าได้ทุกอัน)
+async function suOrAdminTicketPerm(req, res, next) {
+  if (isAdminAuthed(req)) return next();
+  const username = isUserAuthed(req);
+  if (username) {
+    try {
+      const su = await loadSuUser(username);
+      if (su && (su.permissions || []).indexOf("tickets") !== -1) {
+        req.suUser = su;
+        return next();
+      }
+    } catch (err) {
+      console.error("[auth] ตรวจสิทธิ์ใบแจ้งซ่อมไม่สำเร็จ:", err.message);
+    }
+  }
+  return res.status(403).json({ ok: false, message: "ไม่มีสิทธิ์ดำเนินการในส่วนนี้" });
+}
+
+app.put("/api/tickets/:ticketNo", suOrAdminTicketPerm, async (req, res) => {
   try {
     const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
@@ -1252,7 +1669,7 @@ app.put("/api/tickets/:ticketNo", async (req, res) => {
   }
 });
 
-app.delete("/api/tickets/:ticketNo", async (req, res) => {
+app.delete("/api/tickets/:ticketNo", suOrAdminTicketPerm, async (req, res) => {
   try {
     const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
@@ -1285,7 +1702,7 @@ res.json({ ok: true, ticketNo });
   }
 });
 
-app.post("/api/tickets/:ticketNo/status", async (req, res) => {
+app.post("/api/tickets/:ticketNo/status", suOrAdminTicketPerm, async (req, res) => {
   try {
     const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
@@ -1366,16 +1783,6 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
       }
     }
 
-    if (status === "done") {
-      try {
-        const { buffer } = await archive.buildArchiveBuffer(data);
-        await adapter.updateArchive(ticketNo, buffer.toString("base64"), buffer.length);
-        console.log(`[Archive] งาน ${ticketNo} จัดเก็บแล้ว (บีบอัด ${buffer.length} bytes)`);
-      } catch (err) {
-        console.warn("[Archive] ข้ามจัดเก็บ (ยังไม่ได้รัน SQL เพิ่มคอลัมน์ archive): " + err.message);
-      }
-    }
-
     res.json({ ok: true, ticketNo, status: data.status, pdfUrl: data.pdf_url || "" });
   } catch (err) {
     console.error(err);
@@ -1383,37 +1790,67 @@ app.post("/api/tickets/:ticketNo/status", async (req, res) => {
   }
 });
 
-app.get("/api/tickets/:ticketNo/archive", async (req, res) => {
+app.post("/api/tickets/:ticketNo/finish", suOrAdminTicketPerm, upload.array("photos", 3), async (req, res) => {
   try {
     const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
+    const finishedAtRaw = String((req.body || {}).finished_at || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(finishedAtRaw)) {
+      return res.status(400).json({ ok: false, message: "ระบุวันที่และเวลาที่เสร็จสิ้นให้ครบ" });
+    }
+    const statusDate = finishedAtRaw.slice(0, 10);
+    const statusTime = finishedAtRaw.slice(11, 16);
+
+    const files = (req.files || []).filter(Boolean);
+    if (files.length > 3) {
+      return res.status(400).json({ ok: false, message: "แนบภาพได้ไม่เกิน 3 รูป" });
+    }
+
+    const patch = {
+      status: "done",
+      status_date: statusDate,
+      status_time: statusTime,
+      approved_at: new Date().toISOString()
+    };
+
     let data;
     if (adapter.mode === "supabase") {
       const { data: result, error } = await adapter.supabase
         .from("tickets")
-        .select("ticket_no, archive_base64, archive_size")
+        .update(patch)
         .eq("ticket_no", ticketNo)
+        .select("*, ticket_photos(id, cloud_url)")
         .single();
-      if (error || !result || !result.archive_base64) {
-        return res.status(404).json({ ok: false, message: "ยังไม่มีข้อมูลบีบอัดสำหรับงานนี้" });
+      if (error || !result) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
       }
       data = result;
     } else {
+      const keys = Object.keys(patch);
+      const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+      const values = keys.map(k => patch[k]);
+      values.push(ticketNo);
       const result = await adapter.pool.query(
-        `SELECT ticket_no, archive_base64, archive_size FROM tickets WHERE ticket_no = $1`,
-        [ticketNo]
+        `UPDATE tickets SET ${setClause} WHERE ticket_no = $${keys.length + 1} RETURNING *`,
+        values
       );
-      if (!result.rows[0] || !result.rows[0].archive_base64) {
-        return res.status(404).json({ ok: false, message: "ยังไม่มีข้อมูลบีบอัดสำหรับงานนี้" });
+      if (!result.rows[0]) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
       }
       data = result.rows[0];
     }
-res.setHeader("Content-Type", "application/gzip");
-    res.setHeader("Content-Disposition", `attachment; filename="${ticketNo}-archive.gz"`);
-    res.send(Buffer.from(data.archive_base64, "base64"));
+
+    const urls = [];
+    for (let i = 0; i < files.length; i++) {
+      const up = await cloud.uploadImage(files[i].buffer, `${ticketNo}-d${i + 1}`, files[i].mimetype);
+      if (up && up.secure_url) urls.push(up.secure_url);
+    }
+    if (urls.length) await adapter.addPhotos(data.id, urls);
+
+    res.json({ ok: true, ticketNo, status: "done", statusDate, statusTime });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
