@@ -13,11 +13,14 @@
     .hidden { display: none !important; }
 
     :root {
-      --bg: #eef3f0;
+      --bg: #eef7f1;
       --card: #ffffff;
-      --green-dark: #0b3d25;
-      --green: #0e6b3a;
-      --green-soft: #e6f4ec;
+      --green-dark: #067a3e;
+      --green: #0ca35c;
+      --green-soft: #e6f9ef;
+      --pink: #ff5fa2;
+      --pink-soft: #ffe9f2;
+      --pink-line: #ffd0e3;
       --text: #23362b;
       --muted: #6b7d72;
       --line: #e2ece6;
@@ -27,10 +30,10 @@
       --blue-soft: #e8f0ff;
       --red: #dc2626;
       --red-soft: #fdecec;
-      --green-line: #cfe3d7;
+      --green-line: #c9ecd9;
       --border: #e2ece6;
-      --radius: 14px;
-      --shadow: 0 6px 24px rgba(11, 61, 37, 0.08);
+      --radius: 16px;
+      --shadow: 0 6px 24px rgba(6, 122, 62, 0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -151,8 +154,8 @@
     .side-logo {
       width: 42px;
       height: 42px;
-      border-radius: 0;
-      background: linear-gradient(135deg, var(--green-dark), #145c37);
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--green), var(--pink));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -239,10 +242,10 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      background: linear-gradient(135deg, var(--green-dark), #145c37);
+      background: linear-gradient(135deg, var(--green), var(--pink));
       color: #fff;
       padding: 20px 28px;
-      border-radius: 0;
+      border-radius: 16px;
       box-shadow: var(--shadow);
       margin-bottom: 22px;
       flex-wrap: wrap;
@@ -1519,100 +1522,97 @@
     .confirm-no { font-weight: 600; color: var(--green-dark); text-align: center; font-size: 16px; margin-bottom: 6px; }
     .confirm-text { text-align: center; color: var(--muted); font-size: 13.5px; margin-bottom: 18px; }
 
-    /* ---------- PDF CARD ---------- */
+    /* ---------- PDF CARD (เอกสารราชการ A4 ไม่มีเส้น/กรอบ/สี) ----------
+       การ์ดกว้าง 468pt = 165 มม. = A4 210 - ซ้าย 25 - ขวา 20 (ดู PDF_MARGIN ใน makePdfBlob)
+       CSS 1pt = PDF 1pt พอดี (468pt -> 165 มม.) ขนาดตัวอักษรจึงเขียนเป็น pt ตรง ๆ */
     .pdf-card {
       position: fixed;
       left: -9999px;
       top: 0;
-      width: 640px;
-      background: #ffffff;
-      color: #1f2b25;
+      width: 468pt;
+      background: none;
+      color: #000;
       opacity: 0;
       pointer-events: none;
       z-index: 2;
-      font-family: "Sarabun", sans-serif;
+      font-family: "TH Sarabun New", "Sarabun", "Leelawadee UI", Tahoma, sans-serif;
+      font-size: 14pt;
+      line-height: 1.65;
     }
-    .pdf-hero {
-      background: linear-gradient(135deg, #0b3d25, #145c37);
-      color: #fff;
+    .pdf-doc-head { padding: 0; }
+    .pdf-h-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #000;
       text-align: center;
-      padding: 34px 36px 30px;
+      line-height: 1.4;
     }
-    .pdf-hero-label {
-      font-size: 14px;
-      opacity: 0.9;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+    .pdf-h-sub {
+      font-size: 14pt;
+      font-weight: 400;
+      color: #000;
+      text-align: center;
+      line-height: 1.5;
     }
-    .pdf-hero-no {
-      font-size: 34px;
-      font-weight: 700;
-      margin-top: 6px;
-      letter-spacing: 1px;
+    .pdf-meta {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      border: 0;
+      margin: 12pt 0 0;
+      font-size: 14pt;
     }
-    .pdf-badge {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 6px 16px;
-      border-radius: 0;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      font-size: 13px;
-      white-space: nowrap;
-    }
-    .pdf-section-h {
-      font-size: 17px;
-      font-weight: 700;
-      color: #0a6b3b;
-      padding-bottom: 8px;
-      margin-bottom: 4px;
-      border-bottom: 2px solid #dbe7e1;
-    }
-    .pdf-info-pad { padding: 16px 36px 8px; }
-    .pdf-meta { width: 100%; border-collapse: collapse; margin: 0; }
-    .pdf-meta tr { border-bottom: 1px solid #e6eeea; }
-    .pdf-meta td, .pdf-meta th {
-      padding: 10px 0;
-      font-size: 14px;
-      text-align: left;
+    .pdf-meta col.c1 { width: 50%; }
+    .pdf-meta > tbody > tr > td {
+      border: 0;
+      padding: 0;
       vertical-align: top;
     }
-    .pdf-meta th { color: #6b7d72; font-weight: 500; width: 150px; }
+    .pdf-meta > tbody > tr > td.r { text-align: right; }
+    .pdf-meta b { font-weight: 700; }
     .pdf-sec {
-      margin-top: 18px;
-      padding-top: 14px;
-      border-top: 1.5px solid #dbe7e1;
-    }
-    .pdf-sec-title {
-      font-size: 12px;
-      color: #0a6b3b;
+      font-size: 14pt;
       font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 9px;
+      color: #000;
+      line-height: 1.5;
+      margin-bottom: 4pt;
     }
-    .pdf-photo-block {
-      padding: 14px 36px 18px;
-      border-top: 1.5px solid #dbe7e1;
+    .pdf-body { padding: 0; }
+    .pdf-fields {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      border: 0;
+      margin: 0;
     }
-    .pdf-photo-row { display: flex; gap: 16px; margin-bottom: 14px; }
-    .pdf-photo-row:last-child { margin-bottom: 0; }
-    .pdf-photo-row img {
-      width: 276px;
-      height: 207px;
-      object-fit: cover;
-      border-radius: 0;
-      border: 1px solid #e6eeea;
+    .pdf-fields col.ck { width: 21%; }
+    .pdf-fields col.cv { width: 29%; }
+    .pdf-fields > tbody > tr > td {
+      border: 0;
+      padding: 3.5pt 0;
+      font-size: 14pt;
+      line-height: 1.6;
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
     }
-    .pdf-photo-row img.sm {
-      width: 176px;
-      height: 132px;
+    .pdf-fields > tbody > tr > td.k {
+      font-weight: 700;
+      color: #000;
+      padding-right: 6pt;
     }
-    .pdf-no-photo {
-      padding: 2px 0;
-      color: #6b7d72;
-      font-size: 13px;
+    .pdf-fields > tbody > tr > td.v { color: #000; }
+    .pdf-li {
+      font-size: 14pt;
+      line-height: 1.6;
+      word-break: break-word;
     }
+    .pdf-li + .pdf-li { margin-top: 2pt; }
+    .pdf-li-n {
+      display: inline-block;
+      width: 22pt;
+    }
+    .pdf-note { font-size: 14pt; line-height: 1.6; }
 
     /* ---------- PDF พรีวิวโน้ตอุปกรณ์ ---------- */
     .pdfp-mask {
@@ -2766,12 +2766,12 @@
   <div class="mob-backdrop" id="mobBackdrop"></div>
   <div class="layout">
     <aside class="sidebar" id="sidebar">
-      <div class="mob-side-title">ระบบแจ้งซ่อม IT<small id="mobUserLabel">Admin</small></div>
+      <div class="mob-side-title"><img class="side-logo" src="logo-ticket/logo-wan.jpg" alt="โลโก้ระบบแจ้งซ่อม IT">ระบบแจ้งซ่อม IT<small id="mobUserLabel">Admin</small></div>
       <div class="mob-cats" id="mobCats">
         <button class="mob-cat is-active" data-cat="tickets" type="button">ระบบแจ้งซ่อม</button>
         <button class="mob-cat" data-cat="care" type="button">ดูแลอุปกรณ์</button>
-        <button class="mob-cat" data-cat="pwip" type="button">PASSWORD NOTE</button>
         <button class="mob-cat" data-cat="notes" type="button">โน้ต</button>
+        <button class="mob-cat" data-cat="private" type="button">ระบบ Private</button>
       </div>
       <nav class="side-nav" id="adminTabs" aria-label="เมนูหลัก">
         <div class="mob-cat-body" data-cat-body="tickets">
@@ -2794,10 +2794,18 @@
             <span>ตรวจสอบประกัน</span>
           </button>
         </div>
-        <div class="mob-cat-body" data-cat-body="pwip" hidden>
+        <div class="mob-cat-body" data-cat-body="private" hidden>
           <button class="side-btn" data-tab="pwIP" data-perm="pwIP" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
             <span>PASSWORD NOTE</span>
+          </button>
+          <button class="side-btn" data-tab="devices" data-perm="devices" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>บันทึก IP ADDRESS</span>
+          </button>
+          <button class="side-btn" data-tab="visitors" data-perm="visitors" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>ระบบจดจำผู้ใช้งานภายนอก</span>
           </button>
         </div>
         <div class="mob-cat-body" data-cat-body="notes" hidden>
@@ -3356,6 +3364,10 @@
 
     <section id="warrantyView" hidden>
       <div class="w-bar">
+        <div class="w-search-wrap">
+          <input type="text" id="wDeviceSearch" placeholder="พิมพ์ค้นหา: รุ่น / เลขประกัน S/N / สาขา / บริษัทเคลม..." autocomplete="off">
+          <div class="w-drop hidden" id="wDeviceDrop"></div>
+        </div>
         <div class="w-input-row">
           <label class="w-label" for="wLoadAllBtn">รายการอุปกรณ์ทั้งหมด</label>
           <button type="button" class="w-btn w-btn-primary" id="wLoadAllBtn" onclick="wLoadAll()">
@@ -3363,11 +3375,28 @@
             หาอุปกรณ์ (ดึงข้อมูลจากระบบ)
           </button>
         </div>
-        <p class="w-note">กดปุ่ม "หาอุปกรณ์" เพื่อดึงข้อมูลอุปกรณ์จากระบบ — สีพื้นหลังของ "วันที่หมดประกัน":
+        <p class="w-note">พิมพ์หาอุปกรณ์ในช่องด้านบน แล้วเลือกจากรายการ — สีพื้นหลังของ "วันที่หมดประกัน":
           <span class="wl-chip wl-expired">หมดประกันแล้ว</span>
           <span class="wl-chip wl-warn">กำลังจะหมด ≤ 30 วัน</span>
           <span class="wl-chip wl-good">ยังอีกนาน</span>
         </p>
+
+        <div class="w-result hidden" id="wResultPanel">
+          <div class="w-result-head">
+            <div>
+              <div class="w-result-name" id="wResName">-</div>
+              <div class="w-result-cat" id="wResCat"></div>
+            </div>
+            <span class="badge b-new" id="wResStatusBadge"></span>
+          </div>
+          <div class="w-result-grid">
+            <div><div class="w-result-k">สาขา / ตำแหน่ง</div><div class="w-result-v" id="wResLoc">-</div></div>
+            <div><div class="w-result-k">เลขประกัน (S/N)</div><div class="w-result-v" id="wResSerial">-</div></div>
+            <div><div class="w-result-k">วันที่หมดประกัน</div><div class="w-result-v" id="wResExpire">-</div></div>
+            <div><div class="w-result-k">บริษัทที่รับเคลม</div><div class="w-result-v" id="wResCompany">-</div></div>
+            <div><div class="w-result-k">สถานะ</div><div class="w-result-v" id="wResStatus">-</div></div>
+          </div>
+        </div>
 
         <div id="wDeviceWrap" class="hidden">
           <div class="table-wrap">
@@ -3573,13 +3602,41 @@
           </div>
           <div class="form-row">
             <div class="form-field">
-              <label>สถานที่</label>
-              <input id="editLocation">
+              <label>วัน / เวลาที่แจ้ง</label>
+              <input type="datetime-local" id="editCreatedAt">
             </div>
             <div class="form-field">
-              <label>บัญชี Line (ผู้แจ้ง)</label>
-              <input id="editLineId" disabled>
+              <label>สถานะ</label>
+              <select id="editStatus">
+                <option value="new">งานใหม่</option>
+                <option value="working">กำลังดำเนินการ</option>
+                <option value="done">เสร็จสิ้น</option>
+              </select>
             </div>
+          </div>
+          <div class="form-field">
+            <label>ผู้รับผิดชอบ</label>
+            <input id="editHandler">
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>สาขา</label>
+              <select id="editBranch">
+                <option value="">— ไม่ระบุ —</option>
+                <option value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)">สาขา 1 (ขนส่งเก่าระยอง)</option>
+                <option value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)">สาขา 3 (ไกล้ รพ. กรุงเทพระยอง)</option>
+                <option value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">สาขา 4 (มาบตาพุด ระยอง)</option>
+                <option value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">สาขา 5 (บ้านฉาง ระยอง)</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>ตำแหน่ง / สถานที่</label>
+              <input id="editPosition">
+            </div>
+          </div>
+          <div class="form-field">
+            <label>บัญชี Line (ผู้แจ้ง)</label>
+            <input id="editLineId" disabled>
           </div>
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
@@ -4107,15 +4164,29 @@
                   <label class="tf-field-label">สาขา <span class="tf-req">*</span></label>
                   <p class="tf-field-hint">เลือกร้านวรรณสาขาที่อุปกรณ์นี้ตั้งอยู่</p>
                   <div class="tf-loc-group" id="tfBranchGroup">
-                    <input type="radio" name="tfBranch" id="tfBr1" value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">
+                    <input type="radio" name="tfBranch" id="tfBr1" value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)">
                     <label for="tfBr1" class="tf-loc-option">
+                      <span class="tf-loc-text">
+                        <span class="tf-loc-title">ร้านวรรณสาขา 1</span>
+                        <span class="tf-loc-desc">ขนส่งเก่าระยอง</span>
+                      </span>
+                    </label>
+                    <input type="radio" name="tfBranch" id="tfBr2" value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)">
+                    <label for="tfBr2" class="tf-loc-option">
+                      <span class="tf-loc-text">
+                        <span class="tf-loc-title">ร้านวรรณสาขา 3</span>
+                        <span class="tf-loc-desc">ไกล้ รพ. กรุงเทพระยอง</span>
+                      </span>
+                    </label>
+                    <input type="radio" name="tfBranch" id="tfBr3" value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">
+                    <label for="tfBr3" class="tf-loc-option">
                       <span class="tf-loc-text">
                         <span class="tf-loc-title">ร้านวรรณสาขา 4</span>
                         <span class="tf-loc-desc">มาบตาพุด ระยอง</span>
                       </span>
                     </label>
-                    <input type="radio" name="tfBranch" id="tfBr2" value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">
-                    <label for="tfBr2" class="tf-loc-option">
+                    <input type="radio" name="tfBranch" id="tfBr4" value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">
+                    <label for="tfBr4" class="tf-loc-option">
                       <span class="tf-loc-text">
                         <span class="tf-loc-title">ร้านวรรณสาขา 5</span>
                         <span class="tf-loc-desc">บ้านฉาง ระยอง</span>
@@ -5603,7 +5674,7 @@
           '<td data-c="date" data-label="วันที่">' + esc(fmtDate(t.created_at)) + "</td>" +
           '<td data-c="device" data-label="ประเภท">' + fmtDevices(t.device) + "</td>" +
           '<td data-c="symptom" data-label="รายละเอียด"><span class="cell-trunc">' + fmtSymptoms(t.symptom) + "</span></td>" +
-          '<td data-c="loc" data-label="สถานที่">' + esc(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</td>" +
+          '<td data-c="loc" data-label="สถานที่">' + branchChip(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</td>" +
           '<td data-c="user" data-label="ผู้รับผิดชอบ">' + esc(t.handler_name || "-") + "</td>" +
           '<td data-c="actions" data-label="จัดการ">' + statusButtons(t, i) + "</td>" +
           "</tr>"
@@ -5700,6 +5771,17 @@
       var i = loc.indexOf(" · ");
       if (i > -1) return { branch: loc.slice(0, i), position: loc.slice(i + 3) };
       return { branch: loc, position: "-" };
+    }
+
+    function branchChip(branch) {
+      var b = String(branch || "");
+      var cls = "";
+      if (/สาขา\s*4(?![0-9])/.test(b)) cls = "branch-4";
+      else if (/สาขา\s*5(?![0-9])/.test(b)) cls = "branch-5";
+      else if (/สาขา\s*3(?![0-9])/.test(b)) cls = "branch-3";
+      else if (/สาขา\s*1(?![0-9])/.test(b)) cls = "branch-1";
+      if (!cls) return esc(b);
+      return '<span class="branch-chip ' + cls + '">' + esc(b) + "</span>";
     }
 
     function splitPhotos(list) {
@@ -5820,13 +5902,42 @@
 
     window.setStatus = setStatus;
 
+    function localInputValue(d) {
+      if (!(d instanceof Date) || isNaN(d)) return "";
+      var pad = function (n) { return String(n).padStart(2, "0"); };
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+        "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+
+    function branchNumber(branchText) {
+      var m = String(branchText || "").match(/สาขา\s*([1-5])/);
+      return m ? m[1] : "";
+    }
+
     function openEdit(row) {
       currentRow = row;
       openDetail(row);
+      var loc = parseLocation(row.location);
+      var created = new Date(row.created_at);
       document.getElementById("editNo").textContent = row.ticket_no;
       document.getElementById("editDevice").value = row.device || "";
       document.getElementById("editSymptom").value = row.symptom || "";
-      document.getElementById("editLocation").value = row.location || "";
+      document.getElementById("editCreatedAt").value = localInputValue(created);
+      document.getElementById("editStatus").value = row.status === "working" ? "working" : row.status === "done" ? "done" : "new";
+      document.getElementById("editHandler").value = row.handler_name || "";
+      var bn = branchNumber(loc.branch);
+      var brSel = document.getElementById("editBranch");
+      var matched = false;
+      for (var i = 0; i < brSel.options.length; i++) {
+        var op = brSel.options[i];
+        if (op.value && (op.value === loc.branch || (bn && branchNumber(op.value) === bn))) {
+          brSel.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) brSel.selectedIndex = 0;
+      document.getElementById("editPosition").value = loc.position === "-" ? "" : loc.position;
       document.getElementById("editLineId").value = row.reporter_line_id || "";
       showView("editView");
     }
@@ -5950,12 +6061,29 @@
     function saveEdit() {
       var row = currentRow;
       if (!row) return;
+      var branch = document.getElementById("editBranch").value;
+      var pos = document.getElementById("editPosition").value.trim();
+      var location = branch + (pos ? " · " + pos : "");
+      var createdAt = document.getElementById("editCreatedAt").value;
+      var status = document.getElementById("editStatus").value;
       var payload = {
         device: document.getElementById("editDevice").value,
         symptom: document.getElementById("editSymptom").value.trim(),
-        location: document.getElementById("editLocation").value.trim()
+        location: location.trim(),
+        handler_name: document.getElementById("editHandler").value.trim()
       };
-      fetch("/api/tickets/" + encodeURIComponent(row.ticket_no), {
+      if (createdAt) payload.created_at = new Date(createdAt).toISOString();
+      if (status && status !== row.status) {
+        payload.status = status;
+        if (status === "done" && !row.status_date) {
+          var now = new Date();
+          var pad = function (n) { return String(n).padStart(2, "0"); };
+          payload.status_date = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+          payload.status_time = pad(now.getHours()) + ":" + pad(now.getMinutes());
+        }
+      }
+      var no = row.ticket_no;
+      fetch("/api/tickets/" + encodeURIComponent(no), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -5965,7 +6093,10 @@
           if (!res.ok) throw new Error(res.d.message || "แก้ไขไม่สำเร็จ");
           toast("บันทึกการแก้ไขแล้ว");
           closeModal();
-          return loadTickets();
+          return loadTickets().then(function () {
+            var found = (tickets || []).filter(function (t) { return String(t.ticket_no) === String(no); })[0];
+            if (found) openDetail(found);
+          });
         })
         .catch(function (e) { toast(e.message); });
     }
@@ -6012,6 +6143,48 @@
     window.doDeleteUser = doDeleteUser;
 
     // ---------- แชร์ PDF ----------
+    // เลขไทยสำหรับลำดับหัวข้อ/รายการ ให้เป็นแบบเอกสารราชการ
+    var PDF_TH_NUM = ["๑", "๒", "๓", "๔", "๕", "๖", "๗", "๘", "๙"];
+
+    function pdfNum(n) {
+      var i = (n - 1) % PDF_TH_NUM.length;
+      var prefix = n > PDF_TH_NUM.length ? String(Math.floor((n - 1) / PDF_TH_NUM.length)) : "";
+      return prefix + PDF_TH_NUM[i];
+    }
+
+    // รายการย่อยในช่องค่า (อุปกรณ์ / รายละเอียด) เรียงเป็นบรรทัดอ่านง่าย
+    function pdfListHtml(items, marker) {
+      if (!items.length) return "-";
+      var h = "";
+      items.forEach(function (t, i) {
+        var mark = marker === "num" ? pdfNum(i + 1) + "." : "•";
+        h += '<div class="pdf-li"><span class="pdf-li-n">' + mark + "</span>" + esc(t) + "</div>";
+      });
+      return h;
+    }
+
+    function pdfDeviceItems(device) {
+      return parseDeviceParts(device).map(function (p) {
+        var label = deviceLabel(p);
+        if (!label) return "";
+        var t = deviceType(p);
+        if (!t || /^(hardware|อุปกรณ์)$/i.test(t)) return label;
+        return label + " (" + t + ")";
+      }).filter(Boolean);
+    }
+
+    function pdfSymptomItems(symptom) {
+      return symptomLines(symptom).map(function (l) {
+        var i = l.indexOf(":");
+        return (i > -1 ? l.slice(i + 1) : l).trim();
+      }).filter(Boolean);
+    }
+
+    function pdfVal(v) {
+      v = String(v == null ? "" : v).trim();
+      return v ? esc(v) : "-";
+    }
+
     function photosBlocksHtml(title, list) {
       if (!list || !list.length) {
         return '<div class="pdf-frag"><div class="pdf-photo-block">' +
@@ -6032,30 +6205,42 @@
       return html;
     }
 
+    // data-gap = ระยะห่างก่อนชิ้นถัดไปหน่วย มม. (มาตรฐานเอกสารราชการ)
     function fillPdfCard(row) {
       var st = statusInfo(row);
       var loc = parseLocation(row.location);
-      var groups = splitPhotos(row.ticket_photos);
+      var devItems = pdfDeviceItems(row.device);
+      var sympItems = pdfSymptomItems(row.symptom);
+      var place = [loc.branch, loc.position].join(" · ");
       document.getElementById("pdfCard").innerHTML =
-        '<div class="pdf-frag"><div class="pdf-hero">' +
-          '<div class="pdf-hero-label">รหัสแจ้งซ่อม</div>' +
-          '<div class="pdf-hero-no">' + esc(row.ticket_no) + "</div>" +
-          '<span class="pdf-badge">' + st.label + "</span>" +
+        '<div class="pdf-frag" data-gap="16"><div class="pdf-doc-head">' +
+          '<div class="pdf-h-title">ใบแจ้งซ่อม</div>' +
+          '<div class="pdf-h-sub">ระบบบันทึกรายการแจ้งซ่อม</div>' +
+          '<table class="pdf-meta"><colgroup><col class="c1"><col class="c1"></colgroup><tbody><tr>' +
+            "<td>เลขที่ <b>" + pdfVal(row.ticket_no) + "</b></td>" +
+            '<td class="r">วันที่ <b>' + pdfVal(fmtDate(row.created_at)) + "</b></td>" +
+          "</tr></tbody></table>" +
         "</div></div>" +
-        '<div class="pdf-frag"><div class="pdf-info-pad">' +
-          '<div class="pdf-section-h">รายละเอียดการแจ้งซ่อม</div>' +
-          '<table class="pdf-meta">' +
-            "<tr><th>หมวด</th><td>" + fmtDevices(row.device) + "</td></tr>" +
-            "<tr><th>วัน / เวลา</th><td>" + esc(fmtDate(row.created_at)) + "</td></tr>" +
-            "<tr><th>สาขา</th><td>" + esc(loc.branch) + "</td></tr>" +
-            "<tr><th>ตำแหน่ง / สถานที่</th><td>" + esc(loc.position) + "</td></tr>" +
-            "<tr><th>เบอร์โทรติดต่อ</th><td>" + esc(row.reporter_phone || "-") + "</td></tr>" +
-            "<tr><th>บัญชี Line (ผู้แจ้ง)</th><td>" + esc(row.reporter_line_id || "-") + "</td></tr>" +
-            "<tr><th>รายละเอียด</th><td>" + fmtSymptoms(row.symptom) + "</td></tr>" +
-          "</table>" +
+        '<div class="pdf-frag" data-gap="12"><div class="pdf-body">' +
+          '<div class="pdf-sec">๑. ข้อมูลการแจ้งซ่อม</div>' +
+          '<table class="pdf-fields">' +
+            "<colgroup><col class=\"ck\"><col class=\"cv\"><col class=\"ck\"><col class=\"cv\"></colgroup><tbody>" +
+            "<tr><td class=\"k\">สถานที่</td><td class=\"v\" colspan=\"3\">" + pdfVal(place) + "</td></tr>" +
+            "<tr><td class=\"k\">สถานะงาน</td><td class=\"v\">" + pdfVal(st.label) + "</td>" +
+            "<td class=\"k\">ผู้แจ้ง</td><td class=\"v\">" + pdfVal(row.reporter_name) + "</td></tr>" +
+            "<tr><td class=\"k\">ผู้รับผิดชอบ</td><td class=\"v\">" + pdfVal(row.handler_name) + "</td>" +
+            "<td class=\"k\">โทรศัพท์</td><td class=\"v\">" + pdfVal(row.reporter_phone) + "</td></tr>" +
+            "<tr><td class=\"k\">LINE ผู้แจ้ง</td><td class=\"v\" colspan=\"3\">" + pdfVal(row.reporter_line_id) + "</td></tr>" +
+          "</tbody></table>" +
         "</div></div>" +
-        photosBlocksHtml("รูปภาพ · สภาพอุปกรณ์", groups.problem) +
-        photosBlocksHtml("รูปสถานที่ / โซน", groups.zone);
+        '<div class="pdf-frag" data-gap="12"><div class="pdf-body">' +
+          '<div class="pdf-sec">๒. อุปกรณ์ที่แจ้ง</div>' +
+          '<div class="pdf-note">' + pdfListHtml(devItems, "dot") + "</div>" +
+        "</div></div>" +
+        '<div class="pdf-frag" data-gap="0"><div class="pdf-body">' +
+          '<div class="pdf-sec">๓. รายละเอียดที่แจ้ง</div>' +
+          '<div class="pdf-note">' + pdfListHtml(sympItems, "num") + "</div>" +
+        "</div></div>";
     }
 
     function resetPdfCard() {
@@ -6100,67 +6285,21 @@
       });
     }
 
+    // ระยะขอบเอกสารราชการ A4 (มม.) : ซ้ายเผื่อเจาะเย็บ ขวา/บน/ล่างตามมาตรฐาน
+    var PDF_MARGIN = { top: 25, right: 20, bottom: 20, left: 25 };
+
     // สร้าง PDF จริงขึ้นมา (เรียงชิ้นต่อหน้า เมื่อเต็มให้ตัดไปหน้าถัดไป) แล้วคืนค่า blob + ชื่อไฟล์
     function makePdfBlob(row) {
-      return new Promise(function (resolve, reject) {
-        var card = document.getElementById("pdfCard");
-        fillPdfCard(row);
-        // ย้ายการ์ดเข้ามาบนจอเฉพาะช่วงจับภาพ (ป้องกัน PDF หน้าขาว)
-        card.style.left = "4px";
-        card.style.top = "8px";
-        card.style.opacity = "1";
-        card.style.zIndex = "2";
-        var imgs = card.querySelectorAll("img");
-        Promise.all(Array.prototype.map.call(imgs, function (img) {
-          return cropToDataUrl(img.src, 4, 3).then(function (dataUrl) {
-            img.src = dataUrl;
-          });
-        })).then(function () {
-          setTimeout(function () {
-            var frags = card.querySelectorAll(".pdf-frag");
-            var pdf = new window.jspdf.jsPDF("p", "mm", "a4");
-            var pageW = pdf.internal.pageSize.getWidth();
-            var pageH = pdf.internal.pageSize.getHeight();
-            var margin = 12;
-            var usableW = pageW - margin * 2;
-            var y = margin;
-            var firstOnPage = true;
-
-            function ensure(h) {
-              if (!firstOnPage && y + h > pageH - margin) {
-                pdf.addPage();
-                y = margin;
-              }
-            }
-
-            var seq = Promise.resolve();
-            Array.prototype.forEach.call(frags, function (frag) {
-              seq = seq.then(function () {
-                return html2canvas(frag, { scale: 2, backgroundColor: "#ffffff", useCORS: true })
-                  .then(function (cnv) {
-                    var w = usableW;
-                    var h = cnv.height * (w / cnv.width);
-                    ensure(h);
-                    pdf.addImage(cnv.toDataURL("image/jpeg", 0.92), "JPEG", margin, y, w, h);
-                    y += h + 5;
-                    firstOnPage = false;
-                  });
-              });
-            });
-
-            seq.then(function () {
-              resetPdfCard();
-              resolve({ blob: pdf.output("blob"), name: row.ticket_no + ".pdf" });
-            }).catch(function (e) {
-              resetPdfCard();
-              reject(e);
-            });
-          }, 120);
-        }).catch(function (e) {
-          resetPdfCard();
-          reject(e);
+      return fetch("/api/admin/tickets/" + encodeURIComponent(row.ticket_no) + "/pdf")
+        .then(function (r) {
+          if (!r.ok) {
+            return r.json().then(function (j) { throw new Error((j && j.message) || "สร้าง PDF ไม่สำเร็จ"); });
+          }
+          return r.blob();
+        })
+        .then(function (blob) {
+          return { blob: blob, name: row.ticket_no + ".pdf" };
         });
-      });
     }
 
     var DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1m8-JuFHqhv3x1GRgk1Qy6gbJCl8SHo1e";
@@ -7800,8 +7939,8 @@
       return D_BADGE[s] || "b-pending";
     }
 
-    function warrantyLoadEntries() {
-      if (warrantyEntries) return Promise.resolve(warrantyEntries);
+    function warrantyLoadEntries(force) {
+      if (!force && warrantyEntries && warrantyEntries.length) return Promise.resolve(warrantyEntries);
       return fetch("/api/admin/device-entries")
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -7900,7 +8039,8 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (btn) btn.disabled = false;
-          renderWDeviceTable(data.entries || []);
+          warrantyEntries = data.entries || [];
+          renderWDeviceTable(warrantyEntries);
         })
         .catch(function () {
           if (btn) btn.disabled = false;
@@ -7927,13 +8067,15 @@
       return String((document.getElementById("wDeviceSearch") || {}).value || "").trim().toLowerCase();
     }
 
-    function wRunSearch() {
+    function wRunSearch(mode) {
       var q = warrantySearchQuery();
+      if (mode === "list") q = "";
       warrantyLoadEntries().then(function (list) {
         var drop = document.getElementById("wDeviceDrop");
         var hay = function (e) {
           return ((e.asset_code || "") + " " + (e.entry_no || "") + " " + (e.category || "") + " " +
-            (e.model || "") + " " + (e.warranty_no || "") + " " + (e.claim_company || "")).toLowerCase();
+            (e.model || "") + " " + (e.warranty_no || "") + " " + (e.claim_company || "") + " " +
+            (branchLabel(e.branch) || "") + " " + (e.branch || "") + " " + (e.position || "")).toLowerCase();
         };
         var rows = q
           ? list.filter(function (e) { return hay(e).indexOf(q) !== -1; })
@@ -7943,12 +8085,17 @@
           drop.classList.remove("hidden");
           return;
         }
-        if (rows.length === 1) { wPickEntry(rows[0]); drop.classList.add("hidden"); return; }
+        if (rows.length === 1 && mode === "pick") { wPickEntry(rows[0]); drop.classList.add("hidden"); return; }
         drop.innerHTML = rows.slice(0, 20).map(function (e, i) {
+          var bl = branchLabel(e.branch);
+          var locLine = bl
+            ? '<span class="wd-cat">สถานที่: ' + esc(bl) + (e.position ? " · " + esc(e.position) : "") + "</span>"
+            : "";
           return '<button class="w-drop-item" type="button" onclick="wPickEntryById(' + i + ')" data-i="' + i + '">' +
             '<span class="wd-typo">' + esc(e.asset_code || e.entry_no || "-") + "</span>" +
             '<span class="wd-cat">' + esc(e.category || "ไม่ระบุหมวด") + " · " + esc(e.model || "-") + "</span>" +
             (e.warranty_no ? '<span class="wd-cat">S/N: ' + esc(e.warranty_no) + "</span>" : "") +
+            locLine +
           "</button>";
         }).join("");
         drop.classList.remove("hidden");
@@ -7973,6 +8120,8 @@
       document.getElementById("wSerial").value = e.warranty_no || "";
       document.getElementById("wResName").textContent = e.model || e.entry_no || "-";
       document.getElementById("wResCat").textContent = (e.category || "ไม่ระบุหมวด") + (e.asset_code ? " · " + e.asset_code : "");
+      var bl = branchLabel(e.branch);
+      document.getElementById("wResLoc").textContent = (bl || "-") + (e.position ? " · " + e.position : "");
       document.getElementById("wResSerial").textContent = e.warranty_no || "-";
       document.getElementById("wResExpire").textContent = e.warranty_expire_date ? fmtDateOnly(e.warranty_expire_date) : "-";
       document.getElementById("wResCompany").textContent = e.claim_company || "-";
@@ -8019,10 +8168,12 @@
       var input = document.getElementById("wDeviceSearch");
       if (input) {
         input.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") { e.preventDefault(); wRunSearch(); }
+          if (e.key === "Enter") { e.preventDefault(); wRunSearch("pick"); }
         });
-        input.addEventListener("input", function () { wRunSearch(); });
-        input.addEventListener("focus", function () { wRunSearch(); });
+        input.addEventListener("input", function () { wRunSearch("pick"); });
+        input.addEventListener("focus", function () { wRunSearch("list"); });
+        input.addEventListener("click", function () { wRunSearch("list"); });
+        input.addEventListener("select", function () { wRunSearch("list"); });
         document.addEventListener("click", function (e) {
           var drop = document.getElementById("wDeviceDrop");
           if (!drop) return;
@@ -8058,6 +8209,7 @@ function applyMobileSuUser(username, permissions) {
     tickets: ["tickets"],
     care: ["deviceNotes", "maintenance", "warranty"],
     notes: ["workNotes"],
+    private: ["devices", "visitors"],
     settings: ["settings"]
   };
   document.querySelectorAll("#mobCats .mob-cat").forEach(function (c) {
@@ -8511,8 +8663,8 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     radio.addEventListener("change", function () {
       tfRenderMap(radio.value);
       if (!tf$("tfPosition").value.trim()) {
-        var pos = radio.value.indexOf("สาขา 4") > -1 ? "สาขา 4" : "สาขา 5";
-        tf$("tfPosition").value = pos;
+        var m = String(radio.value || "").match(/สาขา\s*(\d+)/);
+        tf$("tfPosition").value = m ? "สาขา " + m[1] : "";
       }
     });
   });

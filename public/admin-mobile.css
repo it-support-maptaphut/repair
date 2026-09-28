@@ -21,10 +21,10 @@ body.mobile-admin {
   align-items: center;
   gap: 10px;
   padding: 0 12px;
-  background: linear-gradient(180deg, var(--green), var(--green-dark));
+  background: linear-gradient(135deg, var(--green), var(--pink, #ff5fa2));
   color: #fff;
   z-index: 60;
-  box-shadow: 0 2px 10px rgba(11, 61, 37, 0.25);
+  box-shadow: 0 2px 10px rgba(255, 95, 162, 0.25);
 }
 .mob-topbar .mob-menu-btn {
   width: 42px;
@@ -33,10 +33,10 @@ body.mobile-admin {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  border: none !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff !important;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -53,6 +53,25 @@ body.mobile-admin {
   font-size: 11px;
   font-weight: 500;
   opacity: 0.85;
+}
+
+/* ดึงช่อง drawer บนสุดให้แสดงโลโก้ + ชื่อ */
+.mob-side-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mob-side-title small {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.mob-side-title .side-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 10px !important;
 }
 
 /* ---------- ซ่อน content ที่ใช้ desktop เท่านั้น ---------- */
@@ -571,7 +590,7 @@ body.mobile-admin .table-wrap th { font-size: 12px; }
 
 /* การ์ดรายการงาน (ticket) ไม่ใหญ่เกินไป */
 body.mobile-admin #ticketsBody tr.ticket-card {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
   border-radius: 12px;
 }
 body.mobile-admin #ticketsBody tr.ticket-card td {
@@ -919,4 +938,242 @@ body.mobile-admin input,
 body.mobile-admin select,
 body.mobile-admin textarea {
   font-size: 16px !important;
+}
+/* สีตามสาขาในคอลัมน์สถานที่ (ตารางรายการแจ้งซ่อม มือถือ) */
+body.mobile-admin .branch-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  border-radius: 999px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+body.mobile-admin .branch-4 { background: var(--green-soft); color: var(--green-dark); border: 1px solid var(--green); }
+body.mobile-admin .branch-5 { background: #b91c1c; color: #ffffff; border: 1px solid #7f1d1d; }
+body.mobile-admin .branch-3 { background: #fce7f3; color: #831843; border: 1px solid #f2a7cc; }
+body.mobile-admin .branch-1 { background: #fff7db; color: #7a5b00; border: 1px solid #e8cd6e; }
+
+/* Hover: พื้นเป็นสีเต็ม ตัวหนังสือขาว เพื่อให้ contrast ชัด (มือถือ) */
+body.mobile-admin #ticketsBody tr.ticket-card:hover .branch-chip, body.mobile-admin .branch-chip:hover { filter: none; }
+body.mobile-admin #ticketsBody tr.ticket-card:hover .branch-4, body.mobile-admin .branch-4:hover { background: var(--green) !important; color: #ffffff !important; border-color: var(--green-dark) !important; }
+body.mobile-admin #ticketsBody tr.ticket-card:hover .branch-5, body.mobile-admin .branch-5:hover { background: #7f1d1d !important; color: #ffffff !important; border-color: #450a0a !important; }
+body.mobile-admin #ticketsBody tr.ticket-card:hover .branch-3, body.mobile-admin .branch-3:hover { background: #be185d !important; color: #ffffff !important; border-color: #831843 !important; }
+body.mobile-admin #ticketsBody tr.ticket-card:hover .branch-1, body.mobile-admin .branch-1:hover { background: #a16207 !important; color: #ffffff !important; border-color: #713f12 !important; }
+
+/* ============================================================
+   ตรวจสอบประกัน มือถือ — กันแน่น + กล่องค้นหาอุปกรณ์
+   ============================================================ */
+body.mobile-admin .w-bar { padding: 14px; margin-bottom: 14px; border-radius: 12px; }
+body.mobile-admin .w-input-row { gap: 10px; }
+body.mobile-admin .w-note { line-height: 1.65; margin-top: 10px; }
+body.mobile-admin .w-note .wl-chip { white-space: normal; line-height: 1.5; }
+body.mobile-admin .w-btn { border-radius: 10px; min-height: 46px; }
+body.mobile-admin .w-input-row .w-btn { flex: 1 1 100%; }
+
+body.mobile-admin .w-search-wrap {
+  flex: 1 1 100%;
+  min-width: 0;
+  position: relative;
+  margin-bottom: 10px;
+}
+body.mobile-admin #wDeviceSearch {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+body.mobile-admin #wDeviceSearch:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(14, 107, 58, 0.14);
+  outline: none;
+}
+body.mobile-admin .w-drop {
+  top: calc(100% + 6px);
+  max-height: 260px;
+  border-radius: 10px;
+  border: 1px solid var(--green-line);
+  box-shadow: var(--shadow);
+}
+body.mobile-admin .w-drop-item {
+  padding: 13px 14px;
+  font-size: 14px;
+  display: block;
+}
+body.mobile-admin .w-drop-item .wd-cat { display: block; margin-left: 0; margin-top: 2px; }
+body.mobile-admin .w-drop-empty { padding: 14px; font-size: 13.5px; line-height: 1.6; }
+
+body.mobile-admin .w-result {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+body.mobile-admin .w-result-grid { grid-template-columns: 1fr; gap: 9px 0; }
+body.mobile-admin .w-result-head { gap: 8px; margin-bottom: 10px; }
+body.mobile-admin .w-result-k { font-size: 11px; }
+body.mobile-admin .w-result-v { font-size: 14.5px; }
+
+/* ตารางอุปกรณ์ (เช็คประกัน): อ่านง่าย ไม่เบียด */
+body.mobile-admin #wDeviceTable tbody tr { padding: 10px; }
+body.mobile-admin #wDeviceTable tbody td { padding: 9px 4px; font-size: 13.5px; }
+body.mobile-admin #wDeviceTable tbody td::before { min-width: 118px; }
+body.mobile-admin #wDeviceTable tbody td .m-freq { font-size: 13.5px; }
+body.mobile-admin #wDeviceTable tbody td[data-label="สถานะ"] { white-space: normal !important; }
+body.mobile-admin #wDeviceTable .wl-chip { white-space: normal; line-height: 1.5; }
+body.mobile-admin #wDeviceTable .icon-btn { width: 40px; height: 40px; margin-left: 4px; }
+
+/* แผง iframe ตรวจประกัน: สูงพอดี ไม่บีบ */
+body.mobile-admin .w-frame { height: 320px; }
+body.mobile-admin .w-panel-head { gap: 6px; padding: 12px; }
+body.mobile-admin .w-panel-hint { padding: 10px 12px; font-size: 12.5px; line-height: 1.6; }
+
+/* ============================================================
+   รายการแจ้งซ่อม บนมือถือ — แยกแต่ละรายละเอียดเป็นบล็อก
+   (วันที่ / ประเภท / รายละเอียด / สถานที่ / ผู้รับผิดชอบ / จัดการ)
+   ============================================================ */
+body.mobile-admin #ticketsBody tr.ticket-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--green-line);
+  background: #f2f8f4;
+  box-shadow: var(--shadow);
+}
+body.mobile-admin #ticketsBody tr.ticket-card td {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 8px 12px;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px;
+  background: var(--card);
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c]::before {
+  flex: 0 0 auto;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="status"] {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 2px 4px;
+  border: none !important;
+  background: transparent;
+  gap: 6px;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="actions"] {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 0;
+  border: none !important;
+  background: transparent;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="actions"]::before { content: none; }
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="actions"] .status-btn,
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="actions"] .pdf-chip {
+  flex: 1 1 auto;
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+body.mobile-admin #ticketsBody tr.ticket-card td[data-c="symptom"] {
+  background: var(--green-soft);
+  border-color: var(--green-line) !important;
+  padding: 10px 12px !important;
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   บันทึก IP ADDRESS (#devicesView) + ระบบจดจำผู้ใช้งานภายนอก (#visitorsView)
+   — ทำให้เป็น responsive บนมือถือ: ซ้อนกัน ไม่ล้นแนวนอน ไม่เบียด
+   ============================================================ */
+body.mobile-admin #devicesView .devices-toolbar,
+body.mobile-admin #visitorsView .devices-toolbar {
+  flex-direction: column;
+  align-items: stretch !important;
+  gap: 12px !important;
+}
+body.mobile-admin #devicesView .devices-toolbar .btn {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 44px;
+}
+body.mobile-admin #devicesView h3,
+body.mobile-admin #visitorsView h3 { font-size: 15px; line-height: 1.4; }
+body.mobile-admin #visitorsView .devices-toolbar p { font-size: 13px; line-height: 1.6; }
+
+/* ชื่อผู้ใช้ + IP: ให้ห่อได้เมื่อจอแคบ */
+body.mobile-admin .ip-toggle-wrap { flex-wrap: wrap; }
+body.mobile-admin .ip-toggle {
+  white-space: normal;
+  word-break: break-all;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+body.mobile-admin .ip-copy {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+}
+body.mobile-admin .ip-full { border-radius: 8px; max-width: 100%; }
+body.mobile-admin .chip-badge {
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+/* แก้ชื่อผู้ใช้: อินพุตเต็มแถว ปุ่มห่อกันเบียดจอ */
+body.mobile-admin .name-editor {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: 100%;
+}
+body.mobile-admin .name-input {
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: none !important;
+  min-height: 44px;
+  font-size: 16px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+body.mobile-admin .name-edit,
+body.mobile-admin .name-save,
+body.mobile-admin .name-del {
+  flex: 1 1 auto;
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+/* ผู้ใช้งานภายนอก: ปุ่มจัดการไม่ล้น ไม่บังคับ nowrap */
+body.mobile-admin #visitorsView table td[style*="white-space:nowrap"],
+body.mobile-admin #visitorsView table td:last-child {
+  white-space: normal !important;
+}
+body.mobile-admin #visitorsView table td:last-child .btn {
+  flex: 1 1 auto;
+  min-height: 40px;
+  margin: 2px 0;
+  border-radius: 8px;
 }

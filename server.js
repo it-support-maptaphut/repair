@@ -10,6 +10,7 @@ const cloud = require("./cloudinary");
 const notif = require("./notify");
 const devicePdf = require("./device-pdf");
 const workNotePdf = require("./work-note-pdf");
+const ticketPdf = require("./ticket-pdf");
 
 const app = express();
 
@@ -221,6 +222,7 @@ app.use("/api/admin", (req, res, next) => {
     if (req.method === "GET") return has("devices", "deviceNotes", "warranty") ? next() : deny();
     return has("devices", "deviceNotes") ? next() : deny();
   }
+  if (/^\/tickets\/.+/.test(path)) return has("tickets") ? next() : deny();
   if (/^\/tickets$/.test(path)) return has("tickets", "analytics", "worklog") ? next() : deny();
   if (/^\/inbox\/.+/.test(path)) return has("tickets") ? next() : deny();
   if (/^\/inbox$/.test(path)) return has("tickets", "analytics", "worklog") ? next() : deny();
@@ -332,6 +334,7 @@ app.use(function (req, res, next) {
   next();
 });
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/fonts", express.static(path.join(__dirname, "fonts")));
 app.get("/", (req, res) => res.redirect("/ticket.html"));
 
 const upload = multer({
@@ -414,7 +417,8 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
       statusTime,
       source,
       acceptedAt,
-      audioUrl
+      audioUrl,
+      visitorId: (visitor && visitor.id) || null
     });
     await adapter.addPhotos(ticketId, urls);
     await adapter.recordDevice({ ip: clientIp(req), ticketNo });
@@ -608,6 +612,39 @@ app.get("/api/visitors/me", async (req, res) => {
     const visitor = await resolveVisitor(req);
     if (!visitor) return res.json({ ok: true, registered: false });
     res.json({ ok: true, registered: true, visitor });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// PATCH /api/visitors/me — ผู้ใช้แก้ชื่อ / ตำแหน่งของตัวเอง (เชื่อมโยงทุกหน้า)
+app.patch("/api/visitors/me", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const visitor = await resolveVisitor(req);
+    if (!visitor) {
+      return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน กรุณากรอกชื่อและตำแหน่งก่อน" });
+    }
+    const body = req.body || {};
+    const patch = {};
+    if (body.name !== undefined) {
+      patch.name = String(body.name).trim();
+      if (!patch.name) return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อ" });
+    }
+    if (body.position !== undefined) {
+      patch.position = String(body.position).trim();
+      if (!patch.position) return res.status(400).json({ ok: false, message: "กรุณากรอกตำแหน่ง" });
+    }
+    if (!Object.keys(patch).length) {
+      return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลที่แก้" });
+    }
+    const updated = await adapter.updateVisitor(visitor.id, patch);
+    if (!updated) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+    res.json({ ok: true, visitor: updated });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -1004,6 +1041,28 @@ app.get("/api/admin/device-entries/:id/pdf", async (req, res) => {
     const row = entries.filter(function (e) { return String(e.id) === String(id); })[0];
     if (!row) return res.status(404).json({ ok: false, message: "ไม่พบโน้ตอุปกรณ์" });
     const { stream, filename } = devicePdf.buildDeviceEntryPdf(row);
+    const buffer = await stream;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="' + filename + '"');
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- PDF ใบแจ้งซ่อม (อย่างเป็นทางการ / Sarabun) ----------
+app.get("/api/admin/tickets/:ticketNo/pdf", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const ticketNo = String(req.params.ticketNo || "").trim();
+    if (!ticketNo) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    if (!ticketPdf.hasFonts()) return res.status(500).json({ ok: false, message: "หายังพบไฟล์ฟอนต์ Sarabun (โฟลเดอร์ fonts/)" });
+    const tickets = await adapter.listTickets();
+    const row = (tickets || []).filter(function (t) { return String(t.ticket_no) === String(ticketNo); })[0];
+    if (!row) return res.status(404).json({ ok: false, message: "ไม่พบใบแจ้งซ่อม " + ticketNo });
+    const { stream, filename } = ticketPdf.buildTicketPdf(row);
     const buffer = await stream;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", 'inline; filename="' + filename + '"');
@@ -1547,7 +1606,55 @@ app.get("/api/admin/spec-search", async (req, res) => {
 });
 
 
-app.get("/status", (req, res) => res.redirect("/status.html"));
+// GET /api/tickets/mine — ประวัติการแจ้งซ่อมของฉัน (ผู้ใช้ภายนอก) อ่านอย่างเดียว
+// ดูได้เฉพาะงานของตัวเอง (ผูก visitor_id) ไม่มีปุ่มแก้ไข/ลบ
+app.get("/api/tickets/mine", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const visitor = await resolveVisitor(req);
+    if (!visitor) {
+      return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน กรุณากรอกชื่อและตำแหน่งก่อน" });
+    }
+    const reporterName = (visitor.name + (visitor.position ? (" · " + visitor.position) : "")).trim();
+    let tickets = await adapter.listMyTickets(visitor.id, reporterName);
+    if (tickets && tickets.length) {
+      const ids = tickets.map((t) => t.id).filter(Boolean);
+      let photoRows = [];
+      if (ids.length) {
+        if (adapter.mode === "supabase") {
+          const { data } = await adapter.supabase
+            .from("ticket_photos")
+            .select("ticket_id, cloud_url")
+            .in("ticket_id", ids)
+            .order("sort_order", { ascending: true });
+          photoRows = data || [];
+        } else {
+          const r = await adapter.pool.query(
+            `SELECT ticket_id, cloud_url FROM ticket_photos WHERE ticket_id = ANY($1) ORDER BY sort_order ASC`,
+            [ids]
+          );
+          photoRows = r.rows;
+        }
+      }
+      const byTicket = {};
+      photoRows.forEach((p) => {
+        (byTicket[p.ticket_id] = byTicket[p.ticket_id] || []).push(p.cloud_url);
+      });
+      tickets = tickets.map((t) => ({ ...t, photos: byTicket[t.id] || [] }));
+    }
+    res.json({
+      ok: true,
+      visitor: { id: visitor.id, name: visitor.name, position: visitor.position },
+      tickets
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
 
 app.get("/api/tickets/:ticketNo/status", async (req, res) => {
   try {

@@ -31,6 +31,14 @@ alter table public.tickets add column if not exists status_time text default '';
 alter table public.tickets add column if not exists source text default 'external';
 alter table public.tickets add column if not exists accepted_at timestamptz;
 alter table public.tickets add column if not exists audio_url text default '';
+-- ตัวตนผู้แจ้งภายนอก (ดูประวัติของตัวเองได้ แต่แก้ไขไม่ได้) — ถ้ายังไม่รัน column นี้ ระบบจะหา
+-- ประวัติจากชื่อ·ตำแหน่งแทนชั่วคราว แล้วจะผูกแบบถาวรเมื่อรัน SQL นี้แล้ว
+alter table public.tickets add column if not exists visitor_id bigint;
+create index if not exists tickets_visitor_idx on public.tickets (visitor_id);
+-- (ทางเลือก) ย้ายงานเก่าที่เคยแจ้งจากภายนอกให้ผูกกับผู้ใช้ตามชื่อ·ตำแหน่งเดิม
+-- update public.tickets t set visitor_id = v.id
+-- from external_visitors v
+-- where t.visitor_id is null and t.source = 'external' and t.reporter_name = trim(concat_ws(' · ', v.name, v.position));
 
 create table if not exists public.ticket_photos (
   id bigint generated always as identity primary key,

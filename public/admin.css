@@ -1,7 +1,7 @@
 
     .hidden { display: none !important; }
 
-    :root {
+:root {
       --bg: #eef3f0;
       --card: #ffffff;
       --green-dark: #0b3d25;
@@ -10,9 +10,6 @@
       --text: #23362b;
       --muted: #6b7d72;
       --line: #e2ece6;
-      --yellow: #d9a406;
-      --yellow-soft: #fff7db;
-      --blue: #2563eb;
       --blue-soft: #e8f0ff;
       --red: #dc2626;
       --red-soft: #fdecec;
@@ -1523,100 +1520,97 @@
     .confirm-no { font-weight: 600; color: var(--green-dark); text-align: center; font-size: 16px; margin-bottom: 6px; }
     .confirm-text { text-align: center; color: var(--muted); font-size: 13.5px; margin-bottom: 18px; }
 
-    /* ---------- PDF CARD ---------- */
+    /* ---------- PDF CARD (เอกสารราชการ A4 ไม่มีเส้น/กรอบ/สี) ----------
+       การ์ดกว้าง 468pt = 165 มม. = A4 210 - ซ้าย 25 - ขวา 20 (ดู PDF_MARGIN ใน makePdfBlob)
+       CSS 1pt = PDF 1pt พอดี (468pt -> 165 มม.) ขนาดตัวอักษรจึงเขียนเป็น pt ตรง ๆ */
     .pdf-card {
       position: fixed;
       left: -9999px;
       top: 0;
-      width: 640px;
-      background: #ffffff;
-      color: #1f2b25;
+      width: 468pt;
+      background: none;
+      color: #000;
       opacity: 0;
       pointer-events: none;
       z-index: 2;
-      font-family: "Sarabun", sans-serif;
+      font-family: "TH Sarabun New", "Sarabun", "Leelawadee UI", Tahoma, sans-serif;
+      font-size: 14pt;
+      line-height: 1.65;
     }
-    .pdf-hero {
-      background: linear-gradient(135deg, #0b3d25, #145c37);
-      color: #fff;
+    .pdf-doc-head { padding: 0; }
+    .pdf-h-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #000;
       text-align: center;
-      padding: 34px 36px 30px;
+      line-height: 1.4;
     }
-    .pdf-hero-label {
-      font-size: 14px;
-      opacity: 0.9;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+    .pdf-h-sub {
+      font-size: 14pt;
+      font-weight: 400;
+      color: #000;
+      text-align: center;
+      line-height: 1.5;
     }
-    .pdf-hero-no {
-      font-size: 34px;
-      font-weight: 700;
-      margin-top: 6px;
-      letter-spacing: 1px;
+    .pdf-meta {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      border: 0;
+      margin: 12pt 0 0;
+      font-size: 14pt;
     }
-    .pdf-badge {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 6px 16px;
-      border-radius: 0;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      font-size: 13px;
-      white-space: nowrap;
-    }
-    .pdf-section-h {
-      font-size: 17px;
-      font-weight: 700;
-      color: #0a6b3b;
-      padding-bottom: 8px;
-      margin-bottom: 4px;
-      border-bottom: 2px solid #dbe7e1;
-    }
-    .pdf-info-pad { padding: 16px 36px 8px; }
-    .pdf-meta { width: 100%; border-collapse: collapse; margin: 0; }
-    .pdf-meta tr { border-bottom: 1px solid #e6eeea; }
-    .pdf-meta td, .pdf-meta th {
-      padding: 10px 0;
-      font-size: 14px;
-      text-align: left;
+    .pdf-meta col.c1 { width: 50%; }
+    .pdf-meta > tbody > tr > td {
+      border: 0;
+      padding: 0;
       vertical-align: top;
     }
-    .pdf-meta th { color: #6b7d72; font-weight: 500; width: 150px; }
+    .pdf-meta > tbody > tr > td.r { text-align: right; }
+    .pdf-meta b { font-weight: 700; }
     .pdf-sec {
-      margin-top: 18px;
-      padding-top: 14px;
-      border-top: 1.5px solid #dbe7e1;
-    }
-    .pdf-sec-title {
-      font-size: 12px;
-      color: #0a6b3b;
+      font-size: 14pt;
       font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 9px;
+      color: #000;
+      line-height: 1.5;
+      margin-bottom: 4pt;
     }
-    .pdf-photo-block {
-      padding: 14px 36px 18px;
-      border-top: 1.5px solid #dbe7e1;
+    .pdf-body { padding: 0; }
+    .pdf-fields {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      border: 0;
+      margin: 0;
     }
-    .pdf-photo-row { display: flex; gap: 16px; margin-bottom: 14px; }
-    .pdf-photo-row:last-child { margin-bottom: 0; }
-    .pdf-photo-row img {
-      width: 276px;
-      height: 207px;
-      object-fit: cover;
-      border-radius: 0;
-      border: 1px solid #e6eeea;
+    .pdf-fields col.ck { width: 21%; }
+    .pdf-fields col.cv { width: 29%; }
+    .pdf-fields > tbody > tr > td {
+      border: 0;
+      padding: 3.5pt 0;
+      font-size: 14pt;
+      line-height: 1.6;
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
     }
-    .pdf-photo-row img.sm {
-      width: 176px;
-      height: 132px;
+    .pdf-fields > tbody > tr > td.k {
+      font-weight: 700;
+      color: #000;
+      padding-right: 6pt;
     }
-    .pdf-no-photo {
-      padding: 2px 0;
-      color: #6b7d72;
-      font-size: 13px;
+    .pdf-fields > tbody > tr > td.v { color: #000; }
+    .pdf-li {
+      font-size: 14pt;
+      line-height: 1.6;
+      word-break: break-word;
     }
+    .pdf-li + .pdf-li { margin-top: 2pt; }
+    .pdf-li-n {
+      display: inline-block;
+      width: 22pt;
+    }
+    .pdf-note { font-size: 14pt; line-height: 1.6; }
 
     /* ---------- PDF พรีวิวโน้ตอุปกรณ์ ---------- */
     .pdfp-mask {
@@ -1850,6 +1844,16 @@
     @media (prefers-reduced-motion: reduce) {
       .side-group-items, .side-chev { transition: none; }
     }
+
+    /* หมวดระบบ Private (กลุ่มย่อยซ้อนในกลุ่ม) */
+    .side-group[data-group="private"] { margin-top: 18px; }
+    .side-group-private-inner { padding: 2px 0 4px 8px; }
+    .side-group-nested { margin-left: 6px; }
+    .side-group-nested .side-group-head {
+      padding-left: 12px;
+      font-size: 11.5px;
+    }
+    .side-group-nested .side-group-head .g-icon { width: 14px; height: 14px; }
 
     /* ===== ระบบเช็คประกัน (ขอบสี่เหลี่ยม ไม่มีเรเดียส) ===== */
     .w-bar {
@@ -2841,4 +2845,28 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
+
+    /* สีตามสาขาในคอลัมน์สถานที่ (ตารางรายการแจ้งซ่อม) */
+    .branch-chip {
+      display: inline-block;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.5;
+      border-radius: 999px;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .branch-4 { background: var(--green-soft); color: var(--green-dark); border: 1px solid var(--green); }
+    .branch-5 { background: #b91c1c; color: #ffffff; border: 1px solid #7f1d1d; }
+    .branch-3 { background: #fce7f3; color: #831843; border: 1px solid #f2a7cc; }
+    .branch-1 { background: #fff7db; color: #7a5b00; border: 1px solid #e8cd6e; }
+
+    /* Hover: พื้นเป็นสีเต็ม ตัวหนังสือขาว เพื่อให้ contrast ชัด
+   (ทั้งตอนชี้ที่ chip โดยตรง หรือตอน hover แถวนั้น) */
+    #ticketsBody tr.ticket-card:hover .branch-chip, .branch-chip:hover { filter: none; }
+    #ticketsBody tr.ticket-card:hover .branch-4, .branch-4:hover { background: var(--green) !important; color: #ffffff !important; border-color: var(--green-dark) !important; }
+    #ticketsBody tr.ticket-card:hover .branch-5, .branch-5:hover { background: #7f1d1d !important; color: #ffffff !important; border-color: #450a0a !important; }
+    #ticketsBody tr.ticket-card:hover .branch-3, .branch-3:hover { background: #be185d !important; color: #ffffff !important; border-color: #831843 !important; }
+    #ticketsBody tr.ticket-card:hover .branch-1, .branch-1:hover { background: #a16207 !important; color: #ffffff !important; border-color: #713f12 !important; }
     

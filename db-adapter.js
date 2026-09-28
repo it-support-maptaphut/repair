@@ -39,6 +39,10 @@ function createSupabaseAdapter() {
       return supabaseModule.acceptTicket(ticketNo);
     },
     
+    async listMyTickets(visitorId, reporterName) {
+      return supabaseModule.listMyTickets(visitorId, reporterName);
+    },
+    
     async recordDevice(data) {
       return supabaseModule.recordDevice(data);
     },
@@ -481,6 +485,29 @@ function createPostgresAdapter() {
         [new Date(), ticketNo]
       );
       return result.rows[0] || null;
+    },
+    
+    async listMyTickets(visitorId, reporterName) {
+      const base = `SELECT id, ticket_no, device, symptom, location, reporter_name, status, handler_name, status_date, status_time, source, approved_at, accepted_at, created_at, pdf_url, audio_url FROM tickets`;
+      if (visitorId) {
+        try {
+          const result = await query(
+            `${base} WHERE visitor_id = $1 ORDER BY id DESC LIMIT 200`,
+            [visitorId]
+          );
+          return result.rows.map(mapTicket);
+        } catch (e) {
+          if (!/visitor_id/.test(e.message)) throw e;
+        }
+      }
+      if (reporterName) {
+        const result = await query(
+          `${base} WHERE reporter_name = $1 ORDER BY id DESC LIMIT 200`,
+          [reporterName]
+        );
+        return result.rows.map(mapTicket);
+      }
+      return [];
     },
     
     async recordDevice({ ip, ticketNo }) {

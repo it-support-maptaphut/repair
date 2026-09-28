@@ -4,17 +4,14 @@ var photos = [];
 var toastTimer = null;
 var submitted = false;
 
-var audioBlob = null;
-var audioUrl = null;
-var mediaRecorder = null;
-var mediaChunks = [];
-var micStream = null;
 var recognition = null;
 var recognizing = false;
-var recording = false;
+var voiceActive = false;
+var voiceBase = "";
+var voiceFinal = "";
+var voiceInterim = "";
 
 var SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-var MediaRecorderOK = typeof window.MediaRecorder !== "undefined";
 
 var photoInput = document.getElementById("photoInput");
 var photoBtn = document.getElementById("photoBtn");
@@ -54,7 +51,7 @@ function closeVerifyGate() {
 function showVisitorBar(visitor) {
   if (!visitorBar || !visitorBarText) return;
   visitorBar.classList.remove("hidden");
-  visitorBarText.textContent = "สวัสดี " + (visitor.name || "") + (visitor.position ? " · " + visitor.position : "") + " — เข้าใช้งานต่อได้เลย";
+  visitorBarText.textContent = (visitor.name || "") + (visitor.position ? " · " + visitor.position : "");
 }
 
 // เช็คว่าเคยยืนยันแล้วหรือยัง (cookie / IP เดิม)
@@ -130,9 +127,6 @@ var micBtn = document.getElementById("micBtn");
 var micLabel = document.getElementById("micLabel");
 var voiceBars = document.getElementById("voiceBars");
 var voiceHint = document.getElementById("voiceHint");
-var voiceAudioWrap = document.getElementById("voiceAudioWrap");
-var voiceAudio = document.getElementById("voiceAudio");
-var redoBtn = document.getElementById("redoBtn");
 var voiceUnsupported = document.getElementById("voiceUnsupported");
 var copyTicketBtn = document.getElementById("copyTicketBtn");
 var successClose = document.getElementById("successClose");
@@ -148,12 +142,12 @@ function setMode(mode) {
   });
   var isVoice = mode === "voice";
   voicePanel.classList.toggle("hidden", !isVoice);
-  if (isVoice && !SpeechRecognitionAPI && !MediaRecorderOK) {
+  if (isVoice && !SpeechRecognitionAPI) {
     voiceUnsupported.classList.remove("hidden");
   } else {
     voiceUnsupported.classList.add("hidden");
   }
-  if (!isVoice) stopRecording();
+  if (!isVoice) stopVoice();
 }
 
 modeBtns.forEach(function (btn) {
@@ -163,7 +157,9 @@ modeBtns.forEach(function (btn) {
   });
 });
 
-// ---------- การจดจำเสียง (Speech → ข้อความ) ----------
+// ---------- โหมดเสียง: แปลงเสียง → ข้อความ (ไม่บันทึกเสียง) ----------
+var SPACE = " ";
+
 function makeRecognition() {
   if (!SpeechRecognitionAPI) return null;
   var rec = new SpeechRecognitionAPI();
@@ -171,125 +167,96 @@ function makeRecognition() {
   rec.continuous = true;
   rec.interimResults = true;
   rec.onresult = function (event) {
-    var text = "";
+    var finalTxt = "";
+    var interimTxt = "";
+    var clean = function (s) {
+      return s.replace(/\s+/g, " ").trim();
+    };
     for (var i = event.resultIndex; i < event.results.length; i++) {
-      text += event.results[i][0].transcript;
+      var r = event.results[i];
+      var t = clean(r[0].transcript);
+      if (!t) continue;
+      if (r.isFinal) finalTxt += (finalTxt ? SPACE : "") + t;
+      else interimTxt += (interimTxt ? SPACE : "") + t;
     }
-    var cur = symptomText.value;
-    var base = cur.trim();
-    var appended = false;
-    if (base && !base.endsWith(text)) {
-      symptomText.value = base + (base.endsWith(" ") ? "" : " ") + text.trim();
-      appended = true;
-    } else if (!base) {
-      symptomText.value = text.trim();
-      appended = true;
+    if (finalTxt) {
+      voiceFinal += (voiceFinal && finalTxt ? SPACE : "") + finalTxt;
+      voiceInterim = "";
+    } else if (interimTxt) {
+      voiceInterim = interimTxt;
     }
-    if (appended) {
-      symptomText.scrollTop = symptomText.scrollHeight;
-      autoGrowTextarea();
-      saveDraftSoon();
-    }
+    placeVoiceText();
   };
   rec.onerror = function (e) {
     console.warn("[voice] recognition error:", e.error);
     if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      voiceActive = false;
       showToast("ไม่อนุญาตให้ใช้ไมโครโฟน");
+      updateMicUI();
     }
   };
   rec.onend = function () {
     recognizing = false;
-    if (recording) updateMicUI();
+    if (voiceActive) {
+      try { recognition.start(); recognizing = true; } catch (e) { voiceActive = false; }
+    }
+    updateMicUI();
   };
   return rec;
 }
 
-// ---------- อัดเสียง (MediaRecorder) ----------
-function startRecording() {
-  if (recording) return;
-  if (!MediaRecorderOK) {
-    showToast("เบราว์เซอร์นี้ไม่รองรับการอัดเสียง");
-    return;
-  }
-  if (audioUrl) {
-    if (!confirm("เริ่มอัดใหม่ จะทิ้งไฟล์เสียงเดิม?")) return;
-    audioBlob = null;
-    URL.revokeObjectURL(audioUrl);
-    audioUrl = null;
-    voiceAudio.removeAttribute("src");
-    voiceAudioWrap.classList.add("hidden");
-  }
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showToast("เบราว์เซอร์นี้ไม่รองรับการอัดเสียง (ใช้โหมดพิมพ์แทน)");
-    return;
-  }
-  navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(function (stream) {
-      micStream = stream;
-      mediaChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.ondataavailable = function (e) {
-        if (e.data && e.data.size > 0) mediaChunks.push(e.data);
-      };
-      mediaRecorder.onstop = function () {
-        micStream.getTracks().forEach(function (t) { t.stop(); });
-        micStream = null;
-        recording = false;
-        var type = (mediaRecorder && mediaRecorder.mimeType) || "audio/webm";
-        audioBlob = new Blob(mediaChunks, { type: type });
-        if (audioUrl) URL.revokeObjectURL(audioUrl);
-        audioUrl = URL.createObjectURL(audioBlob);
-        voiceAudio.src = audioUrl;
-        voiceAudioWrap.classList.remove("hidden");
-        updateMicUI();
-        saveDraftSoon();
-      };
-      mediaRecorder.start();
-      recording = true;
-      if (SpeechRecognitionAPI && !recognizing) {
-        recognition = recognition || makeRecognition();
-        recognizing = true;
-        try { recognition.start(); } catch (e) {}
-      }
-      updateMicUI();
-    })
-    .catch(function () {
-      showToast("ไม่สามารถเปิดไมโครโฟนได้");
-    });
+function placeVoiceText() {
+  var base = voiceBase;
+  var parts = [];
+  if (base) parts.push(base);
+  if (voiceFinal) parts.push(voiceFinal);
+  if (voiceInterim) parts.push(voiceInterim);
+  symptomText.value = parts.join(SPACE);
+  autoGrowTextarea();
+  saveDraftSoon();
 }
 
-function stopRecording() {
-  if (recording && mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop();
+function startVoice() {
+  if (voiceActive) return;
+  if (!SpeechRecognitionAPI) {
+    showToast("เบราว์เซอร์นี้ไม่รองรับการแปลงเสียงเป็นข้อความ (ใช้โหมดพิมพ์แทน)");
+    return;
   }
+  voiceActive = true;
+  voiceBase = symptomText.value.replace(/\s+/g, " ").trim();
+  voiceFinal = "";
+  voiceInterim = "";
+  recognition = recognition || makeRecognition();
+  try {
+    recognition.start();
+    recognizing = true;
+  } catch (e) {
+    voiceActive = false;
+    showToast("เปิดไมค์ไม่สำเร็จ ลองอีกครั้ง");
+  }
+  updateMicUI();
+}
+
+function stopVoice() {
+  voiceActive = false;
   if (recognition && recognizing) {
     recognizing = false;
     try { recognition.stop(); } catch (e) {}
   }
+  updateMicUI();
 }
 
 function updateMicUI() {
-  var on = recording;
+  var on = voiceActive;
   micBtn.classList.toggle("listening", on);
-  micLabel.textContent = on ? "กำลังแปลงเสียงเป็นคำพูด" : "กดพูดบอกรายละเอียด";
+  micLabel.textContent = on ? "กำลังฟัง... กดเพื่อหยุด" : "กดพูดบอกรายละเอียด";
   voiceBars.classList.toggle("hidden", !on);
   voiceHint.classList.toggle("hidden", !on);
 }
 
 micBtn.addEventListener("click", function () {
-  if (recording) { stopRecording(); return; }
-  startRecording();
-});
-
-redoBtn.addEventListener("click", function () {
-  stopRecording();
-  if (audioUrl) URL.revokeObjectURL(audioUrl);
-  audioUrl = null;
-  audioBlob = null;
-  voiceAudio.removeAttribute("src");
-  voiceAudioWrap.classList.add("hidden");
-  updateMicUI();
+  if (voiceActive) { stopVoice(); return; }
+  startVoice();
 });
 
 symptomText.addEventListener("input", function () {
@@ -413,6 +380,7 @@ function invalidField(el, msg) {
     }, { once: true });
   }
   showToast(msg);
+  if (window.__sounds) window.__sounds.error();
   if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -433,6 +401,10 @@ function submitForm() {
     invalidField(document.getElementById("branchGroup"), "กรุณาเลือกสาขา");
     return;
   }
+  if (!positionText.value.trim()) {
+    invalidField(positionText, "กรุณากรอกตำแหน่ง / สถานที่");
+    return;
+  }
 
   submitBtn.disabled = true;
   showLoading();
@@ -441,14 +413,6 @@ function submitForm() {
   photos.forEach(function (file) {
     formData.append("photos", file, file.name);
   });
-  if (audioBlob) {
-    var ext = "";
-    var mt = String(audioBlob.type || "");
-    if (mt.indexOf("mp4") > -1 || mt.indexOf("mp3") > -1) ext = ".mp4";
-    else if (mt.indexOf("ogg") > -1) ext = ".ogg";
-    else ext = ".webm";
-    formData.append("audio", audioBlob, "voice" + ext);
-  }
   formData.append("symptom", symptom);
   formData.append("device", device.value.trim());
   formData.append("location", getLocation());
@@ -465,8 +429,8 @@ function submitForm() {
       clearDraft();
       showSuccess(data.ticketNo, {
         location: getLocation(),
-        photos: photos.length,
-        audio: !!audioBlob
+        symptom: symptom,
+        photos: photos.length
       });
     })
     .catch(function () {
@@ -494,11 +458,12 @@ function hideLoading() {
 }
 
 function showSuccess(ticketNo, info) {
+  if (window.__sounds) window.__sounds.success();
   ticketNoEl.textContent = ticketNo;
   info = info || {};
   document.getElementById("sLocation").textContent = info.location || "-";
+  document.getElementById("sSymptom").textContent = info.symptom || "-";
   document.getElementById("sPhotos").textContent = info.photos ? info.photos + " รูป" : "ไม่มีรูป";
-  document.getElementById("sAudio").textContent = info.audio ? "มีไฟล์เสียง" : "ไม่มี";
   loadingOverlay.classList.add("hidden");
   successOverlay.classList.remove("hidden");
 }
@@ -659,23 +624,3 @@ function showToast(message) {
     toastEl.classList.add("hidden");
   }, 2600);
 }
-
-function toggleTicketNav(event) {
-  if (event && event.stopPropagation) event.stopPropagation();
-  var nav = document.getElementById("topNav");
-  if (nav) nav.classList.toggle("is-open");
-}
-
-function closeTicketNav() {
-  var nav = document.getElementById("topNav");
-  if (nav) nav.classList.remove("is-open");
-}
-
-document.addEventListener("click", function (e) {
-  var nav = document.getElementById("topNav");
-  if (!nav) return;
-  if (!nav.contains(e.target)) closeTicketNav();
-});
-
-window.toggleTicketNav = toggleTicketNav;
-window.closeTicketNav = closeTicketNav;

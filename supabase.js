@@ -61,7 +61,7 @@ async function genTicketNo(device) {
   return prefix + String(seq).padStart(3, "0");
 }
 
-async function createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl }) {
+async function createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl, visitorId }) {
   const accepted_at = acceptedAt || null;
   const payload = {
     ticket_no: ticketNo,
@@ -78,7 +78,8 @@ async function createTicket({ ticketNo, device, symptom, location, reporterName,
     source: source || "external",
     approved_at: status === "working" ? new Date().toISOString() : null,
     accepted_at,
-    audio_url: audioUrl || ""
+    audio_url: audioUrl || "",
+    visitor_id: visitorId || null
   };
   let res = await supabase
     .from("tickets")
@@ -117,6 +118,16 @@ async function createTicket({ ticketNo, device, symptom, location, reporterName,
     res = await supabase
       .from("tickets")
       .insert(p4)
+      .select("id")
+      .single();
+  }
+  if (res.error && /visitor_id/.test(res.error.message)) {
+    // ยังไม่ได้ ran SQL เพิ่มคอลัมน์ visitor_id — เก็บงานโดยไม่ผูกผู้ใช้ (หาประวัติจากชื่อ/ตำแหน่งแทน)
+    const p5 = Object.assign({}, payload);
+    delete p5.visitor_id;
+    res = await supabase
+      .from("tickets")
+      .insert(p5)
       .select("id")
       .single();
   }
@@ -199,6 +210,37 @@ async function acceptTicket(ticketNo) {
     .maybeSingle();
   if (error) throw error;
   return data || null;
+}
+
+// ประวัติการแจ้งซ่อมของฉัน (ผู้ใช้ภายนอก) — อ่านอย่างเดียว
+// จะให้ดูเฉพาะงานของตัวเองเท่านั้น ต้องผูกด้วย visitor_id
+// ถ้ายังไม่ได้รัน SQL เพิ่มคอลัมน์ visitor_id ให้หาโดยเทียบเรปอร์เตอร์ (ชื่อ · ตำแหน่ง) แทน
+const MY_TICKETS_COLS =
+  "id,ticket_no,device,symptom,location,reporter_name,status,handler_name,status_date,status_time,source,approved_at,accepted_at,created_at,pdf_url,audio_url";
+
+async function listMyTickets(visitorId, reporterName) {
+  if (!ready) return [];
+  if (visitorId) {
+    const { data, error } = await supabase
+      .from("tickets")
+      .select(MY_TICKETS_COLS)
+      .eq("visitor_id", visitorId)
+      .order("id", { ascending: false })
+      .limit(200);
+    if (!error) return data || [];
+    if (!/visitor_id/.test(error.message)) throw error;
+  }
+  if (reporterName) {
+    const { data, error } = await supabase
+      .from("tickets")
+      .select(MY_TICKETS_COLS)
+      .eq("reporter_name", reporterName)
+      .order("id", { ascending: false })
+      .limit(200);
+    if (!error) return data || [];
+    throw error;
+  }
+  return [];
 }
 
 async function recordDevice({ ip, ticketNo }) {
@@ -956,4 +998,4 @@ async function bumpVisitorTicket(id) {
   }
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket };
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets };

@@ -2,13 +2,14 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#06c755">
 <title>แจ้งซ่อมอุปกรณ์ IT</title>
 <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="ticket.css">
 </head>
@@ -17,16 +18,25 @@
 <nav class="navbar" id="topNav">
   <div class="navbar-inner">
     <a class="navbar-brand" href="ticket.html">
-      <svg class="navbar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5M17 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM8 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/><circle cx="17" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      <img class="navbar-logo navbar-logo-img" src="logo-ticket/logo-wan.jpg" alt="โลโก้ระบบแจ้งซ่อม IT">
       <span class="navbar-title">ระบบแจ้งซ่อม IT</span>
     </a>
-    <button class="nav-trigger" type="button" aria-label="เปิดเมนู" onclick="toggleTicketNav(event)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
+    <div id="visitorBar" class="visitor-bar hidden" role="status">
+      <span id="visitorBarText"></span>
+    </div>
     <div class="navbar-links">
-      <a class="nav-link is-active" href="ticket.html">แจ้งซ่อม</a>
-      <a class="nav-link" href="status.html">ตรวจสอบสถานะ</a>
-      <a class="nav-link" href="contact.html">ติดต่อฝ่าย IT SUPPORT</a>
+      <a class="nav-link is-active" href="ticket.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span>แจ้งซ่อม</span>
+      </a>
+      <a class="nav-link" href="my-tickets.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>ประวัติ</span>
+      </a>
+      <a class="nav-link" href="contact.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+        <span>ติดต่อ</span>
+      </a>
     </div>
   </div>
 </nav>
@@ -43,25 +53,23 @@
   </div>
 </div>
 
-<div id="visitorBar" class="visitor-bar hidden" role="status">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  <span id="visitorBarText"></span>
-  <svg class="visitor-bar-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-</div>
-
 <div id="verifyGate" class="verify-gate hidden" role="dialog" aria-modal="true" aria-labelledby="verifyTitle">
   <div class="verify-box">
-    <div class="verify-icon">
-      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+    <div class="verify-head">
+      <div class="verify-logo">
+        <img class="verify-logo-img" src="logo-ticket/logo-wan.jpg" alt="โลโก้ระบบแจ้งซ่อม IT">
+      </div>
+      <h2 id="verifyTitle" class="verify-title">ยืนยันตัวตน</h2>
+      <p class="verify-sub">ขอทราบว่าคุณคือใครในบริษัท<br>ระบบจะจำไว้เพื่อความปลอดภัย</p>
     </div>
-    <h2 id="verifyTitle" class="verify-title">ยืนยันตัวตนครั้งแรก</h2>
-    <p class="verify-sub">ขอทราบว่าคุณคือใครในบริษัท ระบบจะจำไว้เพื่อครั้งต่อไปไม่ต้องกรอกใหม่<br><span class="verify-sub-note">(ครั้งต่อไปจากคอมหรือเน็ตเดิมจะเข้าระบบได้เลย)</span></p>
 
-    <label for="verifyName" class="verify-label">ชื่อ</label>
-    <input type="text" id="verifyName" class="verify-input" maxlength="60" autocomplete="given-name">
+    <div class="verify-fields">
+      <label for="verifyName" class="verify-label">ชื่อ</label>
+      <input type="text" id="verifyName" class="verify-input" maxlength="60" autocomplete="given-name">
 
-    <label for="verifyPosition" class="verify-label">ตำแหน่ง</label>
-    <input type="text" id="verifyPosition" class="verify-input" maxlength="120" autocomplete="organization-title">
+      <label for="verifyPosition" class="verify-label">ตำแหน่ง</label>
+      <input type="text" id="verifyPosition" class="verify-input" maxlength="120" autocomplete="organization-title">
+    </div>
 
     <button id="verifySubmit" class="verify-btn" type="button">เข้าใช้งานระบบ</button>
     <p id="verifyErr" class="verify-err hidden"></p>
@@ -93,7 +101,7 @@
                   style="width:100%; resize:vertical; min-height:110px"></textarea>
 
         <div id="voicePanel" class="voice-panel hidden">
-          <p class="voice-help">ใช้เสียงเพื่อแปลงเป็นคำพูด — พูดบอกรายละเอียด ระบบแปลงเป็นข้อความให้โดยอัตโนมัติ</p>
+          <p class="voice-help">กดปุ่มไมค์แล้วพูด — ระบบแปลงเสียงเป็นข้อความให้โดยอัตโนมัติ <strong>ไม่บันทึกไฟล์เสียง</strong></p>
           <div class="voice-actions">
             <button id="micBtn" class="mic-btn" type="button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
@@ -102,14 +110,10 @@
                 <span class="vbar"></span><span class="vbar"></span><span class="vbar"></span><span class="vbar"></span>
               </span>
             </button>
-            <span id="voiceHint" class="voice-hint hidden">กำลังแปลงเสียงเป็นคำพูด...</span>
-          </div>
-          <div id="voiceAudioWrap" class="voice-audio hidden">
-            <audio id="voiceAudio" controls preload="metadata"></audio>
-            <button id="redoBtn" class="redo-btn" type="button">อัดใหม่ / พูดเพิ่ม</button>
+            <span id="voiceHint" class="voice-hint hidden">กำลังฟัง... พูดได้เลย กดปุ่มไมค์อีกครั้งเพื่อหยุด</span>
           </div>
           <div id="voiceUnsupported" class="voice-unsupported hidden">
-            เบราว์เซอร์นี้ไม่รองรับการพิมพ์ด้วยเสียง กรุณาใช้โหมดพิมพ์แทน
+            เบราว์เซอร์นี้ไม่รองรับการแปลงเสียงเป็นข้อความ กรุณาใช้โหมดพิมพ์แทน
           </div>
         </div>
       </div>
@@ -165,8 +169,8 @@
       </div>
 
       <div class="field" id="positionField">
-        <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="opt-hint">ไม่บังคับ</span></label>
-        <p class="field-hint">ช่วยระบุจุดที่อุปกรณ์นี้อยู่ เพื่อให้ทีม IT หาเจอง่ายขึ้น</p>
+        <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="req">*</span></label>
+        <p class="field-hint">ช่วยระบุจุดที่อุปกรณ์นี้อยู่ เพื่อให้ทีม IT หาเจอง่ายขึ้น <strong>จำเป็นต้องระบุ</strong></p>
         <input type="text" id="positionText" class="text-input" maxlength="120" autocomplete="off">
       </div>
 
@@ -206,23 +210,26 @@
         <span id="sLocation" class="srow-value">—</span>
       </div>
       <div class="success-row">
-        <span class="srow-label">แนบรูปภาพ</span>
-        <span id="sPhotos" class="srow-value">—</span>
+        <span class="srow-label">รายละเอียด</span>
+        <span id="sSymptom" class="srow-value srow-detail">—</span>
       </div>
       <div class="success-row">
-        <span class="srow-label">ไฟล์เสียง</span>
-        <span id="sAudio" class="srow-value">—</span>
+        <span class="srow-label">รูปภาพ</span>
+        <span id="sPhotos" class="srow-value">—</span>
       </div>
     </div>
 
     <button id="copyTicketBtn" class="copy-btn" type="button">คัดลอกรหัสซ่อม</button>
     <a class="back-btn" href="ticket.html">แจ้งซ่อมอีกครั้ง</a>
+    <a class="history-btn" href="my-tickets.html">ดูประวัติการแจ้งซ่อม</a>
   </div>
 </div>
 
 <div id="toast" class="toast hidden"></div>
 
 <script src="notify.js"></script>
+<script src="settings.js"></script>
+<script src="touch-fx.js"></script>
 <script src="ticket.js"></script>
 </body>
 </html>
