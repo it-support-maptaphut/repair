@@ -235,7 +235,7 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         verifySubmit.disabled = false;
-        verifySubmit.textContent = "ดูประวัติของฉัน";
+        verifySubmit.textContent = "เข้าใช้งานระบบ";
         if (!d.ok) {
           verifyErr.textContent = d.message || "ยืนยันตัวตนไม่สำเร็จ";
           verifyErr.classList.remove("hidden");
@@ -246,7 +246,7 @@
       })
       .catch(function () {
         verifySubmit.disabled = false;
-        verifySubmit.textContent = "ดูประวัติของฉัน";
+        verifySubmit.textContent = "เข้าใช้งานระบบ";
         verifyErr.textContent = "เชื่อมต่อไม่ได้ กรุณาลองใหม่";
         verifyErr.classList.remove("hidden");
       });
