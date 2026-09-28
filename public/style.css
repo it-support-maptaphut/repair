@@ -236,6 +236,73 @@ body.app-nav { font-size: 16px; }
 @keyframes splashBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 @keyframes splashSlide { 0% { transform: translateX(-120%); } 100% { transform: translateX(420%); } }
 
+/* ---------- แถบโหลดบนสุด (แสดงเมื่อกำลังโหลด asset / API) ---------- */
+.top-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9997;
+  pointer-events: none;
+}
+.top-loader-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, #06c755, #34d97b);
+  box-shadow: 0 0 8px rgba(6, 199, 85, 0.7);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.top-loader.on .top-loader-fill {
+  opacity: 1;
+  animation: topLoaderSlide 1.3s ease-in-out infinite;
+}
+.top-loader-chip {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #d4e9dc;
+  box-shadow: 0 8px 22px rgba(6, 50, 29, 0.18);
+  font-size: 13px;
+  font-weight: 600;
+  color: #14532d;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+}
+.top-loader.on .top-loader-chip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.top-loader-spin {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 2.5px solid rgba(6, 199, 85, 0.25);
+  border-top-color: #06c755;
+  animation: topLoaderSpin 0.8s linear infinite;
+}
+@keyframes topLoaderSlide { 0% { width: 0; margin-left: 0; } 60% { width: 55%; margin-left: 0; } 100% { width: 0; margin-left: 100%; } }
+@keyframes topLoaderSpin { to { transform: rotate(360deg); } }
+@media (max-width: 520px) {
+  .top-loader-chip { font-size: 12px; padding: 7px 13px; }
+}
+
 button,
 textarea,
 input {
