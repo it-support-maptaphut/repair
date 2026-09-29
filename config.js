@@ -3,6 +3,8 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 module.exports = {
   PORT: process.env.PORT || 3000,
+  APP_VERSION: process.env.APP_VERSION || "1.0.1",
+  APP_VERSION_LABEL: process.env.APP_VERSION_LABEL || "1.0.1 (TEST)",
   ADMIN_USER: process.env.ADMIN_USER || "",
   ADMIN_PASS: process.env.ADMIN_PASS || "",
   ADMIN_SECRET: process.env.ADMIN_SECRET || "",

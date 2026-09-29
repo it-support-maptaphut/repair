@@ -28,99 +28,15 @@ var symptomText = document.getElementById("symptomText");
 var device = document.getElementById("device");
 var positionText = document.getElementById("positionText");
 
-// ---------- ยืนยันตัวตนเบื้องต้น (ระบบจดจำผู้ใช้งานภายนอก) ----------
-var verifyGate = document.getElementById("verifyGate");
-var verifyName = document.getElementById("verifyName");
-var verifyPosition = document.getElementById("verifyPosition");
-var verifySubmitBtn = document.getElementById("verifySubmit");
-var verifyErr = document.getElementById("verifyErr");
-var visitorBar = document.getElementById("visitorBar");
-var visitorBarText = document.getElementById("visitorBarText");
+// ---------- ยืนยันตัวตน / บัญชีผู้ใช้ (จัดการที่ verify.js) ----------
 var visitorPassed = false;
 
-function openVerifyGate() {
-  if (!verifyGate) return;
-  verifyGate.classList.remove("hidden");
-  setTimeout(function () { if (verifyName) verifyName.focus(); }, 60);
+function setVisitorPassed(on) {
+  visitorPassed = !!on;
 }
 
-function closeVerifyGate() {
-  if (verifyGate) verifyGate.classList.add("hidden");
-}
-
-function showVisitorBar(visitor) {
-  if (!visitorBar || !visitorBarText) return;
-  visitorBar.classList.remove("hidden");
-  visitorBarText.textContent = (visitor.name || "") + (visitor.position ? " · " + visitor.position : "");
-}
-
-// เช็คว่าเคยยืนยันแล้วหรือยัง (cookie / IP เดิม)
-function checkVisitor() {
-  fetch("/api/visitors/me", { method: "GET", credentials: "same-origin" })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d && d.ok && d.registered && d.visitor) {
-        visitorPassed = true;
-        closeVerifyGate();
-        showVisitorBar(d.visitor);
-      } else {
-        openVerifyGate();
-      }
-    })
-    .catch(function () {
-      openVerifyGate();
-    });
-}
-
-function verifySubmit() {
-  if (verifyErr) verifyErr.classList.add("hidden");
-  var name = verifyName.value.trim();
-  var position = verifyPosition.value.trim();
-  if (!name) {
-    if (verifyName) verifyName.classList.add("invalid");
-    if (verifyErr) { verifyErr.textContent = "กรุณากรอกชื่อ"; verifyErr.classList.remove("hidden"); }
-    if (verifyName) verifyName.focus();
-    return;
-  }
-  if (!position) {
-    if (verifyPosition) verifyPosition.classList.add("invalid");
-    if (verifyErr) { verifyErr.textContent = "กรุณากรอกตำแหน่ง"; verifyErr.classList.remove("hidden"); }
-    if (verifyPosition) verifyPosition.focus();
-    return;
-  }
-  verifySubmitBtn.disabled = true;
-  fetch("/api/visitors", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: name, position: position }),
-    credentials: "same-origin"
-  })
-    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-    .then(function (res) {
-      verifySubmitBtn.disabled = false;
-      if (!res.ok) {
-        if (verifyErr) { verifyErr.textContent = "บันทึกไม่สำเร็จ กรุณาลองใหม่"; verifyErr.classList.remove("hidden"); }
-        return;
-      }
-      visitorPassed = true;
-      closeVerifyGate();
-      showVisitorBar(res.d.visitor);
-      showToast("ยืนยันตัวตนสำเร็จ — เข้าใช้งานระบบได้แล้ว");
-    })
-    .catch(function () {
-      verifySubmitBtn.disabled = false;
-      if (verifyErr) { verifyErr.textContent = "เครือข่ายขัดข้อง กรุณาลองใหม่"; verifyErr.classList.remove("hidden"); }
-    });
-}
-
-if (verifySubmitBtn) {
-  verifySubmitBtn.addEventListener("click", verifySubmit);
-}
-if (verifyName) {
-  verifyName.addEventListener("input", function () { this.classList.remove("invalid"); });
-}
-if (verifyPosition) {
-  verifyPosition.addEventListener("input", function () { this.classList.remove("invalid"); });
+if (window.WanGate) {
+  window.WanGate.onAuthed(function () { setVisitorPassed(true); });
 }
 var voicePanel = document.getElementById("voicePanel");
 var micBtn = document.getElementById("micBtn");
@@ -386,8 +302,10 @@ function invalidField(el, msg) {
 
 function submitForm() {
   if (!visitorPassed) {
-    openVerifyGate();
-    showToast("กรุณายืนยันตัวตนก่อนแจ้งซ่อม");
+    if (window.WanGate) {
+      window.WanGate.open({ mode: "register" });
+    }
+    showToast("กรุณาสมัครหรือเข้าสู่ระบบก่อนแจ้งซ่อม");
     return;
   }
   var symptom = symptomText.value.trim();
@@ -420,14 +338,25 @@ function submitForm() {
 
   fetch("/api/tickets", { method: "POST", body: formData })
     .then(function (res) {
-      if (!res.ok) throw new Error("server");
-      return res.json();
+      return res.json().then(function (d) {
+        return { ok: res.ok, status: res.status, d: d };
+      }).catch(function () { return { ok: false, status: res.status, d: {} }; });
     })
-    .then(function (data) {
+    .then(function (result) {
+      if (!result.ok) {
+        if (result.status === 401) {
+          // ยังไม่เข้าสู่ระบบ (เช่นเพิ่งออกจากระบบ) — ให้เข้าสู่ระบบใหม่
+          hideLoading();
+          submitBtn.disabled = false;
+          if (window.WanGate) window.WanGate.open({ mode: "login" });
+          return;
+        }
+        throw new Error("server");
+      }
       hideLoading();
       submitted = true;
       clearDraft();
-      showSuccess(data.ticketNo, {
+      showSuccess(result.d.ticketNo, {
         location: getLocation(),
         symptom: symptom,
         photos: photos.length
@@ -609,7 +538,19 @@ function showDraftPrompt() {
 
 if (hasDraft()) showDraftPrompt();
 
-checkVisitor();
+// เช็คบัญชีผู้ใช้บนเครื่องนี้ (ยังไม่มีบัญชี/ยังไม่ล็อกอิน → เปิดเกตติ้ง)
+if (window.WanGate) {
+  window.WanGate.check().then(function (st) {
+    if (st.authed) { setVisitorPassed(true); return; }
+    window.WanGate.open({
+      mode: st.registered && !st.needsCredentials ? "login" : "register",
+      step: st.registered && st.needsCredentials ? "2" : "1",
+      state: st
+    });
+  }).catch(function () {
+    if (window.WanGate) window.WanGate.open({ mode: "register" });
+  });
+}
 
 window.addEventListener("beforeunload", function () {
   if (submitted) return;

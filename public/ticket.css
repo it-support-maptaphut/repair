@@ -75,20 +75,6 @@ body.ticket-page .navbar-logo-img {
   box-shadow: 0 2px 8px rgba(12, 163, 92, 0.20);
 }
 body.ticket-page .navbar-title { font-weight: 700; letter-spacing: 0.2px; }
-body.ticket-page .nav-link {
-  flex-direction: column;
-  gap: 2px;
-  color: var(--tk-muted);
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 7px 12px 8px;
-  font-size: 11.5px;
-  transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease;
-}
-body.ticket-page .nav-link svg { width: 20px; height: 20px; flex: 0 0 auto; }
-body.ticket-page .nav-link:hover { color: var(--tk-green); background: var(--tk-green-soft, #eaf5ef); }
-body.ticket-page .nav-link:active { transform: scale(0.97); }
-body.ticket-page .nav-link.is-active { color: #fff; background: var(--tk-green); box-shadow: 0 5px 14px rgba(12, 163, 92, 0.30); }
 body.ticket-page .nav-trigger { color: var(--tk-ink); border-radius: 10px; transition: background 0.18s ease; }
 body.ticket-page .nav-trigger:hover { background: var(--tk-green-soft, #eaf5ef); }
 
@@ -115,37 +101,6 @@ body.ticket-page .draft-btn:active { transform: scale(0.97); }
 body.ticket-page .draft-btn.restore { background: var(--tk-green); border-color: var(--tk-green); color: #fff; box-shadow: 0 4px 12px rgba(11, 122, 67, 0.25); }
 body.ticket-page .draft-close { color: #a0863a; transition: transform 0.15s ease; }
 body.ticket-page .draft-close:hover { transform: rotate(90deg); }
-
-/* ---------- ชื่อผู้ใช้ : อยู่ขวาของแถบ nav ---------- */
-body.ticket-page .visitor-bar {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  flex: 0 1 auto;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--tk-pink-line, #ffd0e3);
-  background: linear-gradient(90deg, rgba(12, 163, 92, 0.08), rgba(255, 95, 162, 0.12));
-  color: var(--tk-green-deep);
-  font-size: 12.5px;
-  font-weight: 700;
-  white-space: nowrap;
-  animation: ticketFadeIn 0.4s ease both;
-}
-body.ticket-page .visitor-bar #visitorBarText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (max-width: 520px) {
-  body.ticket-page .visitor-bar {
-    max-width: 42vw;
-    padding: 4px 10px;
-    font-size: 11.5px;
-  }
-}
 
 /* ---------- FORM ---------- */
 body.ticket-page .form-wrap {
@@ -451,7 +406,8 @@ body.ticket-page .loc-desc { font-size: 12.5px; color: var(--tk-muted); margin-t
 /* ---------- ACTION BAR ---------- */
 body.ticket-page .action-bar {
   max-width: 680px;
-  margin: 0 auto calc(92px + env(safe-area-inset-bottom));
+  /* เว้นที่ท้ายหน้าให้แถบเมนูล่าง (ดู padding-bottom ของ body.has-bottom-nav) */
+  margin: 0 auto 20px;
   padding: 12px 16px;
   background: #fff;
   border: 1px solid var(--tk-line);
@@ -612,102 +568,6 @@ body.ticket-page .toast {
 /* ---------- Shake (field error) ---------- */
 body.ticket-page .shake { animation: shakeX 0.4s ease; }
 
-/* ---------- VERIFY GATE : ยืนยันตัวตน ---------- */
-body.ticket-page .verify-gate {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  background: linear-gradient(160deg, rgba(6, 88, 46, 0.42), rgba(14, 159, 88, 0.16)), rgba(250, 253, 251, 0.90);
-  animation: ticketFadeIn 0.3s ease both;
-}
-body.ticket-page .verify-gate.hidden { display: none; }
-body.ticket-page .verify-box {
-  width: 100%;
-  max-width: 430px;
-  background: #fff;
-  border-radius: 22px;
-  border: 1px solid #d9ebdf;
-  box-shadow: 0 24px 60px rgba(6, 50, 29, 0.28);
-  padding: 32px 30px 28px;
-  text-align: left;
-  animation: ticketPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-body.ticket-page .verify-head { text-align: center; margin-bottom: 22px; }
-
-body.ticket-page .verify-logo {
-  width: 74px;
-  height: 74px;
-  margin: 0 auto 16px;
-  border-radius: 22px;
-  padding: 5px;
-  background: linear-gradient(160deg, var(--tk-accent), var(--tk-green));
-  box-shadow: 0 10px 24px rgba(11, 122, 67, 0.3);
-  animation: ticketPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) both,
-             verifyBounce 1.6s 0.5s ease-in-out infinite;
-}
-
-@keyframes verifyBounce {
-  0%, 100% { transform: translateY(0) scale(1); }
-  12% { transform: translateY(-16px) scale(0.99, 1.03); }
-  26% { transform: translateY(0) scale(1.08, 0.92); }
-  40% { transform: translateY(-9px) scale(0.99, 1.02); }
-  54% { transform: translateY(0) scale(1.04, 0.96); }
-  68% { transform: translateY(-3px) scale(1, 1); }
-  80% { transform: translateY(0) scale(1.01, 0.99); }
-}
-
-body.ticket-page .verify-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 18px;
-  display: block;
-}
-
-body.ticket-page .verify-title { margin: 0 0 8px; font-size: 21px; color: var(--tk-ink); font-weight: 700; }
-body.ticket-page .verify-sub { margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--tk-muted); }
-body.ticket-page .verify-fields { padding: 20px 0 2px; border-top: 1px dashed #e3eee7; }
-body.ticket-page .verify-label { display: block; font-size: 13px; font-weight: 700; color: var(--tk-ink); margin: 4px 0 6px; }
-body.ticket-page .verify-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 13px 15px;
-  border-radius: 12px;
-  border: 1.5px solid var(--tk-line);
-  background: #fbfdfc;
-  font-family: inherit;
-  font-size: 15px;
-  color: var(--tk-ink);
-  margin-bottom: 14px;
-  outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-}
-body.ticket-page .verify-input:focus { border-color: var(--tk-accent); background: #fff; box-shadow: 0 0 0 4px rgba(14, 159, 88, 0.14); }
-body.ticket-page .verify-input.invalid { border-color: #d64541 !important; }
-body.ticket-page .verify-btn {
-  width: 100%;
-  margin-top: 8px;
-  padding: 15px;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(180deg, #16b563, var(--tk-green));
-  color: #fff;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 700;
-  box-shadow: 0 8px 22px rgba(12, 163, 92, 0.34);
-  transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-}
-body.ticket-page .verify-btn:hover { box-shadow: 0 10px 26px rgba(11, 122, 67, 0.42); }
-body.ticket-page .verify-btn:active { transform: scale(0.98); }
-body.ticket-page .verify-btn:disabled { opacity: 0.65; cursor: default; }
-body.ticket-page .verify-err { margin: 12px 0 0; font-size: 13px; color: #d4382f; text-align: center; }
-
 body.ticket-page .success-icon::after { display: none; }
 
 /* ---------- จอเล็กจัด (มือถือ) ---------- */
@@ -715,7 +575,6 @@ body.ticket-page .success-icon::after { display: none; }
   body.ticket-page .step.is-active { padding: 22px 16px 18px; }
   body.ticket-page .mic-btn { width: 100%; justify-content: center; }
   body.ticket-page .photo-grid { grid-template-columns: repeat(2, 1fr); }
-  body.ticket-page .verify-box { padding: 26px 20px 22px; }
 }
 
 /* ---------- VOICE: actions / bars ---------- */
@@ -738,8 +597,6 @@ body.ticket-page .vbar:nth-child(4) { animation-delay: 0.4s; }
 
 /* ---------- NAV utils ---------- */
 body.ticket-page .mode-btn svg { flex: 0 0 auto; }
-body.ticket-page .visitor-bar svg { width: 17px; height: 17px; flex: 0 0 auto; color: var(--tk-accent); }
-body.ticket-page .visitor-bar .visitor-bar-check { color: var(--tk-green); }
 
 /* ---------- KEYFRAMES ---------- */
 @keyframes shakeX {

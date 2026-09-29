@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<script src="no-zoom.js"></script>
   <meta name="theme-color" content="#06c755">
   <title>ติดต่อฝ่าย IT SUPPORT</title>
   <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
@@ -25,29 +26,12 @@
   <div class="splash-bar"><div class="splash-bar-fill"></div></div>
 </div>
 
-  <nav class="navbar" id="topNav">
+  <nav class="navbar navbar-slim" id="topNav">
     <div class="navbar-inner">
       <a class="navbar-brand" href="ticket.html">
         <img class="navbar-logo navbar-logo-img" src="logo-ticket/logo-wan.jpg" alt="โลโก้ระบบแจ้งซ่อม IT">
         <span class="navbar-title">ระบบแจ้งซ่อม IT</span>
       </a>
-      <div id="visitorBar" class="visitor-bar hidden" role="status">
-        <span id="visitorBarText"></span>
-      </div>
-      <div class="navbar-links">
-        <a class="nav-link" href="ticket.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          <span>แจ้งซ่อม</span>
-        </a>
-        <a class="nav-link" href="my-tickets.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>ประวัติ</span>
-        </a>
-        <a class="nav-link is-active" href="contact.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
-          <span>ติดต่อ</span>
-        </a>
-      </div>
     </div>
   </nav>
 
@@ -91,19 +75,8 @@
     </div>
   </main>
 
-  <script>
-    fetch("/api/visitors/me", { method: "GET", credentials: "same-origin" })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.ok || !d.registered || !d.visitor) return;
-        var bar = document.getElementById("visitorBar");
-        var txt = document.getElementById("visitorBarText");
-        if (!bar || !txt) return;
-        txt.textContent = (d.visitor.name || "") + (d.visitor.position ? " · " + d.visitor.position : "");
-        bar.classList.remove("hidden");
-      })
-      .catch(function () {});
-  </script>
+  <script src="verify.js"></script>
+  <script src="bottom-nav.js"></script>
   <script src="notify.js"></script>
   <script src="settings.js"></script>
   <script src="touch-fx.js" data-fx="zoom"></script>

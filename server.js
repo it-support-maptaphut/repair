@@ -40,10 +40,6 @@ function parseCookies(req) {
   return out;
 }
 
-function setVisitorCookie(res, token) {
-  res.set("Set-Cookie", "visitor_token=" + encodeURIComponent(token) + "; Path=/; Max-Age=31536000; SameSite=Lax");
-}
-
 // ======================================================
 // ระบบล็อกอินหน้า Admin (server-side, HttpOnly cookie)
 // ======================================================
@@ -54,6 +50,8 @@ const ADMIN_USER = config.ADMIN_USER || "admin";
 const ADMIN_PASS = config.ADMIN_PASS;
 const ADMIN_SECRET = config.ADMIN_SECRET;
 const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
+const APP_VERSION = config.APP_VERSION || "1.0.1";
+const APP_VERSION_LABEL = config.APP_VERSION_LABEL || APP_VERSION + " (TEST)";
 
 // ---------- PASSWORD NOTE: เข้ารหัส AES-256-GCM + PIN ยืนยันตัวตน ----------
 const PN_PIN = String(config.PASSWORD_NOTE_PIN || "741236");
@@ -121,11 +119,11 @@ function verifyAdminToken(token) {
 }
 
 function setAdminCookie(res, token) {
-  res.set("Set-Cookie", "admin_token=" + encodeURIComponent(token) + "; HttpOnly; Path=/; Max-Age=28800; SameSite=Lax");
+  res.append("Set-Cookie", "admin_token=" + encodeURIComponent(token) + "; HttpOnly; Path=/; Max-Age=28800; SameSite=Lax");
 }
 
 function clearAdminCookie(res) {
-  res.set("Set-Cookie", "admin_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
+  res.append("Set-Cookie", "admin_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
 }
 
 function isAdminAuthed(req) {
@@ -165,11 +163,11 @@ function isUserAuthed(req) {
 }
 
 function setUserCookie(res, token) {
-  res.set("Set-Cookie", "su_token=" + encodeURIComponent(token) + "; HttpOnly; Path=/; Max-Age=28800; SameSite=Lax");
+  res.append("Set-Cookie", "su_token=" + encodeURIComponent(token) + "; HttpOnly; Path=/; Max-Age=28800; SameSite=Lax");
 }
 
 function clearUserCookie(res) {
-  res.set("Set-Cookie", "su_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
+  res.append("Set-Cookie", "su_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
 }
 
 // ดึงข้อมูลพนักงานจาก DB (สิทธิ์สดเสมอ ไม่เคยฝังใน token)
@@ -178,6 +176,134 @@ async function loadSuUser(username) {
   const cred = await db.getAdapter().getSystemUserAuth(username);
   if (!cred || !cred.password_hash) return null;
   return { username: username, permissions: Array.isArray(cred.permissions) ? cred.permissions : [] };
+}
+
+// ---------- บัญชีผู้ใช้หน้าเว็บ (external_visitors) ----------
+// ทุกการเข้าสู่ระบบผูกกับ visitor_id เท่านั้น ไม่ผูกกับ IP เดิมหรือเครื่อง
+const VISITOR_SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 วัน
+const VISITOR_COOKIE_MAXAGE = 30 * 24 * 60 * 60;      // วินาที
+const VISITOR_TOKEN_TTL = 365 * 24 * 60 * 60;        // cookie จำเบราว์เซอร์ 1 ปี
+const VISITOR_PASS_MIN = 6;
+const VISITOR_IP_FALLBACK_HOURS = 12;                 // ใช้ IP ช่วยระบุตัวตนได้เฉพาะของเก่าในช่วงนี้
+const VISITOR_USERNAME_RE = /^[a-z0-9][a-z0-9._-]{3,29}$/;
+
+function signVisitorToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", ADMIN_SECRET).update(body).digest("base64url");
+  return body + "." + sig;
+}
+
+function verifyVisitorToken(token) {
+  if (!token) return null;
+  try {
+    const [bodyB64, sig] = String(token).split(".");
+    if (!bodyB64 || !sig) return null;
+    const expect = crypto.createHmac("sha256", ADMIN_SECRET).update(bodyB64).digest("base64url");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expect);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const payload = JSON.parse(Buffer.from(bodyB64, "base64url").toString("utf8"));
+    if (!payload || payload.e !== "visitor" || !payload.v || !payload.exp) return null;
+    if (Date.now() > payload.exp) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function cookieFlags(req) {
+  return "Path=/; SameSite=Lax" + (isHttps(req) ? "; Secure" : "");
+}
+
+function isHttps(req) {
+  if (req && req.secure) return true;
+  if (req && String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https") return true;
+  return false;
+}
+
+// ใช้ res.append เสมอ: res.set("Set-Cookie", ...) สองครั้งใน response เดียวจะทับกัน
+function setVisitorSessionCookie(req, res, visitorId) {
+  const token = signVisitorToken({ e: "visitor", v: visitorId, exp: Date.now() + VISITOR_SESSION_TTL });
+  res.append("Set-Cookie", "vst_token=" + encodeURIComponent(token) + "; HttpOnly; Max-Age=" + VISITOR_SESSION_TTL / 1000 + "; " + cookieFlags(req));
+}
+
+function clearVisitorSessionCookie(req, res) {
+  res.append("Set-Cookie", "vst_token=; HttpOnly; Max-Age=0; " + cookieFlags(req));
+}
+
+function setVisitorTokenCookie(req, res, token) {
+  res.append("Set-Cookie", "visitor_token=" + encodeURIComponent(token) + "; Max-Age=" + VISITOR_TOKEN_TTL + "; " + cookieFlags(req));
+}
+
+function clearVisitorTokenCookie(req, res) {
+  res.append("Set-Cookie", "visitor_token=; Max-Age=0; " + cookieFlags(req));
+}
+
+function setVisitorCookie(req, res, token) {
+  setVisitorTokenCookie(req, res, token);
+}
+
+// ---------- รหัสผ่านผู้ใช้: เก็บทั้ง scrypt hash (ตรวจตอนล็อกอิน) และ AES-256-GCM (แสดงค่าเดิมในหน้าตั้งค่า) ----------
+const VC_KEY = crypto.createHash("sha256").update(String(ADMIN_SECRET) + ":visitor_cred_v1").digest();
+
+function vcEncrypt(plain) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", VC_KEY, iv);
+  const pt = Buffer.from(String(plain == null ? "" : plain), "utf8");
+  const ct = Buffer.concat([cipher.update(pt), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [iv.toString("base64"), tag.toString("base64"), ct.toString("base64")].join(".");
+}
+
+function vcDecrypt(blob) {
+  const parts = String(blob || "").split(".");
+  if (parts.length !== 3) throw new Error("ข้อมูลรหัสผ่านเข้ารหัสไม่ถูกต้อง");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", VC_KEY, Buffer.from(parts[0], "base64"));
+  decipher.setAuthTag(Buffer.from(parts[1], "base64"));
+  const pt = Buffer.concat([decipher.update(Buffer.from(parts[2], "base64")), decipher.final()]);
+  return pt.toString("utf8");
+}
+
+function normalizeUsername(raw) {
+  return String(raw || "").trim().toLowerCase();
+}
+
+function validateUsername(raw) {
+  const u = normalizeUsername(raw);
+  if (!u) return { ok: false, message: "กรุณากรอกชื่อผู้ใช้" };
+  if (!VISITOR_USERNAME_RE.test(u)) {
+    return { ok: false, message: "ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ - ความยาว 4-30 ตัวอักษร" };
+  }
+  return { ok: true, username: u };
+}
+
+function validatePassword(raw) {
+  const p = String(raw == null ? "" : raw);
+  if (!p) return { ok: false, message: "กรุณากรอกรหัสผ่าน" };
+  if (p.length < VISITOR_PASS_MIN) return { ok: false, message: "รหัสผ่านต้องมีอย่างน้อย " + VISITOR_PASS_MIN + " ตัวอักษร" };
+  if (p.length > 128) return { ok: false, message: "รหัสผ่านยาวเกินไป (สูงสุด 128 ตัวอักษร)" };
+  if (/\s/.test(p)) return { ok: false, message: "รหัสผ่านห้ามมีช่องว่าง" };
+  return { ok: true, password: p };
+}
+
+function randomPassword() {
+  const chars = "abcdefghijkmnopqrstuvwxyz23456789";
+  let out = "";
+  const bytes = crypto.randomBytes(10);
+  for (let i = 0; i < bytes.length; i++) out += chars[bytes[i] % chars.length];
+  return out;
+}
+
+// เปิดดูข้อมูลบัญชี (ไม่ส่ง token/ip/รหัสผ่านกลับไปที่เบราว์เซอร์)
+function publicVisitor(v) {
+  if (!v) return null;
+  return {
+    id: v.id,
+    name: v.name || "",
+    position: v.position || "",
+    username: v.username || "",
+    hasCredentials: !!v.credentials_at
+  };
 }
 
 // กัน API ทั้งหมดในหมวด /api/admin/* (login ไม่มีในหมวดนี้)
@@ -323,10 +449,14 @@ app.get("/admin.html", serveAdminPage, (req, res) => {
 app.get("/admin-mobile.html", serveAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin-mobile.html"));
 });
+app.get("/admin-db", serveAdminPage, (req, res) => res.redirect("/admin-db.html"));
+app.get("/admin-db.html", serveAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin-db.html"));
+});
 
 app.use(express.json());
 app.use(function (req, res, next) {
-  if (req.path === "/admin" || req.path === "/admin.html" || req.path === "/admin-mobile.html") {
+  if (["/admin", "/admin.html", "/admin-mobile.html", "/admin-db", "/admin-db.html"].includes(req.path)) {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
@@ -370,12 +500,17 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
 
-    // ใบแจ้งจากภายนอกต้องยืนยันตัวตนก่อน (ผ่านระบบจดจำผู้ใช้งานภายนอก)
+    // ใบแจ้งจากภายนอกต้องเข้าสู่ระบบด้วย user/password ก่อน (ผูก visitor_id เท่านั้น ไม่ผูก IP)
+    // ใบแจ้งภายในต้องเป็นผู้ดูแลระบบ/พนักงานเท่านั้น — ห้ามแอบส่ง source:"internal" จากหน้าเว็บสาธารณะ
     let visitor = null;
-    if (source !== "internal") {
-      visitor = await resolveVisitor(req);
+    if (source === "internal") {
+      if (!isAdminAuthed(req) && !isUserAuthed(req)) {
+        return res.status(403).json({ ok: false, message: "ใบแจ้งภายในต้องเข้าสู่ระบบฝ่าย IT ก่อน" });
+      }
+    } else {
+      visitor = await requireVisitorSession(req);
       if (!visitor) {
-        return res.status(403).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน กรุณากรอกชื่อและตำแหน่งก่อนแจ้งซ่อม" });
+        return res.status(401).json({ ok: false, needsCredentials: true, message: "กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านก่อนแจ้งซ่อม" });
       }
     }
 
@@ -444,13 +579,28 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
   }
 });
 
-app.get("/api/notify/stream", (req, res) => {
-  notif.handleStream(req, res, clientIp(req));
+// ผูกกับบัญชีผู้ใช้ (visitor_id) — เปลี่ยนเครือข่ายแล้วยังได้รับแจ้งเตือน
+app.get("/api/notify/stream", async (req, res) => {
+  try {
+    const visitor = await requireVisitorSession(req);
+    if (!visitor) {
+      return notif.handleStream(req, res, null);
+    }
+    notif.handleStream(req, res, visitor.id);
+  } catch (err) {
+    console.warn("[notify] เปิดสตรีมไม่สำเร็จ:", err.message);
+    if (!res.headersSent) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false }));
+    }
+  }
 });
 
 app.get("/api/config", (req, res) => {
   res.json({
-    maxPhotos: 3
+    maxPhotos: 3,
+    version: APP_VERSION,
+    versionLabel: APP_VERSION_LABEL
   });
 });
 
@@ -495,22 +645,9 @@ app.post("/api/admin/inbox/:ticketNo/accept", async (req, res) => {
       return res.status(404).json({ ok: false, message: "ไม่พบรายการรอตอบรับ (หรือตอบรับไปแล้ว)" });
     }
     try {
-      let dev;
-      if (adapter.mode === "supabase") {
-        dev = await adapter.supabase
-          .from("user_devices")
-          .select("ip")
-          .eq("last_ticket_no", ticketNo)
-          .maybeSingle();
-      } else {
-        const result = await adapter.pool.query(
-          `SELECT ip FROM user_devices WHERE last_ticket_no = $1`,
-          [ticketNo]
-        );
-        dev = { data: result.rows[0] };
-      }
-      if (dev && dev.data && dev.data.ip) {
-        notif.pushToIp(dev.data.ip, {
+      const owner = await db.getAdapter().getTicketOwner(ticketNo);
+      if (owner && owner.visitor_id) {
+        notif.pushToVisitor(owner.visitor_id, {
           type: "accepted",
           ticketNo,
           at: new Date().toISOString()
@@ -595,41 +732,120 @@ app.delete("/api/admin/users/:ip", async (req, res) => {
 });
 
 
-// ---------- ระบบจดจำผู้ใช้งานภายนอก (ยืนยันตัวตนเบื้องต้น) ----------
-
-// ตรวจว่า visitor นี้ผ่านแล้วหรือยัง (cookie token หรือ IP ก็ได้)
-async function resolveVisitor(req) {
+// ---------- ระบบบัญชีผู้ใช้งานภายนอก ----------
+// ลำดับการระบุตัวตน: session (vst_token) → cookie เครื่อง → เลขเครื่อง → IP (เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน)
+// IP ไม่มีอำนาจผูกตัวตนอีกต่อไป เปลี่ยนเครือข่ายหรือเปลี่ยนเครื่องแล้วใช้ user/password เข้าได้
+async function resolveVisitor(req, opts) {
+  const options = opts || {};
   const adapter = db.getAdapter();
   if (!adapter.ready) return null;
+
+  const allowIp = options.allowIpFallback !== false;
   const token = parseCookies(req).visitor_token || "";
   const ip = clientIp(req);
-  return adapter.findVisitor({ ip, token });
+  const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200) || null;
+
+  // 1) session ที่ล็อกอินไว้ — เป็นแหล่งความจริงเดียว (ไม่แตะ ip/device_id เด็ดขาด)
+  const session = verifyVisitorToken(parseCookies(req).vst_token);
+  if (session) {
+    const row = await adapter.getVisitorById(session.v);
+    if (row) {
+      row.matchedBy = "session";
+      return row;
+    }
+  }
+
+  // 2-4) cookie / เลขเครื่อง / IP
+  const row = await adapter.findVisitor({
+    ip,
+    token,
+    deviceId,
+    allowIpFallback: allowIp,
+    ipFallbackHours: VISITOR_IP_FALLBACK_HOURS
+  });
+  if (row) row.matchedBy = token && String(row.token) === token ? "token" : (deviceId && row.device_id === deviceId ? "device" : "ip");
+  return row;
 }
 
-// GET /api/visitors/me — เช็กตัวเองว่าผ่านแล้วหรือยัง
+// ผู้ใช้ที่ "เข้าสู่ระบบแล้ว" = มี session ที่ยังใช้ได้ (ไม่ผูกกับ IP/เครื่อง)
+async function requireVisitorSession(req) {
+  const session = verifyVisitorToken(parseCookies(req).vst_token);
+  if (!session) return null;
+  const adapter = db.getAdapter();
+  if (!adapter.ready) return null;
+  const row = await adapter.getVisitorById(session.v);
+  if (!row) return null;
+  row.matchedBy = "session";
+  return row;
+}
+
+// GET /api/visitors/me — สถานะบัญชีของผู้ใช้บนเครื่องนี้
 app.get("/api/visitors/me", async (req, res) => {
   try {
     const visitor = await resolveVisitor(req);
-    if (!visitor) return res.json({ ok: true, registered: false });
-    res.json({ ok: true, registered: true, visitor });
+    if (!visitor) {
+      clearVisitorSessionCookie(req, res);
+      return res.json({ ok: true, registered: false, authed: false, needsCredentials: true, visitor: null });
+    }
+    const authed = visitor.matchedBy === "session" && !!visitor.credentials_at;
+    res.json({
+      ok: true,
+      registered: true,
+      authed: authed,
+      needsCredentials: !visitor.credentials_at,
+      visitor: publicVisitor(visitor)
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
   }
 });
 
-// PATCH /api/visitors/me — ผู้ใช้แก้ชื่อ / ตำแหน่งของตัวเอง (เชื่อมโยงทุกหน้า)
+// PATCH /api/visitors/me — แก้ชื่อ / ตำแหน่ง / ชื่อผู้ใช้ / เปลี่ยนรหัสผ่าน
 app.patch("/api/visitors/me", async (req, res) => {
   try {
     const adapter = db.getAdapter();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const visitor = await resolveVisitor(req);
+    const visitor = await requireVisitorSession(req);
     if (!visitor) {
-      return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน กรุณากรอกชื่อและตำแหน่งก่อน" });
+      return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อนแก้ไขข้อมูลผู้ใช้" });
     }
     const body = req.body || {};
+
+    if (body.newPassword !== undefined || body.currentPassword !== undefined) {
+      const cur = validatePassword(body.currentPassword);
+      if (!cur.ok) return res.status(400).json({ ok: false, message: "กรอกรหัสผ่านเดิมให้ถูกต้อง" });
+      const cred = await adapter.getVisitorCredentials(visitor.id);
+      if (!cred || !cred.password_hash || !verifyPassword(cur.password, cred.password_hash)) {
+        return res.status(401).json({ ok: false, message: "รหัสผ่านเดิมไม่ถูกต้อง" });
+      }
+      const next = validatePassword(body.newPassword);
+      if (!next.ok) return res.status(400).json({ ok: false, message: next.message });
+      await adapter.setVisitorPassword(visitor.id, {
+        passwordHash: hashPassword(next.password),
+        passwordEnc: vcEncrypt(next.password)
+      });
+    }
+
+    if (body.username !== undefined) {
+      const u = validateUsername(body.username);
+      if (!u.ok) return res.status(400).json({ ok: false, message: u.message });
+      if (u.username !== normalizeUsername(visitor.username)) {
+        const taken = await adapter.findVisitorByUsername(u.username);
+        if (taken && String(taken.id) !== String(visitor.id)) {
+          return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น" });
+        }
+        try {
+          await adapter.renameVisitor(visitor.id, u.username);
+        } catch (err) {
+          if (err && err.code === "DUP_USERNAME") return res.status(409).json({ ok: false, message: err.message });
+          throw err;
+        }
+      }
+    }
+
     const patch = {};
     if (body.name !== undefined) {
       patch.name = String(body.name).trim();
@@ -639,19 +855,52 @@ app.patch("/api/visitors/me", async (req, res) => {
       patch.position = String(body.position).trim();
       if (!patch.position) return res.status(400).json({ ok: false, message: "กรุณากรอกตำแหน่ง" });
     }
-    if (!Object.keys(patch).length) {
-      return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลที่แก้" });
-    }
-    const updated = await adapter.updateVisitor(visitor.id, patch);
-    if (!updated) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
-    res.json({ ok: true, visitor: updated });
+    if (Object.keys(patch).length) await adapter.updateVisitor(visitor.id, patch);
+
+    const fresh = await adapter.getVisitorById(visitor.id);
+    res.json({ ok: true, visitor: publicVisitor(fresh) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
   }
 });
 
-// POST /api/visitors — ลงทะเบียนครั้งแรก (ชื่อ + ตำแหน่ง)
+// GET /api/visitors/me/credential — เปิดเผยรหัสผ่านเดิม (หน้าตั้งค่า) ต้องเข้าสู่ระบบแล้วเท่านั้น
+app.get("/api/visitors/me/credential", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const visitor = await requireVisitorSession(req);
+    if (!visitor) return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อน" });
+    const cred = await adapter.getVisitorCredentials(visitor.id);
+    if (!cred || !cred.username) {
+      return res.status(404).json({ ok: false, message: "ยังไม่ได้ตั้งชื่อผู้ใช้และรหัสผ่าน" });
+    }
+    let password = "";
+    if (cred.password_enc) {
+      try {
+        password = vcDecrypt(cred.password_enc);
+      } catch (e) {
+        password = "";
+      }
+    }
+    res.json({
+      ok: true,
+      credential: {
+        username: cred.username || "",
+        password: password,
+        createdAt: cred.credentials_at || null
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// POST /api/visitors — ขั้นที่ 1 ของการสมัคร (ชื่อ + ตำแหน่ง)
 app.post("/api/visitors", async (req, res) => {
   try {
     const adapter = db.getAdapter();
@@ -664,14 +913,101 @@ app.post("/api/visitors", async (req, res) => {
     if (!name) return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อ" });
     if (!position) return res.status(400).json({ ok: false, message: "กรุณากรอกตำแหน่ง" });
     const ip = clientIp(req);
+    const deviceId = String(body.device_id || req.headers["x-device-id"] || "").trim().slice(0, 200);
     const token = crypto.randomBytes(24).toString("hex");
-    const visitor = await adapter.createVisitor({ name, position, ip, token });
-    setVisitorCookie(res, token);
-    res.json({ ok: true, visitor });
+    const visitor = await adapter.createVisitor({ name, position, ip, token, deviceId });
+    setVisitorCookie(req, res, token);
+    res.json({ ok: true, needsCredentials: true, visitor: publicVisitor(visitor) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
   }
+});
+
+// POST /api/visitors/credentials — ขั้นที่ 2 ของการสมัคร (ตั้ง user/password แล้วเข้าใช้งานได้เลย)
+app.post("/api/visitors/credentials", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    // ขั้นนี้ต้องระบุตัวตนจาก cookie เครื่องหรือเลขเครื่องเท่านั้น (ห้ามใช้ IP เด็ดขาด)
+    const visitor = await resolveVisitor(req, { allowIpFallback: false });
+    if (!visitor) {
+      return res.status(401).json({ ok: false, message: "ข้อมูลไม่ครบ กรุณากรอกชื่อและตำแหน่งก่อน" });
+    }
+    if (visitor.credentials_at) {
+      return res.status(409).json({ ok: false, message: "บัญชีนี้ตั้งชื่อผู้ใช้แล้ว หากลืมรหัสผ่านกรุณาเข้าสู่ระบบหรือให้ทีม IT รีเซ็ตให้" });
+    }
+    const body = req.body || {};
+    const u = validateUsername(body.username);
+    if (!u.ok) return res.status(400).json({ ok: false, message: u.message });
+    const p = validatePassword(body.password);
+    if (!p.ok) return res.status(400).json({ ok: false, message: p.message });
+    if (body.confirmPassword !== undefined && String(body.confirmPassword) !== p.password) {
+      return res.status(400).json({ ok: false, message: "รหัสผ่านทั้งสองช่องไม่ตรงกัน" });
+    }
+    const taken = await adapter.findVisitorByUsername(u.username);
+    if (taken) {
+      return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น" });
+    }
+    const updated = await adapter.setVisitorCredentials(visitor.id, {
+      username: u.username,
+      passwordHash: hashPassword(p.password),
+      passwordEnc: vcEncrypt(p.password)
+    });
+    setVisitorSessionCookie(req, res, updated ? updated.id : visitor.id);
+    const fresh = await adapter.getVisitorById(updated ? updated.id : visitor.id);
+    res.json({ ok: true, authed: true, visitor: publicVisitor(fresh || visitor) });
+  } catch (err) {
+    if (err && err.code === "DUP_USERNAME") {
+      return res.status(409).json({ ok: false, message: err.message });
+    }
+    console.error(err);
+    res.status(500).json({ ok: false, message: (err && err.message) || "server error" });
+  }
+});
+
+// POST /api/auth/visitor-login — เข้าสู่ระบบด้วย user/password (ทุกเครื่อง ทุกเครือข่าย)
+app.post("/api/auth/visitor-login", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const body = req.body || {};
+    const u = validateUsername(body.username);
+    if (!u.ok) return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อผู้ใช้" });
+    const password = String(body.password == null ? "" : body.password);
+    if (!password) return res.status(400).json({ ok: false, message: "กรุณากรอกรหัสผ่าน" });
+
+    const row = await adapter.findVisitorByUsername(u.username);
+    const cred = row ? await adapter.getVisitorCredentials(row.id) : null;
+    if (!cred || !cred.password_hash || !verifyPassword(password, cred.password_hash)) {
+      return res.status(401).json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
+    setVisitorSessionCookie(req, res, row.id);
+    // ผูกเบราว์เซอร์นี้กับบัญชี เพื่อให้จำสถานะได้เร็วขึ้นในครั้งถัดไป
+    const ip = clientIp(req);
+    const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200);
+    try {
+      if (!row.device_id && deviceId) await adapter.updateVisitor(row.id, { device_id: deviceId });
+    } catch (e) {
+      console.warn("[auth] ผูกเบราว์เซอร์กับบัญชีไม่สำเร็จ:", e.message);
+    }
+    const fresh = await adapter.getVisitorById(row.id);
+    res.json({ ok: true, authed: true, visitor: publicVisitor(fresh || row) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// POST /api/auth/visitor-logout — ออกจากระบบ (ล้างทุกคุกกี้ผู้ใช้)
+app.post("/api/auth/visitor-logout", (req, res) => {
+  clearVisitorSessionCookie(req, res);
+  clearVisitorTokenCookie(req, res);
+  res.json({ ok: true });
 });
 
 // GET /api/admin/visitors — รายการผู้ใช้ภายนอกทั้งหมด
@@ -681,7 +1017,22 @@ app.get("/api/admin/visitors", async (req, res) => {
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const visitors = await adapter.listVisitors();
+    const rows = await adapter.listVisitors();
+    // ไม่ส่งข้อมูลลับ (รหัสผ่าน/โทเคน) ไปที่หน้าจอหลังบ้าน
+    const visitors = rows.map(function (v) {
+      return {
+        id: v.id,
+        name: v.name || "",
+        position: v.position || "",
+        ip: v.ip || "",
+        ticket_count: v.ticket_count || 0,
+        last_seen_at: v.last_seen_at,
+        created_at: v.created_at,
+        username: v.username || "",
+        hasCredentials: !!v.credentials_at,
+        credentials_at: v.credentials_at || null
+      };
+    });
     res.json({ ok: true, visitors });
   } catch (err) {
     console.error(err);
@@ -704,7 +1055,7 @@ app.get("/api/admin/visitors/:id/ips", async (req, res) => {
   }
 });
 
-// PATCH /api/admin/visitors/:id — แก้ชื่อ / ตำแหน่ง
+// PATCH /api/admin/visitors/:id — แก้ชื่อ / ตำแหน่ง / ชื่อผู้ใช้
 app.patch("/api/admin/visitors/:id", async (req, res) => {
   try {
     const adapter = db.getAdapter();
@@ -716,12 +1067,60 @@ app.patch("/api/admin/visitors/:id", async (req, res) => {
     const patch = {};
     if (body.name !== undefined) patch.name = String(body.name).trim();
     if (body.position !== undefined) patch.position = String(body.position).trim();
+
+    // เปลี่ยนชื่อผู้ใช้ (ต้องผ่านการตรวจรูปแบบ + กรณีซ้ำ)
+    if (body.username !== undefined && String(body.username).trim()) {
+      const uv = validateUsername(body.username);
+      if (!uv.ok) return res.status(400).json({ ok: false, message: uv.message });
+      const dup = await adapter.findVisitorByUsername(uv.username);
+      if (dup && Number(dup.id) !== id) {
+        return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว" });
+      }
+      await adapter.renameVisitor(id, uv.username);
+    }
+
     if (!Object.keys(patch).length) {
-      return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลที่แก้" });
+      // เปลี่ยนแค่ชื่อผู้ใช้
+      const row = await adapter.getVisitorById(id);
+      if (!row) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+      return res.json({ ok: true, visitor: publicVisitor(row) });
     }
     const visitor = await adapter.updateVisitor(id, patch);
     if (!visitor) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
-    res.json({ ok: true, visitor });
+    res.json({ ok: true, visitor: publicVisitor(visitor) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// POST /api/admin/visitors/:id/reset-password — แอดมินสุ่มรหัสผ่านใหม่ให้ผู้ใช้ (คืนค่าเป็นข้อความ 1 ครั้ง)
+app.post("/api/admin/visitors/:id/reset-password", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    const id = Number(req.params.id);
+    const row = await adapter.getVisitorById(id);
+    if (!row) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+    if (!row.username) {
+      return res.status(400).json({ ok: false, message: "ผู้ใช้นี้ยังไม่ได้ตั้งชื่อผู้ใช้ ต้องให้เขาสมัครก่อนจึงจะรีเซ็ตรหัสผ่านได้" });
+    }
+    const body = req.body || {};
+    const next = body.password !== undefined ? validatePassword(body.password) : { ok: true, password: randomPassword() };
+    if (!next.ok) return res.status(400).json({ ok: false, message: next.message });
+    await adapter.setVisitorPassword(id, {
+      passwordHash: hashPassword(next.password),
+      passwordEnc: vcEncrypt(next.password)
+    });
+    res.json({
+      ok: true,
+      id,
+      username: row.username,
+      password: next.password,
+      message: "รีเซ็ตรหัสผ่านให้ " + (row.name || "ผู้ใช้") + " แล้ว (ส่งต่อให้ผู้ใช้ทันที ระบบจะไม่แสดงซ้ำ)"
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -1614,9 +2013,14 @@ app.get("/api/tickets/mine", async (req, res) => {
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const visitor = await resolveVisitor(req);
+    const visitor = await requireVisitorSession(req);
     if (!visitor) {
-      return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน กรุณากรอกชื่อและตำแหน่งก่อน" });
+      return res.status(401).json({
+        ok: false,
+        needsCredentials: true,
+        registered: !!(await resolveVisitor(req)),
+        message: "กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านก่อนดูประวัติ"
+      });
     }
     const reporterName = (visitor.name + (visitor.position ? (" · " + visitor.position) : "")).trim();
     let tickets = await adapter.listMyTickets(visitor.id, reporterName);
@@ -1662,6 +2066,17 @@ app.get("/api/tickets/:ticketNo/status", async (req, res) => {
     const ticketNo = String(req.params.ticketNo || "").trim();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    // ต้องเป็นเจ้าของใบแจ้งซ่อม (หรือฝ่าย IT) — ห้ามเปิดดูของคนอื่นโดยเดาหมายเลข
+    if (!isAdminAuthed(req) && !isUserAuthed(req)) {
+      const visitor = await requireVisitorSession(req);
+      if (!visitor) {
+        return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อนดูสถานะงาน" });
+      }
+      const owner = await adapter.getTicketOwner(ticketNo);
+      if (!owner || String(owner.visitor_id || "") !== String(visitor.id)) {
+        return res.status(404).json({ ok: false, message: "ไม่พบงาน " + ticketNo });
+      }
     }
     
     if (adapter.mode === "supabase") {
@@ -1864,22 +2279,9 @@ app.post("/api/tickets/:ticketNo/status", suOrAdminTicketPerm, async (req, res) 
     
     if (status === "working") {
       try {
-        let dev;
-        if (adapter.mode === "supabase") {
-          dev = await adapter.supabase
-            .from("user_devices")
-            .select("ip")
-            .eq("last_ticket_no", data.ticket_no)
-            .maybeSingle();
-        } else {
-          const result = await adapter.pool.query(
-            `SELECT ip FROM user_devices WHERE last_ticket_no = $1`,
-            [data.ticket_no]
-          );
-          dev = { data: result.rows[0] };
-        }
-        if (dev && dev.data && dev.data.ip) {
-          notif.pushToIp(dev.data.ip, {
+        const owner = await db.getAdapter().getTicketOwner(data.ticket_no);
+        if (owner && owner.visitor_id) {
+          notif.pushToVisitor(owner.visitor_id, {
             type: "approved",
             ticketNo: data.ticket_no,
             at: data.approved_at || approvedAt
@@ -2100,11 +2502,232 @@ app.post("/api/admin/migrate/verify", async (req, res) => {
 });
 
 // ============================================================
+// ---------- ตั้งค่าฐานข้อมูล (หน้า admin-db.html) ----------
+// ============================================================
+
+// เขียน/แก้ค่าใน .env (กันดักค่าเดิมซ้ำ)
+function envUpsertSync(values) {
+  const envPath = path.join(__dirname, ".env");
+  let text = fsSync.existsSync(envPath) ? fsSync.readFileSync(envPath, "utf8") : "";
+  for (const key of Object.keys(values)) {
+    const re = new RegExp("^" + key + "=.*$", "m");
+    const line = key + "=" + String(values[key]);
+    if (re.test(text)) {
+      text = text.replace(re, line);
+    } else {
+      text = (text.endsWith("\n") || text === "" ? text : text + "\n") + line + "\n";
+    }
+  }
+  fsSync.writeFileSync(envPath, text, "utf8");
+}
+
+// อ่านสถานะ + ค่าปัจจุบันของทั้ง Supabase และ PGSQL
+app.get("/api/admin/db-config", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+
+    const supa = {
+      url: config.SUPABASE_URL || "",
+      secretKey: config.SUPABASE_SECRET_KEY || "",
+      serviceRoleKey: config.SUPABASE_SERVICE_ROLE_KEY || "",
+      connected: false,
+      message: "ยังไม่ได้ตั้งค่า Supabase ใน .env",
+    };
+    if (adapter.ready) {
+      const t = await adapter.testConnection();
+      supa.connected = !!t.ok;
+      supa.message = t.message || "";
+    }
+
+    const pg = {
+      configured: migrate.hasPgConfig(),
+      host: config.PG_HOST || "",
+      port: String(config.PG_PORT || "5432"),
+      database: config.PG_DATABASE || "",
+      user: config.PG_USER || "",
+      password: config.PG_PASSWORD || "",
+      ssl: String(config.PG_SSL) === "true",
+      connected: false,
+      message: "ยังไม่ได้ตั้งค่า PGSQL (กดแก้ไขฐานข้อมูลเพื่อตั้ง)",
+      tableCount: 0,
+      tables: [],
+    };
+
+    if (pg.configured) {
+      const { Pool } = require("pg");
+      const pool = new Pool({ ...migrate.getPgOptionsFromConfig(), connectionTimeoutMillis: 6000, max: 2 });
+      try {
+        await pool.query("SELECT 1");
+        pg.connected = true;
+        pg.message = "เชื่อมต่อ PostgreSQL สำเร็จ";
+        const tables = await migrate.listPgTables(pool);
+        pg.tables = tables;
+        pg.tableCount = tables.length;
+      } catch (e) {
+        pg.connected = false;
+        pg.message = "เชื่อมต่อ PostgreSQL ล้มเหลว: " + e.message;
+      } finally {
+        await pool.end().catch(() => {});
+      }
+    }
+
+    res.json({ ok: true, supabase: supa, pg, lastSync: migrate.getLastSync() });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ยืนยันรหัสผ่านก่อนแก้ไข (รหัส wan2024* = PASSWORD_NOTE_PASS)
+app.post("/api/admin/db-config/verify-pass", async (req, res) => {
+  try {
+    const pass = String((req.body || {}).password || "");
+    if (pass === config.PASSWORD_NOTE_PASS) {
+      return res.json({ ok: true, message: "รหัสผ่านถูกต้อง" });
+    }
+    return res.json({ ok: false, message: "รหัสผ่านไม่ถูกต้อง" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ยืนยันตัวบุคคลสำหรับเข้าหน้าระบบฐานข้อมูล (admin / wan2024)
+app.post("/api/admin/db-config/verify-admin", async (req, res) => {
+  try {
+    const user = String(((req.body || {}).user || "")).trim();
+    const pass = String((req.body || {}).pass || "");
+    if (user === config.ADMIN_USER && pass === config.ADMIN_PASS) {
+      return res.json({ ok: true, message: "ยืนยันตัวตนสำเร็จ" });
+    }
+    return res.json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// บันทึกค่าฐานข้อมูล PGSQL (ต้องรหัสผ่านถูกก่อน) -> ทดสอบจริง -> เขียน .env
+app.post("/api/admin/db-config/save-pg", async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (String(body.password || "") !== config.PASSWORD_NOTE_PASS) {
+      return res.status(403).json({ ok: false, message: "รหัสผ่านไม่ถูกต้อง" });
+    }
+
+    const host = String(body.host || "").trim();
+    const database = String(body.database || "").trim();
+    const user = String(body.user || "").trim();
+    const pgpass = String(body.pgpass || "");
+    const port = String(body.port || "5432").trim();
+    const ssl = body.ssl === true || body.ssl === "true";
+
+    if (!host || !database || !user) {
+      return res.status(400).json({ ok: false, message: "กรุณาระบุ Host, Database และ User" });
+    }
+
+    const { Pool } = require("pg");
+    const pool = new Pool({
+      host,
+      port: Number(port) || 5432,
+      database,
+      user,
+      password: pgpass,
+      ssl: ssl ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: 6000,
+      max: 2,
+    });
+
+    let tables = [];
+    let tableCount = 0;
+    try {
+      await pool.query("SELECT 1");
+      tables = await migrate.listPgTables(pool);
+      tableCount = tables.length;
+    } catch (e) {
+      await pool.end().catch(() => {});
+      return res.json({ ok: false, message: "ไม่สามารถเชื่อมต่อได้: " + e.message });
+    }
+    await pool.end().catch(() => {});
+
+    const updates = {
+      PG_HOST: host,
+      PG_PORT: String(Number(port) || 5432),
+      PG_DATABASE: database,
+      PG_USER: user,
+      PG_PASSWORD: pgpass,
+      PG_SSL: ssl ? "true" : "false",
+    };
+
+    let persisted = true;
+    try {
+      envUpsertSync(updates);
+      config.PG_HOST = updates.PG_HOST;
+      config.PG_PORT = updates.PG_PORT;
+      config.PG_DATABASE = updates.PG_DATABASE;
+      config.PG_USER = updates.PG_USER;
+      config.PG_PASSWORD = updates.PG_PASSWORD;
+      config.PG_SSL = updates.PG_SSL;
+    } catch (e) {
+      persisted = false;
+    }
+
+    res.json({
+      ok: true,
+      persisted,
+      message: "เชื่อมต่อฐานข้อมูลได้ถูกต้อง" + (persisted ? "" : " (แต่โฮสต์นี้บันทึกถาวรลง .env ไม่ได้)"),
+      tableCount,
+      tables,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ถ่ายโอนข้อมูล Supabase → PGSQL (ใช้ค่าที่บันทึกไว้)
+app.post("/api/admin/db-sync/start", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (adapter.mode !== "supabase" || !adapter.ready) {
+      return res.status(400).json({ ok: false, message: "ต้องเชื่อมต่อ Supabase ก่อนถึงจะถ่ายโอนได้" });
+    }
+    if (!migrate.hasPgConfig()) {
+      return res.status(400).json({ ok: false, message: "ยังไม่ได้ตั้งค่า PGSQL (กดบันทึกก่อน)" });
+    }
+    const jobId = migrate.runSyncFromConfig();
+    res.json({ ok: true, jobId, message: "เริ่มถ่ายโอนข้อมูลแล้ว" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// สถานะการถ่ายโอนรอบล่าสุด
+app.get("/api/admin/db-sync/status", async (req, res) => {
+  try {
+    res.json({ ok: true, lastSync: migrate.getLastSync() });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ============================================================
 
 if (process.env.VERCEL) {
   module.exports = app;
 } else {
   app.listen(config.PORT, () => {
     console.log(`Server เริ่มที่ http://localhost:${config.PORT}`);
+    // เปิดคอม/เปิดเซิร์ฟเวอร์ -> ถ้ามี PGSQL ตั้งไว้ ให้ถ่ายข้อมูลมาให้อัตโนมัติ
+    try {
+      if (migrate.hasPgConfig() && db.getAdapter().ready) {
+        const jobId = migrate.runSyncFromConfig();
+        console.log(`[auto-sync] เริ่มถ่ายโอนข้อมูล Supabase → PostgreSQL (job=${jobId})`);
+      }
+    } catch (err) {
+      console.error("[auto-sync] เกิดข้อผิดพลาด:", err.message);
+    }
   });
 }

@@ -243,6 +243,23 @@ async function listMyTickets(visitorId, reporterName) {
   return [];
 }
 
+// เจ้าของใบแจ้งซ่อม (ใช้ส่งแจ้งเตือนแบบผูกบัญชี แทนการผูก IP)
+async function getTicketOwner(ticketNo) {
+  if (!ready || !ticketNo) return null;
+  try {
+    const { data, error } = await supabase
+      .from("tickets")
+      .select("id, ticket_no, visitor_id, reporter_name")
+      .eq("ticket_no", ticketNo)
+      .limit(1);
+    if (error) throw error;
+    return (data && data[0]) || null;
+  } catch (err) {
+    console.warn("[Notify] โหลดเจ้าของใบแจ้งซ่อมไม่สำเร็จ:", err.message);
+    return null;
+  }
+}
+
 async function recordDevice({ ip, ticketNo }) {
   if (!ready || !ip) return;
   try {
@@ -901,27 +918,80 @@ async function touchVisitorIps(visitorId, ip) {
   }
 }
 
-// หา visitor จาก cookie token ก่อน ถ้าไม่เจอค่อยหาจาก IP
-async function findVisitor({ ip, token }) {
+// ---------- คอลัมน์บัญชีผู้ใช้ (ตรวจครั้งเดียว แล้วจำไว้) ----------
+const VISITOR_BASE_COLS = "id, name, position, ip, token, device_id, ticket_count, last_seen_at, created_at";
+const VISITOR_FULL_COLS = VISITOR_BASE_COLS + ", username, credentials_at";
+let visitorHasCredCols = null;
+
+async function ensureVisitorCredCols() {
+  if (visitorHasCredCols !== null) return visitorHasCredCols;
+  if (!ready) return (visitorHasCredCols = false);
+  try {
+    const { error } = await supabase.from("external_visitors").select(VISITOR_FULL_COLS).limit(1);
+    visitorHasCredCols = !error;
+    if (error) {
+      console.warn("[Visitors] ยังไม่ได้รัน supabase-migrate-account.sql — ระบบบัญชีผู้ใช้จะใช้ไม่ได้:", error.message);
+    }
+  } catch (err) {
+    visitorHasCredCols = false;
+  }
+  return visitorHasCredCols;
+}
+
+function pickVisitorCols(hasCreds) {
+  return hasCreds ? VISITOR_FULL_COLS : VISITOR_BASE_COLS;
+}
+
+// หา visitor จาก session/cookie/เลขเครื่อง — ใช้ IP เป็นตัวสำรองเฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน
+// matchedBy: "session" = เข้าสู่ระบบแล้ว (ไม่แตะ ip/device_id), "token"/"device", "ip" = ตัวสำรอง
+async function findVisitor({ ip, token, deviceId, allowIpFallback = true, ipFallbackHours = 12 }) {
   if (!ready) return null;
   let row = null;
+  let matchedBy = "";
   try {
+    const hasCreds = await ensureVisitorCredCols();
+    const cols = pickVisitorCols(hasCreds);
     if (token) {
-      const { data } = await supabase.from("external_visitors").select("*").eq("token", token).maybeSingle();
-      row = data;
+      const { data } = await supabase.from("external_visitors").select(cols).eq("token", token).limit(1);
+      row = (data && data[0]) || null;
+      if (row) matchedBy = "token";
     }
-    if (!row && ip) {
-      const { data } = await supabase.from("external_visitors").select("*").eq("ip", ip).order("last_seen_at", { ascending: false }).limit(1);
-      row = data && data[0];
+    // เลขเครื่อง: ถ้าไม่มี cookie ให้ยืนยันด้วยอุปกรณ์เดิมแทน (กันเปลี่ยนเน็ตแล้วคิดว่าเป็นคนใหม่)
+    if (!row && deviceId) {
+      const { data } = await supabase.from("external_visitors").select(cols).eq("device_id", deviceId).order("last_seen_at", { ascending: false }).limit(1);
+      row = (data && data[0]) || null;
+      if (row) matchedBy = "device";
     }
-    if (row && ip && row.ip !== ip) {
-      // คนเดียวกันย้ายเครือข่าย → อัปเดตเป็น IP ปัจจุบัน
-      await supabase.from("external_visitors").update({ ip, last_seen_at: new Date().toISOString() }).eq("id", row.id);
-      row.ip = ip;
-    } else if (row) {
-      await supabase.from("external_visitors").update({ last_seen_at: new Date().toISOString() }).eq("id", row.id);
+    // IP: ใช้ได้เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้ง user/password และเพิ่งใช้งานภายในชั่วโมงที่กำหนด
+    if (!row && ip && allowIpFallback) {
+      const since = new Date(Date.now() - (Number(ipFallbackHours) || 12) * 3600 * 1000).toISOString();
+      const { data } = await supabase
+        .from("external_visitors")
+        .select(cols)
+        .eq("ip", ip)
+        .gt("last_seen_at", since)
+        .order("last_seen_at", { ascending: false })
+        .limit(1);
+      if (hasCreds) {
+        // กรองซ้ำอีกชั้น: แถวที่ตั้งรหัสผ่านแล้วห้ามจับคู่ด้วย IP เด็ดขาด
+        row = ((data && data[0]) || null);
+        if (row && row.credentials_at) row = null;
+      } else {
+        row = (data && data[0]) || null;
+      }
+      if (row) matchedBy = "ip";
     }
-    if (row && ip) await touchVisitorIps(row.id, ip);
+    if (!row) return null;
+
+    const now = new Date().toISOString();
+    const patch = { last_seen_at: now };
+    // เลขเครื่อง: เติมให้ครั้งแรกเท่านั้น ไม่เขียนทับของเดิม (กันเครื่องอื่นมาแย่ง device_id)
+    if (matchedBy !== "session" && deviceId && !row.device_id) patch.device_id = deviceId;
+    // IP: เก็บไว้แสดงในหลังบ้านเท่านั้น (ไม่ใช่ตัวระบุตัวตน) — ห้ามเขียนทับตอนเข้าสู่ระบบผ่าน session
+    if (matchedBy !== "session" && ip && row.ip !== ip) patch.ip = ip;
+    await supabase.from("external_visitors").update(patch).eq("id", row.id);
+    Object.assign(row, patch);
+    if (ip) await touchVisitorIps(row.id, ip);
     return row;
   } catch (err) {
     console.warn("[Visitors] ค้นหาผู้ใช้ไม่สำเร็จ (ต้องรัน SQL ตาราง external_visitors):", err.message);
@@ -929,8 +999,125 @@ async function findVisitor({ ip, token }) {
   }
 }
 
-async function createVisitor({ name, position, ip, token }) {
+async function getVisitorById(id) {
+  if (!ready || !id) return null;
+  try {
+    const cols = pickVisitorCols(await ensureVisitorCredCols());
+    const { data } = await supabase.from("external_visitors").select(cols).eq("id", id).limit(1);
+    return (data && data[0]) || null;
+  } catch (err) {
+    console.warn("[Visitors] โหลดผู้ใช้ไม่สำเร็จ:", err.message);
+    return null;
+  }
+}
+
+async function findVisitorByUsername(username) {
+  if (!ready || !username) return null;
+  const want = String(username).trim().toLowerCase();
+  if (!want) return null;
+  try {
+    const cols = pickVisitorCols(await ensureVisitorCredCols());
+    const { data, error } = await supabase.from("external_visitors").select(cols).limit(1000);
+    if (error) throw error;
+    const hit = (data || []).find((r) => String(r.username || "").trim().toLowerCase() === want);
+    if (hit) return hit;
+    if (!/username/.test(error ? error.message : "")) return null;
+    return null;
+  } catch (err) {
+    console.warn("[Visitors] ค้นหาจากชื่อผู้ใช้ไม่สำเร็จ:", err.message);
+    return null;
+  }
+}
+
+// ตั้งบัญชีครั้งแรก (ขั้นที่ 2 ของการสมัคร) — username ต้องไม่ซ้ำ
+async function setVisitorCredentials(id, { username, passwordHash, passwordEnc }) {
+  if (!ready || !id) return null;
+  if (!(await ensureVisitorCredCols())) {
+    throw new Error("ระบบบัญชีผู้ใช้ยังไม่พร้อม: กรุณารันไฟล์ supabase-migrate-account.sql ใน Supabase");
+  }
+  const patch = {
+    username: String(username || "").trim(),
+    password_hash: passwordHash || "",
+    password_enc: passwordEnc || "",
+    credentials_at: new Date().toISOString()
+  };
+  const { data, error } = await supabase
+    .from("external_visitors")
+    .update(patch)
+    .eq("id", id)
+    .select(VISITOR_FULL_COLS)
+    .single();
+  if (error) {
+    if (/username|duplicate|unique|23505/i.test(String(error.message || ""))) {
+      const dup = new Error("ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น");
+      dup.code = "DUP_USERNAME";
+      throw dup;
+    }
+    throw error;
+  }
+  return data;
+}
+
+// เปลี่ยนรหัสผ่าน (ผู้ใช้เปลี่ยนเอง หรือแอดมินรีเซ็ตให้)
+async function setVisitorPassword(id, { passwordHash, passwordEnc }) {
+  if (!ready || !id) return null;
+  if (!(await ensureVisitorCredCols())) {
+    throw new Error("ระบบบัญชีผู้ใช้ยังไม่พร้อม: กรุณารันไฟล์ supabase-migrate-account.sql ใน Supabase");
+  }
+  const { data, error } = await supabase
+    .from("external_visitors")
+    .update({ password_hash: passwordHash || "", password_enc: passwordEnc || "" })
+    .eq("id", id)
+    .select(VISITOR_FULL_COLS)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// เปลี่ยนชื่อผู้ใช้ (ต้องไม่ซ้ำ)
+async function renameVisitor(id, username) {
+  if (!ready || !id) return null;
+  if (!(await ensureVisitorCredCols())) {
+    throw new Error("ระบบบัญชีผู้ใช้ยังไม่พร้อม: กรุณารันไฟล์ supabase-migrate-account.sql ใน Supabase");
+  }
+  const { data, error } = await supabase
+    .from("external_visitors")
+    .update({ username: String(username || "").trim() })
+    .eq("id", id)
+    .select(VISITOR_FULL_COLS)
+    .single();
+  if (error) {
+    if (/username|duplicate|unique|23505/i.test(String(error.message || ""))) {
+      const dup = new Error("ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น");
+      dup.code = "DUP_USERNAME";
+      throw dup;
+    }
+    throw error;
+  }
+  return data;
+}
+
+// ดึงเฉพาะข้อมูลลับของผู้ใช้ (ไว้ตรวจรหัสผ่าน / ถอดแสดงในหน้าตั้งค่า)
+async function getVisitorCredentials(id) {
+  if (!ready || !id) return null;
+  if (!(await ensureVisitorCredCols())) return null;
+  try {
+    const { data, error } = await supabase
+      .from("external_visitors")
+      .select("id, username, password_hash, password_enc, credentials_at")
+      .eq("id", id)
+      .limit(1);
+    if (error) throw error;
+    return (data && data[0]) || null;
+  } catch (err) {
+    console.warn("[Visitors] โหลดข้อมูลบัญชีไม่สำเร็จ:", err.message);
+    return null;
+  }
+}
+
+async function createVisitor({ name, position, ip, token, deviceId }) {
   if (!ready) throw new Error("ยังไม่ได้ตั้งค่า Supabase ใน .env");
+  const cols = pickVisitorCols(await ensureVisitorCredCols());
   const { data, error } = await supabase
     .from("external_visitors")
     .insert({
@@ -938,10 +1125,11 @@ async function createVisitor({ name, position, ip, token }) {
       position: position || "",
       ip: ip || "",
       token: token || "",
+      device_id: deviceId || "",
       ticket_count: 0,
       last_seen_at: new Date().toISOString()
     })
-    .select("id, name, position, ip, token, ticket_count, last_seen_at, created_at")
+    .select(cols)
     .single();
   if (error) throw error;
   if (ip) await touchVisitorIps(data.id, ip);
@@ -949,9 +1137,12 @@ async function createVisitor({ name, position, ip, token }) {
 }
 
 async function listVisitors(limit = 300) {
+  const cols = await ensureVisitorCredCols()
+    ? "id, name, position, ip, device_id, ticket_count, last_seen_at, created_at, username, credentials_at"
+    : VISITOR_BASE_COLS;
   const { data, error } = await supabase
     .from("external_visitors")
-    .select("*")
+    .select(cols)
     .order("last_seen_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -959,11 +1150,12 @@ async function listVisitors(limit = 300) {
 }
 
 async function updateVisitor(id, patch) {
+  const cols = pickVisitorCols(await ensureVisitorCredCols());
   const { data, error } = await supabase
     .from("external_visitors")
     .update(patch)
     .eq("id", id)
-    .select("id, name, position, ip, token, ticket_count, last_seen_at, created_at")
+    .select(cols)
     .single();
   if (error) throw error;
   return data;
@@ -998,4 +1190,4 @@ async function bumpVisitorTicket(id) {
   }
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets };
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };

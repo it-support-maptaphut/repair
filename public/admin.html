@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="no-zoom.js"></script>
   <title>ระบบแจ้งซ่อม IT — จัดการงาน</title>
   <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -188,6 +189,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               <span>ตั้งค่าสิทธิ์การเข้าใช้งานระบบ</span>
             </button>
+            <a class="side-btn" data-perm="settings" href="/admin-db.html" target="_blank" rel="noopener" title="ระบบฐานข้อมูล (Supabase + PGSQL) — เปิดในแท็บใหม่" style="text-decoration:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              <span>ระบบฐานข้อมูล</span>
+            </a>
           </div>
         </div>
       </div>
@@ -289,8 +294,8 @@
     <section id="visitorsView" hidden>
       <div class="devices-toolbar" style="align-items:flex-start;gap:14px">
         <div>
-          <h3 class="tab-title" style="margin:0 0 4px">ระบบจดจำผู้ใช้งานภายนอก</h3>
-          <p class="tf-field-hint" style="margin:0">ผู้ใช้ที่กรอก ชื่อ + ตำแหน่ง ครั้งแรกเพื่อยืนยันตัวตนก่อนแจ้งซ่อม — ระบบจำไว้ผ่าน IP / เบราว์เซอร์ ครั้งต่อไปไม่ต้องกรอกใหม่</p>
+          <h3 class="tab-title" style="margin:0 0 4px">ระบบบัญชีผู้ใช้งานภายนอก</h3>
+          <p class="tf-field-hint" style="margin:0">ผู้ใช้สมัครบัญชีด้วยชื่อผู้ใช้ + รหัสผ่าน เข้าใช้งานได้ทุกเครื่องทุกเครือข่าย — ผู้ใช้ที่ยังไม่ตั้งบัญชีจะยังเข้าถึงระบบไม่ได้</p>
         </div>
       </div>
       <div class="table-wrap">
@@ -299,6 +304,7 @@
             <tr>
               <th>ชื่อ</th>
               <th>ตำแหน่ง</th>
+              <th>ชื่อผู้ใช้</th>
               <th>IP ล่าสุด</th>
               <th style="text-align:right">ครั้งที่แจ้ง</th>
               <th>เข้าใช้งานล่าสุด</th>
@@ -309,7 +315,7 @@
         </table>
       </div>
       <div id="visitorsEmpty" class="empty hidden">
-        <p class="users-empty-hint">ยังไม่มีผู้ใช้ภายนอกยืนยันตัวตน — เมื่อผู้ใช้กรอก ชื่อ + ตำแหน่ง ที่หน้าแจ้งซ่อมครั้งแรก รายการจะปรากฏที่นี่</p>
+        <p class="users-empty-hint">ยังไม่มีผู้ใช้ภายนอกสมัครบัญชี — เมื่อผู้ใช้สมัครที่หน้าแจ้งซ่อม รายการจะปรากฏที่นี่</p>
       </div>
     </section>
 
@@ -326,10 +332,35 @@
             <label>ตำแหน่ง</label>
             <input id="visitorEditPosition" type="text" />
           </div>
+          <div class="form-field">
+            <label>ชื่อผู้ใช้ (username)</label>
+            <input id="visitorEditUsername" type="text" placeholder="a-z 0-9 . _ - (4-30 ตัว)" />
+            <p class="tf-field-hint">เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน</p>
+          </div>
           <p class="tf-field-hint" id="visitorEditIpInfo"></p>
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeVisitorEdit()">ยกเลิก</button>
             <button class="btn btn-primary" type="button" onclick="saveVisitorEdit()">บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-mask hidden" id="visitorResetMask" role="dialog" aria-modal="true" aria-label="รีเซ็ตรหัสผ่านผู้ใช้" onclick="if(event.target===this) closeVisitorReset()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorReset()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title">รีเซ็ตรหัสผ่าน</h3>
+          <p class="tf-field-hint" id="visitorResetInfo"></p>
+          <div class="form-field">
+            <label>รหัสผ่านใหม่</label>
+            <input id="visitorResetPassword" type="text" placeholder="อย่างน้อย 6 ตัวอักษร ไม่มีช่องว่าง" />
+            <p class="tf-field-hint">กดปุ่มด้านล่างเพื่อสร้างรหัสผ่านแบบสุ่มให้อัตโนมัติ แล้วส่งให้ผู้ใช้ทางช่องทางที่สะดวก</p>
+          </div>
+          <div class="modal-actions" style="flex-wrap:wrap">
+            <button class="btn btn-ghost" type="button" onclick="genVisitorPassword()">สร้างรหัสผ่านให้</button>
+            <button class="btn btn-ghost" onclick="closeVisitorReset()">ยกเลิก</button>
+            <button class="btn btn-primary" type="button" onclick="saveVisitorReset()">บันทึกรหัสผ่าน</button>
           </div>
         </div>
       </div>
@@ -2402,15 +2433,20 @@
       if (empty) empty.classList.add("hidden");
       visitors.forEach(function (v) {
         var tr = document.createElement("tr");
+        var hasCred = !!v.username;
         tr.innerHTML =
           "<td>" + esc(v.name || "-") + "</td>" +
           "<td>" + esc(v.position || "-") + "</td>" +
+          "<td>" + (hasCred
+            ? "<code style='font-size:12px'>" + esc(v.username) + "</code>"
+            : "<span style='color:var(--muted);font-size:12px'>ยังไม่ตั้งบัญชี</span>") + "</td>" +
           "<td><code style='font-size:12px'>" + esc(v.ip || "-") + "</code></td>" +
           "<td style='text-align:right'>" + (v.ticket_count || 0) + "</td>" +
           "<td>" + esc(fmtVisitorDate(v.last_seen_at)) + "</td>" +
           "<td style='text-align:right;white-space:nowrap'>" +
             "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button> " +
             "<button class='btn btn-ghost btn-sm' type='button' data-vedit='" + (v.id || "") + "'>แก้ไข</button> " +
+            (hasCred ? "<button class='btn btn-ghost btn-sm' type='button' data-vreset='" + (v.id || "") + "'>รีเซ็ตรหัสผ่าน</button> " : "") +
             "<button class='btn btn-ghost btn-sm' type='button' data-vdel='" + (v.id || "") + "' style='color:var(--red)'>ลบ</button>" +
           "</td>";
         body.appendChild(tr);
@@ -2422,6 +2458,8 @@
       if (ipBtn) { showVisitorIps(ipBtn.getAttribute("data-vip")); return; }
       var editBtn = e.target.closest("[data-vedit]");
       if (editBtn) { openVisitorEdit(editBtn.getAttribute("data-vedit")); return; }
+      var resetBtn = e.target.closest("[data-vreset]");
+      if (resetBtn) { openVisitorReset(resetBtn.getAttribute("data-vreset")); return; }
       var delBtn = e.target.closest("[data-vdel]");
       if (delBtn) { deleteVisitor(delBtn.getAttribute("data-vdel")); }
     });
@@ -2432,8 +2470,15 @@
       visitorEditId = v.id;
       document.getElementById("visitorEditName").value = v.name || "";
       document.getElementById("visitorEditPosition").value = v.position || "";
+      var un = document.getElementById("visitorEditUsername");
+      if (un) un.value = "";
       var ipInfo = document.getElementById("visitorEditIpInfo");
-      if (ipInfo) ipInfo.textContent = "IP ปัจจุบัน: " + (v.ip || "-") + " · แจ้งซ่อม " + (v.ticket_count || 0) + " ครั้ง · เข้าครั้งแรก " + fmtVisitorDate(v.created_at);
+      if (ipInfo) {
+        ipInfo.textContent = "บัญชี: " + (v.username || "ยังไม่ตั้ง") +
+          " · IP ปัจจุบัน: " + (v.ip || "-") +
+          " · แจ้งซ่อม " + (v.ticket_count || 0) + " ครั้ง" +
+          " · เข้าครั้งแรก " + fmtVisitorDate(v.created_at);
+      }
       document.getElementById("visitorEditMask").classList.remove("hidden");
     }
 
@@ -2444,11 +2489,14 @@
     function saveVisitorEdit() {
       var name = document.getElementById("visitorEditName").value.trim();
       var position = document.getElementById("visitorEditPosition").value.trim();
+      var username = document.getElementById("visitorEditUsername") ? document.getElementById("visitorEditUsername").value.trim() : "";
       if (!name) { toast("กรุณากรอกชื่อ"); return; }
+      var body = { name: name, position: position };
+      if (username) body.username = username;
       fetch("/api/admin/visitors/" + visitorEditId, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name, position: position })
+        body: JSON.stringify(body)
       })
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -2458,6 +2506,55 @@
           loadVisitors();
         })
         .catch(function () { toast("แก้ไขไม่สำเร็จ กรุณาลองใหม่"); });
+    }
+
+    // ---------- รีเซ็ตรหัสผ่านให้ผู้ใช้ ----------
+    var visitorResetId = null;
+
+    function openVisitorReset(id) {
+      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
+      if (!v) return;
+      visitorResetId = v.id;
+      var info = document.getElementById("visitorResetInfo");
+      if (info) {
+        info.textContent = (v.name || "-") + " (" + (v.position || "-") + ") · ชื่อผู้ใช้: " + (v.username || "-");
+      }
+      var input = document.getElementById("visitorResetPassword");
+      if (input) { input.value = ""; }
+      document.getElementById("visitorResetMask").classList.remove("hidden");
+    }
+
+    function closeVisitorReset() {
+      document.getElementById("visitorResetMask").classList.add("hidden");
+    }
+
+    function genVisitorPassword() {
+      var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+      var out = "";
+      for (var i = 0; i < 10; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
+      var input = document.getElementById("visitorResetPassword");
+      if (input) { input.value = out; input.select(); }
+      return out;
+    }
+
+    function saveVisitorReset() {
+      var input = document.getElementById("visitorResetPassword");
+      var password = input ? input.value : "";
+      if (!password || password.length < 6) { toast("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"); return; }
+      if (/\s/.test(password)) { toast("รหัสผ่านห้ามมีช่องว่าง"); return; }
+      fetch("/api/admin/visitors/" + visitorResetId + "/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: password })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) { toast(d.message || "รีเซ็ตรหัสผ่านไม่สำเร็จ"); return; }
+          closeVisitorReset();
+          toast("รีเซ็ตรหัสผ่านให้ " + (d.username || "ผู้ใช้") + " แล้ว — รหัสผ่านใหม่: " + d.password);
+          loadVisitors();
+        })
+        .catch(function () { toast("รีเซ็ตรหัสผ่านไม่สำเร็จ กรุณาลองใหม่"); });
     }
 
     function deleteVisitor(id) {

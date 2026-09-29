@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<script src="no-zoom.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0b7a43">
 <title>เข้าสู่ระบบ — Admin IT</title>
@@ -15,15 +16,28 @@
 <script src="splash.js" defer></script>
 <script src="loader.js"></script>
 <style>
+  /* หน้า login เต็มจอทุกขนาด (safe-area + รองรับ iPhone แบบมีตัดหู) */
+  html, body { height: 100%; }
   body.ticket-page.admin-login-page {
     min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 0;
+    overflow-y: auto;
+  }
+  .admin-login-wrap {
+    width: 100%;
+    max-width: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 22px;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px));
   }
-  .admin-login-wrap { width: 100%; max-width: 410px; }
   .admin-login-box {
+    width: 100%;
+    max-width: 410px;
     background: var(--tk-card);
     border: 1px solid var(--tk-line);
     border-radius: var(--tk-radius);
@@ -56,6 +70,23 @@
   .admin-login-btn:hover { box-shadow: 0 10px 26px rgba(11, 122, 67, 0.42); }
   .admin-login-btn:active { transform: scale(0.98); }
   .admin-login-btn:disabled { opacity: 0.65; cursor: default; }
+
+  /* มือถือ: ให้กล่อง login เต็มจอ 100% */
+  @media (max-width: 520px) {
+    .admin-login-wrap { padding: 0; align-items: stretch; }
+    .admin-login-box {
+      max-width: none;
+      min-height: 100vh;
+      min-height: 100dvh;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: calc(28px + env(safe-area-inset-top, 0px)) 22px calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+  }
   </style>
 <!-- ธีมระบบ: 90S (กำหนดเป็นธีมหลักของระบบ) -->
   <link rel="stylesheet" href="admin-retro.css">

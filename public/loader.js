@@ -62,9 +62,43 @@
 
   var origFetch = window.fetch;
   if (origFetch) {
-    window.fetch = function () {
+    // เลขเครื่อง: เก็บไว้ใน localStorage เพื่อยืนยันตัวตนแม้เปลี่ยนเน็ต (กันล็อกอินซ้ำ)
+    var DEVICE_KEY = "wan_device_uid";
+    function deviceUid() {
+      try {
+        var v = localStorage.getItem(DEVICE_KEY);
+        if (!v) {
+          v = "dev-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+          localStorage.setItem(DEVICE_KEY, v);
+        }
+        return v;
+      } catch (e) { return ""; }
+    }
+    window.WanDeviceUid = deviceUid;
+
+    function isSameOrigin(url) {
+      if (/^\//.test(url)) return true;
+      try { return String(url).indexOf(location.origin) === 0; } catch (e) { return false; }
+    }
+
+    window.fetch = function (input, init) {
+      var uid = deviceUid();
+      if (uid && isSameOrigin(typeof input === "string" ? input : (input && input.url) || "")) {
+        init = init || {};
+        var headers = init.headers || {};
+        if (typeof Headers !== "undefined" && headers instanceof Headers) {
+          headers = new Headers(headers);
+          headers.set("X-Device-Id", uid);
+        } else if (Array.isArray(headers)) {
+          headers = headers.slice();
+          headers.push(["X-Device-Id", uid]);
+        } else {
+          headers = Object.assign({}, headers, { "X-Device-Id": uid });
+        }
+        init.headers = headers;
+      }
       show();
-      return origFetch.apply(this, arguments).then(function (r) {
+      return origFetch.call(this, input, init).then(function (r) {
         hide();
         return r;
       }, function (e) {

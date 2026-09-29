@@ -63,8 +63,36 @@ function createSupabaseAdapter() {
       return supabaseModule.removeDevice(ip);
     },
 
-    async findVisitor({ ip, token }) {
-      return supabaseModule.findVisitor({ ip, token });
+    async findVisitor(opts) {
+      return supabaseModule.findVisitor(opts);
+    },
+
+    async getVisitorById(id) {
+      return supabaseModule.getVisitorById(id);
+    },
+
+    async findVisitorByUsername(username) {
+      return supabaseModule.findVisitorByUsername(username);
+    },
+
+    async setVisitorCredentials(id, data) {
+      return supabaseModule.setVisitorCredentials(id, data);
+    },
+
+    async setVisitorPassword(id, data) {
+      return supabaseModule.setVisitorPassword(id, data);
+    },
+
+    async renameVisitor(id, username) {
+      return supabaseModule.renameVisitor(id, username);
+    },
+
+    async getVisitorCredentials(id) {
+      return supabaseModule.getVisitorCredentials(id);
+    },
+
+    async getTicketOwner(ticketNo) {
+      return supabaseModule.getTicketOwner(ticketNo);
     },
 
     async createVisitor(data) {
@@ -298,7 +326,28 @@ function createPostgresAdapter() {
       client.release();
     }
   };
-  
+
+  // เตรียมคอลัมน์บัญชีผู้ใช้ให้ PostgreSQL ตรงกับ Supabase (รันครั้งเดียวต่อ process)
+  let visitorCredColsReady = false;
+  const ensureVisitorCredCols = async () => {
+    if (visitorCredColsReady) return true;
+    try {
+      await query(`
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS username text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS password_hash text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS password_enc text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS credentials_at timestamptz;
+        CREATE UNIQUE INDEX IF NOT EXISTS external_visitors_username_lower_idx
+          ON external_visitors (lower(username)) WHERE username IS NOT NULL AND username <> '';
+      `);
+      visitorCredColsReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมคอลัมน์บัญชีผู้ใช้ไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
   const mapTicket = (row) => ({
     id: row.id,
     ticket_no: row.ticket_no,
@@ -563,18 +612,46 @@ function createPostgresAdapter() {
       return result.rows;
     },
 
-    async findVisitor({ ip, token }) {
+    async findVisitor({ ip, token, deviceId, allowIpFallback = true, ipFallbackHours = 12 }) {
+      if (!(await ensureVisitorCredCols())) {
+        // ยังไม่มีคอลัมน์บัญชีผู้ใช้: ห้ามใช้ IP fallback เด็ดขาด
+        allowIpFallback = false;
+      }
       let row = null;
+      let matchedBy = "";
       if (token) {
         const r = await query(`SELECT * FROM external_visitors WHERE token = $1 LIMIT 1`, [token]);
         row = r.rows[0] || null;
+        if (row) matchedBy = "token";
       }
-      if (!row && ip) {
-        const r = await query(`SELECT * FROM external_visitors WHERE ip = $1 ORDER BY last_seen_at DESC LIMIT 1`, [ip]);
+      // เลขเครื่อง: ถ้าไม่มี cookie ให้ยืนยันด้วยอุปกรณ์เดิมแทน (กันเปลี่ยนเน็ตแล้วคิดว่าเป็นคนใหม่)
+      if (!row && deviceId) {
+        const r = await query(`SELECT * FROM external_visitors WHERE device_id = $1 ORDER BY last_seen_at DESC LIMIT 1`, [deviceId]);
         row = r.rows[0] || null;
+        if (row) matchedBy = "device";
+      }
+      // IP: ใช้ได้เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้ง user/password และเพิ่งใช้งานภายในชั่วโมงที่กำหนด
+      if (!row && ip && allowIpFallback) {
+        const r = await query(
+          `SELECT * FROM external_visitors
+            WHERE ip = $1
+              AND credentials_at IS NULL
+              AND last_seen_at > now() - ($2 || ' hours')::interval
+            ORDER BY last_seen_at DESC LIMIT 1`,
+          [ip, String(Number(ipFallbackHours) || 12)]
+        );
+        row = r.rows[0] || null;
+        if (row) matchedBy = "ip";
       }
       if (!row) return null;
-      if (ip && row.ip !== ip) {
+
+      // เลขเครื่อง: เติมให้ครั้งแรกเท่านั้น ไม่เขียนทับของเดิม
+      if (matchedBy !== "session" && deviceId && !row.device_id) {
+        await query(`UPDATE external_visitors SET device_id = $1 WHERE id = $2`, [deviceId, row.id]);
+        row.device_id = deviceId;
+      }
+      // IP: เก็บไว้แสดงในหลังบ้านเท่านั้น — ห้ามเขียนทับตอนเข้าสู่ระบบผ่าน session
+      if (matchedBy !== "session" && ip && row.ip !== ip) {
         await query(`UPDATE external_visitors SET ip = $1, last_seen_at = now() WHERE id = $2`, [ip, row.id]);
         row.ip = ip;
       } else {
@@ -595,20 +672,121 @@ function createPostgresAdapter() {
       );
     },
 
-    async createVisitor({ name, position, ip, token }) {
+    async createVisitor({ name, position, ip, token, deviceId }) {
       const result = await query(
-        `INSERT INTO external_visitors (name, position, ip, token, ticket_count, last_seen_at)
-         VALUES ($1, $2, $3, $4, 0, now())
-         RETURNING id, name, position, ip, token, ticket_count, last_seen_at, created_at`,
-        [name || "", position || "", ip || "", token || ""]
+        `INSERT INTO external_visitors (name, position, ip, token, device_id, ticket_count, last_seen_at)
+         VALUES ($1, $2, $3, $4, $5, 0, now())
+         RETURNING *`,
+        [name || "", position || "", ip || "", token || "", deviceId || ""]
       );
       const row = result.rows[0];
       if (ip) await this._touchVisitorIps(row.id, ip);
       return row;
     },
 
+    async getVisitorById(id) {
+      if (!id) return null;
+      const result = await query(`SELECT * FROM external_visitors WHERE id = $1 LIMIT 1`, [id]);
+      return result.rows[0] || null;
+    },
+
+    async findVisitorByUsername(username) {
+      const want = String(username || "").trim().toLowerCase();
+      if (!want) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      const result = await query(
+        `SELECT * FROM external_visitors WHERE lower(username) = $1 LIMIT 1`,
+        [want]
+      );
+      return result.rows[0] || null;
+    },
+
+    async setVisitorCredentials(id, { username, passwordHash, passwordEnc }) {
+      if (!id) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      try {
+        const result = await query(
+          `UPDATE external_visitors
+             SET username = $1, password_hash = $2, password_enc = $3, credentials_at = now()
+           WHERE id = $4
+           RETURNING *`,
+          [String(username || "").trim(), passwordHash || "", passwordEnc || "", id]
+        );
+        return result.rows[0] || null;
+      } catch (err) {
+        if (/username|duplicate|unique|23505/i.test(String(err.message || ""))) {
+          const dup = new Error("ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น");
+          dup.code = "DUP_USERNAME";
+          throw dup;
+        }
+        throw err;
+      }
+    },
+
+    async setVisitorPassword(id, { passwordHash, passwordEnc }) {
+      if (!id) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      const result = await query(
+        `UPDATE external_visitors SET password_hash = $1, password_enc = $2 WHERE id = $3 RETURNING *`,
+        [passwordHash || "", passwordEnc || "", id]
+      );
+      return result.rows[0] || null;
+    },
+
+    async renameVisitor(id, username) {
+      if (!id) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      try {
+        const result = await query(
+          `UPDATE external_visitors SET username = $1 WHERE id = $2 RETURNING *`,
+          [String(username || "").trim(), id]
+        );
+        return result.rows[0] || null;
+      } catch (err) {
+        if (/username|duplicate|unique|23505/i.test(String(err.message || ""))) {
+          const dup = new Error("ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น");
+          dup.code = "DUP_USERNAME";
+          throw dup;
+        }
+        throw err;
+      }
+    },
+
+    async getVisitorCredentials(id) {
+      if (!id) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      const result = await query(
+        `SELECT id, username, password_hash, password_enc, credentials_at
+           FROM external_visitors WHERE id = $1 LIMIT 1`,
+        [id]
+      );
+      return result.rows[0] || null;
+    },
+
+    async getTicketOwner(ticketNo) {
+      if (!ticketNo) return null;
+      const result = await query(
+        `SELECT id, ticket_no, visitor_id, reporter_name FROM tickets WHERE ticket_no = $1 LIMIT 1`,
+        [ticketNo]
+      );
+      return result.rows[0] || null;
+    },
+
     async listVisitors(limit = 300) {
-      const result = await query(`SELECT * FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`, [limit]);
+      if (!(await ensureVisitorCredCols())) {
+        const plain = await query(
+          `SELECT id, name, position, ip, device_id, ticket_count, last_seen_at, created_at
+             FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`,
+          [limit]
+        );
+        return plain.rows;
+      }
+      const result = await query(
+        `SELECT id, name, position, ip, device_id, ticket_count, last_seen_at, created_at,
+                username, credentials_at
+           FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`,
+        [limit]
+      );
       return result.rows;
     },
 
@@ -619,8 +797,7 @@ function createPostgresAdapter() {
       const values = keys.map(k => patch[k]);
       values.push(id);
       const result = await query(
-        `UPDATE external_visitors SET ${setClause} WHERE id = $${keys.length + 1}
-         RETURNING id, name, position, ip, token, ticket_count, last_seen_at, created_at`,
+        `UPDATE external_visitors SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
         values
       );
       return result.rows[0] || null;

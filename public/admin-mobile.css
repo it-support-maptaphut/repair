@@ -1177,3 +1177,123 @@ body.mobile-admin #visitorsView table td:last-child .btn {
   margin: 2px 0;
   border-radius: 8px;
 }
+/* ============================================================
+   NAVBAR มือถือ — ธีม 90s (ทับแบบ candy เดิมทั้งหมด)
+   ============================================================ */
+body.mobile-admin {
+  --mobile-top: 48px;
+}
+
+body.mobile-admin .mob-topbar {
+  height: var(--mobile-top);
+  padding: 0 8px;
+  background: linear-gradient(90deg, #000080, #1084d0) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid #000;
+}
+
+body.mobile-admin .mob-topbar .mob-menu-btn {
+  width: 34px;
+  height: 30px;
+  border-radius: 0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  box-shadow: inset 1px 1px 0 #e4e4e4 !important;
+}
+body.mobile-admin .mob-topbar .mob-menu-btn:active {
+  border-color: #404040 #fff #fff #404040 !important;
+  box-shadow: inset -1px -1px 0 #e4e4e4 !important;
+}
+
+body.mobile-admin .mob-topbar .mob-title {
+  font-size: 13px;
+  letter-spacing: normal;
+  font-family: var(--r-font, Tahoma, "MS Sans Serif", sans-serif);
+  padding: 0 2px;
+}
+body.mobile-admin .mob-topbar .mob-title small {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+/* ดึงช่อง drawer กลับเป็นแบบ 90s (เต็ม ๆ ไม่ใช่หัวย่อ) */
+body.mobile-admin #sidebar {
+  top: var(--mobile-top);
+  height: calc(100dvh - var(--mobile-top));
+  background: #c0c0c0 !important;
+  border-right: 2px solid #404040 !important;
+  padding: 10px 8px 20px;
+}
+body.mobile-admin #sidebar .mob-side-title {
+  align-items: flex-start;
+  padding: 6px 2px 8px;
+  border-bottom: 1px solid #808080;
+  margin-bottom: 6px;
+}
+body.mobile-admin #sidebar .mob-side-title .side-title { font-size: 13px; }
+body.mobile-admin #sidebar .mob-side-title small { color: #000; }
+
+/* หมวดหมู่ (chips) 90s */
+body.mobile-admin #sidebar .mob-cats {
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #808080;
+}
+body.mobile-admin #sidebar .mob-cat {
+  flex: 1 1 auto;
+  padding: 7px 6px;
+  border-radius: 0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff !important;
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+body.mobile-admin #sidebar .mob-cat:active {
+  border-color: #404040 #fff #fff #404040 !important;
+}
+body.mobile-admin #sidebar .mob-cat.is-active {
+  background: #000080 !important;
+  color: #fff !important;
+  border-color: #000080 !important;
+}
+
+/* ปุ่มเมนูในลิ้นชัก 90s */
+body.mobile-admin #sidebar .side-btn,
+body.mobile-admin #sidebar .side-group-items .side-btn {
+  min-height: 34px;
+  padding: 6px 8px;
+  border-radius: 0 !important;
+  background: transparent;
+  color: #000;
+  font-size: 12.5px;
+}
+body.mobile-admin #sidebar .side-btn.is-active {
+  background: #000080 !important;
+  color: #fff !important;
+  border-left: 4px solid #cfe2ff !important;
+}
+body.mobile-admin #sidebar .side-group-head {
+  min-height: 0;
+  border-radius: 0;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+}
+
+/* ปุ่มออกจากระบบ 90s */
+body.mobile-admin #sidebar .mob-logout {
+  min-height: 36px;
+  margin-top: 10px;
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  background: #c0c0c0;
+  color: #000;
+}
+body.mobile-admin #sidebar .mob-logout:active {
+  border-color: #404040 #fff #fff #404040;
+}

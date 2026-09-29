@@ -19,6 +19,15 @@ alter table public.device_entries add column if not exists position text default
 alter table public.device_entries add column if not exists category_id bigint;
 alter table public.device_entries add column if not exists supplier_url text default '';
 
+-- 3.1) tickets: ผูกผู้แจ้งภายนอก + ลิงก์ไฟล์ PDF (เผื่อตารางเก่ายังไม่มี)
+alter table public.tickets add column if not exists visitor_id bigint;
+alter table public.tickets add column if not exists pdf_url text default '';
+
+-- 3.2) external_visitors: เลขเครื่อง (device fingerprint) กันล็อกอินซ้ำเมื่อเปลี่ยนเครือข่าย
+alter table public.external_visitors add column if not exists device_id text default '';
+comment on column public.external_visitors.device_id is 'เลขประจําเครื่อง (browser localStorage) ใช้ยืนยันตัวตนแม้ IP/cookie เปลี่ยน';
+create index if not exists external_visitors_device_id_idx on public.external_visitors (device_id);
+
 -- 4) RLS: ให้ service role / authenticated อ่าน-เขียนข้อมูลได้ (รันขั้นสุดท้ายเสมอ)
 alter table public.tickets enable row level security;
 alter table public.ticket_photos enable row level security;

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<script src="no-zoom.js"></script>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000080">
+<title>ตั้งค่าฐานข้อมูล — Admin</title>
+<link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
+<link rel="stylesheet" href="admin.css">
+<!-- ธีมระบบ: 90S (กำหนดเป็นธีมหลักของระบบ) -->
+<link rel="stylesheet" href="admin-retro.css">
+<style>
+  /* ============ กรอบหน้าต่าง Windows 95 ============ */
+  .db-shell {
+    max-width: 900px;
+    margin: 24px auto;
+    background: var(--r-face, #c0c0c0);
+    border: 1px solid var(--r-light, #fff);
+    border-right-color: var(--r-darkest, #404040);
+    border-bottom-color: var(--r-darkest, #404040);
+    box-shadow: inset 1px 1px 0 #dfdfdf;
+  }
+
+  /* แถบชื่อเรื่อง */
+  .db-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, var(--r-title-a, #000080), var(--r-title-b, #1084d0));
+    color: #fff;
+    padding: 4px 6px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .db-captions { display: flex; gap: 2px; }
+  .db-cap {
+    width: 22px; height: 18px;
+    background: var(--r-face, #c0c0c0);
+    border: 1px solid var(--r-light, #fff);
+    border-right-color: #404040;
+    border-bottom-color: #404040;
+    color: #000;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .db-cap:active { border-color: #404040; border-right-color: #fff; border-bottom-color: #fff; }
+
+  /* แถบเครื่องมือ */
+  .db-toolbar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--r-darkest, #404040);
+    box-shadow: 0 1px 0 var(--r-light, #fff);
+  }
+
+  /* ============ พื้นที่เนื้อหา ============ */
+  .db-body { padding: 12px; }
+  .db-group {
+    border: 0;
+    margin: 0 0 14px;
+    padding: 10px 12px 12px;
+    background: var(--r-face, #c0c0c0);
+    border: 1px solid var(--r-light, #fff);
+    border-right-color: var(--r-darkest, #404040);
+    border-bottom-color: var(--r-darkest, #404040);
+    box-shadow: inset 1px 1px 0 #dfdfdf;
+  }
+  .db-group legend {
+    background: var(--r-face, #c0c0c0);
+    border: 1px solid var(--r-light, #fff);
+    border-right-color: var(--r-darkest, #404040);
+    border-bottom-color: var(--r-darkest, #404040);
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--r-focus, #000080);
+  }
+  .db-hint { margin: 4px 0 10px; font-size: 11.5px; color: #333; line-height: 1.55; }
+  .db-hint.mono { font-family: var(--r-mono, "Courier New", monospace); font-size: 11px; }
+
+  /* แถวค่าต่างๆ แบบ grid ของวินโดว์ */
+  .db-kv { border-collapse: collapse; width: 100%; }
+  .db-kv td, .db-kv th {
+    padding: 4px 8px;
+    font-size: 12px;
+    vertical-align: top;
+    text-align: left;
+  }
+  .db-kv th { width: 118px; color: #000; font-weight: 700; }
+  .db-val {
+    display: inline-block;
+    min-width: 140px;
+    max-width: 100%;
+    background: var(--r-field, #fff);
+    border: 2px inset;
+    padding: 3px 6px;
+    font-family: var(--r-mono, "Courier New", Consolas, monospace);
+    font-size: 12px;
+    color: #000;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .db-val.empty { color: #666; font-style: italic; font-family: var(--r-font, Tahoma, sans-serif); }
+
+  /* ตัวบ่งชี้สถานะ (LED) */
+  .db-led {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 1px solid;
+    border-color: var(--r-darkest, #404040) var(--r-light, #fff) var(--r-light, #fff) var(--r-darkest, #404040);
+    background: #808080;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  .db-led.ok { background: #00a54f; }
+  .db-led.err { background: #d33; }
+  .db-led.warn { background: #ffb400; }
+  .db-state { font-weight: 700; font-size: 12px; vertical-align: middle; }
+
+  .db-checkrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-top: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ปุ่มใน toolbar / แอคชัน */
+  .db-btnrow { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ตารางแบบวินโดว์เก่า */
+  .db-tables { margin-top: 12px; }
+  .db-tables-title { font-size: 12px; font-weight: 700; margin: 0 0 6px; color: #000; }
+  .db-tbl { width: 100%; border-collapse: collapse; background: var(--r-field, #fff); }
+  .db-tbl th, .db-tbl td {
+    border: 1px solid #a0a0a0;
+    padding: 4px 8px;
+    font-size: 12px;
+    text-align: left;
+  }
+  .db-tbl th {
+    background: var(--r-face, #c0c0c0);
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    font-weight: 700;
+  }
+  .db-tbl-wrap { max-height: 250px; overflow: auto; border: 2px inset; background: #fff; }
+
+  /* รายการผลถ่ายโอน */
+  .db-list { margin: 0; padding: 0; list-style: none; }
+  .db-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 6px;
+    font-size: 12px;
+    border-bottom: 1px dotted #999;
+  }
+  .db-list li:nth-child(odd) { background: #e8e8e8; }
+  .db-list .muted { color: #333; }
+  .db-list .bad { color: #b00; font-weight: 700; }
+
+  /* ข้อความผลลัพธ์ */
+  .db-okmsg {
+    margin: 8px 0 0;
+    padding: 6px 8px;
+    font-size: 12px;
+    background: #efe; border: 2px solid #0d7a3a; color: #063;
+    font-weight: 700;
+  }
+  .db-errmsg {
+    margin: 8px 0 0;
+    padding: 6px 8px;
+    font-size: 12px;
+    background: #fde; border: 2px solid #b00; color: #800;
+    font-weight: 700;
+  }
+
+  /* กลุ่มฟอร์มใน modal (Win95) */
+  .db-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .db-form-grid .full { grid-column: 1 / -1; }
+
+  /* แถบสถานะล่าง */
+  .db-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--r-dark, #808080);
+    box-shadow: 0 -1px 0 var(--r-light, #fff);
+    border-bottom: 2px inset;
+    padding: 4px 8px;
+    background: var(--r-face, #c0c0c0);
+    font-size: 11.5px;
+    color: #000;
+  }
+  .db-statusbar .pad {
+    border: 1px solid;
+    border-color: var(--r-darkest, #404040) var(--r-light, #fff) var(--r-light, #fff) var(--r-darkest, #404040);
+    padding: 2px 10px;
+    background: var(--r-face, #c0c0c0);
+    white-space: nowrap;
+  }
+
+  /* Modal กลาง */
+  .db-modal-inner { max-width: 540px; margin: 0 auto; }
+  .db-form-grid .form-field label { font-size: 12px; }
+
+  /* หน้าล็อกอินก่อนเข้าใช้งาน (admin / wan2024) */
+  .db-gate {
+    position: fixed;
+    inset: 0;
+    background: #008080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow: auto;
+  }
+  .db-gate-win {
+    width: 360px;
+    max-width: 100%;
+    background: var(--r-face, #c0c0c0);
+    border: 1px solid var(--r-light, #fff);
+    border-right-color: var(--r-darkest, #404040);
+    border-bottom-color: var(--r-darkest, #404040);
+    box-shadow: inset 1px 1px 0 #dfdfdf;
+  }
+  .db-gate-body { padding: 18px 20px 16px; }
+  .db-gate-ico { text-align: center; margin-bottom: 6px; color: #000080; }
+  .db-gate-txt {
+    text-align: center;
+    font-size: 12.5px;
+    color: #000;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+  .db-gate-body .form-field { margin-bottom: 12px; }
+  .db-gate-shake { animation: dbshake 0.35s; }
+  @keyframes dbshake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 640px) {
+    .db-shell { margin: 8px; }
+    .db-form-grid { grid-template-columns: 1fr; }
+    .db-kv th { width: 88px; }
+  }
+</style>
+</head>
+<body class="admin-db-page">
+
+<!-- หน้าล็อกอินก่อนเข้าใช้ระบบฐานข้อมูล -->
+<div class="db-gate" id="dbGate">
+  <div class="db-gate-win" id="dbGateWin">
+    <div class="db-titlebar">
+      <span>ระบบฐานข้อมูล — เข้าสู่ระบบ</span>
+      <span class="db-captions">
+        <button class="db-cap" title="ปิด" onclick="location.href='/admin.html'">&times;</button>
+      </span>
+    </div>
+    <div class="db-gate-body">
+      <div class="db-gate-ico">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      </div>
+      <p class="db-gate-txt">กรุณากรอกชื่อผู้ใช้และรหัสผ่าน<br>เพื่อเข้าใช้งานระบบฐานข้อมูล</p>
+      <div class="form-field">
+        <label>ชื่อผู้ใช้</label>
+        <input id="dbGateUser" autocomplete="username" onkeydown="if(event.key==='Enter')dbGateLogin()">
+      </div>
+      <div class="form-field">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="dbGatePass" autocomplete="current-password" onkeydown="if(event.key==='Enter')dbGateLogin()">
+      </div>
+      <p id="dbGateErr" class="db-errmsg hidden" style="margin-top:0"></p>
+      <div class="db-btnrow" style="display:flex;justify-content:flex-end;gap:6px;margin-top:16px">
+        <button class="btn btn-ghost" type="button" onclick="location.href='/admin.html'">ยกเลิก</button>
+        <button class="btn btn-primary" type="button" id="dbGateBtn" onclick="dbGateLogin()">เข้าสู่ระบบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="db-shell hidden" id="dbShell">
+
+  <!-- แถบชื่อเรื่อง -->
+  <div class="db-titlebar">
+    <span>ตั้งค่าฐานข้อมูล</span>
+    <span class="db-captions">
+      <button class="db-cap" title="ย่อเล็กสุด (สู่หน้าหลัก)" onclick="location.href='/admin.html'">_</button>
+      <button class="db-cap" title="กลับหน้าหลัก" onclick="location.href='/admin.html'">&#9634;</button>
+      <button class="db-cap" title="ปิด" onclick="location.href='/admin.html'">&times;</button>
+    </span>
+  </div>
+
+  <!-- แถบเครื่องมือ -->
+  <div class="db-toolbar">
+    <button class="btn btn-ghost" id="refreshBtn" onclick="loadAll()">รีเฟรช</button>
+    <button class="btn btn-ghost" id="syncBtn" onclick="syncNow()">ถ่ายโอนตอนนี้</button>
+    <a class="btn btn-ghost" href="/admin.html">กลับหน้าหลัก</a>
+  </div>
+
+  <!-- เนื้อหา -->
+  <div class="db-body">
+    <p id="pageMsg" class="db-errmsg hidden" style="margin:0 0 12px;"></p>
+
+    <!-- Supabase -->
+    <fieldset class="db-group">
+      <legend>Supabase — คลาวด์ (ตัวกลาง)</legend>
+      <p class="db-hint">สายส่งข้อมูลหลักของระบบ แสดงค่าและสถานะเท่านั้น (ห้ามแก้ไข)</p>
+      <table class="db-kv">
+        <tr><th>สถานะ</th><td><span id="supaLed" class="db-led warn"></span><span id="supaBadge" class="db-state">กำลังตรวจสอบ...</span></td></tr>
+        <tr><th>URL</th><td><span id="supaUrl" class="db-val">-</span></td></tr>
+        <tr><th>Secret Token</th><td><span id="supaSecret" class="db-val">••••••••</span></td></tr>
+        <tr><th>Service Role</th><td><span id="supaService" class="db-val">••••••••</span></td></tr>
+      </table>
+      <label class="db-checkrow"><input type="checkbox" id="revealSupabase" onchange="toggleReveal()"> แสดงคีย์</label>
+      <p id="supaMsg" class="db-hint" style="margin-top:6px;color:#063;font-weight:700;"></p>
+    </fieldset>
+
+    <!-- PGSQL -->
+    <fieldset class="db-group">
+      <legend>PGSQL — Local (ปลายทาง)</legend>
+      <p class="db-hint">รับข้อมูลทั้งหมดจาก Supabase อัตโนมัติ (ตอนเปิดเซิร์ฟเวอร์ / กดปุ่มถ่ายโอน)</p>
+      <table class="db-kv">
+        <tr><th>สถานะ</th><td><span id="pgLed" class="db-led warn"></span><span id="pgBadge" class="db-state">ยังไม่ได้ตั้งค่า</span></td></tr>
+        <tr><th>Host</th><td><span id="pgHost" class="db-val">-</span></td></tr>
+        <tr><th>Port</th><td><span id="pgPort" class="db-val">-</span></td></tr>
+        <tr><th>Database</th><td><span id="pgDb" class="db-val">-</span></td></tr>
+        <tr><th>User</th><td><span id="pgUser" class="db-val">-</span></td></tr>
+        <tr><th>Password</th><td><span id="pgPass" class="db-val">••••••••</span></td></tr>
+        <tr><th>SSL</th><td><span id="pgSsl" class="db-val">-</span></td></tr>
+      </table>
+      <div class="db-btnrow">
+        <button class="btn btn-primary" onclick="openDbEdit()">แก้ไขฐานข้อมูล</button>
+      </div>
+      <p id="pgMsg" class="db-hint" style="margin-top:6px;color:#333;font-weight:700;"></p>
+      <div id="pgTablesWrap" class="db-tables hidden">
+        <h3 class="db-tables-title">ตารางทั้งหมด <span id="pgTableCount"></span></h3>
+        <div class="db-tbl-wrap">
+          <table class="db-tbl">
+            <thead><tr><th style="width:36px;">#</th><th>ตาราง</th><th style="width:110px;">จำนวนแถว</th></tr></thead>
+            <tbody id="pgTableRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- ถ่ายโอน -->
+    <fieldset class="db-group">
+      <legend>ถ่ายโอนข้อมูล — Supabase → PGSQL</legend>
+      <div id="syncDetail" style="margin-bottom:6px;"></div>
+      <p id="syncStatus" class="db-hint" style="margin:0;font-weight:700;">ยังไม่มีการถ่ายโอนในรอบนี้</p>
+    </fieldset>
+  </div>
+
+  <!-- แถบสถานะ -->
+  <div class="db-statusbar">
+    <span id="dbStatusText" class="pad">พร้อมใช้งาน</span>
+    <span id="dbStatusRight" class="pad" style="margin-left:auto;">v1 · Local Database</span>
+  </div>
+</div>
+
+<!-- ============ Modal: แก้ไข PGSQL ============ -->
+<div id="dbEditMask" class="modal-mask hidden" style="z-index:90;">
+  <div class="modal db-modal-inner">
+    <button class="modal-close" onclick="closeDbEdit()">&times;</button>
+
+    <!-- ขั้น 1: รหัสผ่าน -->
+    <div id="dbPassStep">
+      <h3 class="modal-title" style="margin:0 0 6px;font-size:14px;">ยืนยันตัวตน</h3>
+      <p class="db-hint">กรอกรหัสผ่านเพื่อปลดล็อกการแก้ไขฐานข้อมูล PGSQL</p>
+      <div class="form-field">
+        <label for="dbPassInput">รหัสผ่าน</label>
+        <input type="password" id="dbPassInput" autocomplete="off" onkeydown="if(event.key==='Enter')verifyDbPass()">
+      </div>
+      <p id="dbPassErr" class="db-errmsg hidden"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="dbPassBtn" onclick="verifyDbPass()">ยืนยัน</button>
+        <button class="btn btn-ghost" onclick="closeDbEdit()">ยกเลิก</button>
+      </div>
+    </div>
+
+    <!-- ขั้น 2: ฟอร์ม -->
+    <div id="dbFormStep" class="hidden">
+      <h3 class="modal-title" style="margin:0 0 6px;font-size:14px;">ตั้งค่าฐานข้อมูล PGSQL</h3>
+      <p class="db-hint">กรอกค่าที่สำคัญให้ครบ จากนั้นกด "ทดสอบการเชื่อมต่อ" ก่อนบันทึก</p>
+      <div class="db-form-grid">
+        <div class="form-field">
+          <label for="pgFHost">Host / IP</label>
+          <input id="pgFHost" autocomplete="off" placeholder="เช่น localhost หรือ 192.168.1.10">
+        </div>
+        <div class="form-field">
+          <label for="pgFPort">Port</label>
+          <input id="pgFPort" autocomplete="off" placeholder="5432">
+        </div>
+        <div class="form-field">
+          <label for="pgFDb">Database</label>
+          <input id="pgFDb" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label for="pgFUser">User</label>
+          <input id="pgFUser" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label for="pgFPass">Password</label>
+          <input type="password" id="pgFPass" autocomplete="new-password">
+        </div>
+        <div class="form-field">
+          <label for="pgFSsl">SSL</label>
+          <select id="pgFSsl">
+            <option value="">ไม่ใช้</option>
+            <option value="true">ใช้ SSL</option>
+          </select>
+        </div>
+      </div>
+      <p id="pgFormOk" class="db-okmsg hidden"></p>
+      <p id="pgFormErr" class="db-errmsg hidden"></p>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="btn btn-ghost" id="dbTestBtn" onclick="dbTestForm()">ทดสอบการเชื่อมต่อ</button>
+        <button class="btn btn-primary" id="dbSaveBtn" onclick="dbSaveForm()" disabled>บันทึก &amp; เชื่อมต่อ</button>
+        <button class="btn btn-ghost" onclick="closeDbEdit()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var state = { supabase: null, pg: null, lastSync: null };
+  var syncTimer = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function setMsg(id, text, ok) {
+    var m = el(id);
+    m.classList.remove("hidden");
+    m.className = ok ? "db-okmsg" : "db-errmsg";
+    m.textContent = text;
+  }
+  function clearMsg(id) { el(id).classList.add("hidden"); }
+  function led(id, cls) { el(id).className = "db-led " + cls; }
+  function api(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      return r.json().catch(function () { return { ok: false, message: "ตอบกลับไม่ถูกต้อง" }; });
+    });
+  }
+  function guest() {
+    return api("/api/auth/me", { credentials: "same-origin" }).then(function (d) {
+      if (d && d.ok && d.authed) return true;
+      return api("/api/auth/user-me", { credentials: "same-origin" }).then(function (u) {
+        return !!(u && u.ok && u.authed);
+      });
+    });
+  }
+
+  // --- แสดงค่าที่เป็น secret ---
+  function toggleReveal() {
+    var on = el("revealSupabase").checked;
+    var pairs = [
+      ["supaSecret", state.supabase ? state.supabase.secretKey : ""],
+      ["supaService", state.supabase ? state.supabase.serviceRoleKey : ""],
+      ["pgPass", state.pg ? state.pg.password : ""],
+    ];
+    pairs.forEach(function (p) {
+      var v = on && p[1] ? p[1] : "••••••••";
+      el(p[0]).textContent = v;
+      el(p[0]).classList.toggle("empty", !v);
+    });
+  }
+
+  // --- Update status bar ---
+  function updateStatusbar(extra) {
+    var parts = ["พร้อมใช้งาน"];
+    if (state.supabase) parts.push("Supabase: " + (state.supabase.connected ? "เชื่อมต่อแล้ว" : "ไม่เชื่อมต่อ"));
+    if (state.pg) parts.push("PGSQL: " + (state.pg.configured ? (state.pg.connected ? "เชื่อมต่อแล้ว" : "เชื่อมต่อไม่ได้") : "ยังไม่ตั้งค่า"));
+    if (extra) parts.push(extra);
+    el("dbStatusText").textContent = parts.join("  ·  ");
+  }
+
+  // --- Render Supabase ---
+  function renderSupa(s) {
+    state.supabase = s;
+    el("supaUrl").textContent = s.url || "-";
+    el("supaUrl").classList.toggle("empty", !s.url);
+    el("supaSecret").textContent = s.secretKey ? "••••••••" : "-";
+    el("supaService").textContent = s.serviceRoleKey ? "••••••••" : "-";
+    el("supaBadge").textContent = s.connected ? "เชื่อมต่อแล้ว" : "ไม่เชื่อมต่อ";
+    led("supaLed", s.connected ? "ok" : "err");
+    el("supaMsg").textContent = s.connected ? "✓ " + (s.message || "เชื่อมต่อได้") : (s.message || "ตรวจไม่พบการเชื่อมต่อ");
+    updateStatusbar();
+  }
+
+  // --- Render PGSQL ---
+  function renderPg(p) {
+    state.pg = p;
+    el("pgHost").textContent = p.host || "-";
+    el("pgPort").textContent = p.port || "-";
+    el("pgDb").textContent = p.database || "-";
+    el("pgUser").textContent = p.user || "-";
+    el("pgPass").textContent = p.password ? "••••••••" : "-";
+    el("pgSsl").textContent = p.ssl ? "ใช้ SSL" : "ไม่ใช้";
+    ["pgHost", "pgPort", "pgDb", "pgUser", "pgSsl"].forEach(function (id) {
+      el(id).classList.toggle("empty", !el(id).textContent || el(id).textContent === "-");
+    });
+
+    el("pgTablesWrap").classList.add("hidden");
+
+    if (!p.configured) {
+      el("pgBadge").textContent = "ยังไม่ได้ตั้งค่า";
+      led("pgLed", "warn");
+      el("pgMsg").textContent = "ยังไม่มีการตั้งค่า — กดปุ่ม \"แก้ไขฐานข้อมูล\" เพื่อกรอกค่าครั้งแรก";
+      el("pgMsg").style.color = "#333";
+      updateStatusbar();
+      return;
+    }
+    if (p.connected) {
+      el("pgBadge").textContent = "เชื่อมต่อแล้ว";
+      led("pgLed", "ok");
+      el("pgMsg").textContent = "✓ " + (p.message || "เชื่อมต่อได้ถูกต้อง");
+      el("pgMsg").style.color = "#063";
+    } else {
+      el("pgBadge").textContent = "เชื่อมต่อไม่ได้";
+      led("pgLed", "err");
+      el("pgMsg").textContent = p.message || "เชื่อมต่อไม่ได้";
+      el("pgMsg").style.color = "#800";
+    }
+
+    if (p.connected && p.tables) {
+      el("pgTableCount").textContent = "— ทั้งหมด " + p.tableCount + " ตาราง";
+      var tb = el("pgTableRows");
+      tb.innerHTML = "";
+      p.tables.forEach(function (t, i) {
+        var tr = document.createElement("tr");
+        var r = (t.rows == null || t.rows < 0) ? "-" : t.rows;
+        tr.innerHTML = "<td>" + (i + 1) + "</td><td>" + esc(t.name) + "</td><td style=\"text-align:right;\">" + r + "</td>";
+        tb.appendChild(tr);
+      });
+      el("pgTablesWrap").classList.remove("hidden");
+    }
+    updateStatusbar();
+  }
+
+  // --- Render สถานะการถ่ายโอน ---
+  function renderSync(ls) {
+    state.lastSync = ls;
+    var wrap = el("syncDetail");
+    var st = el("syncStatus");
+    wrap.innerHTML = "";
+
+    if (!ls || ls.status === "none") {
+      wrap.innerHTML = '<span class="db-led warn"></span><span class="db-state">ยังไม่มีการถ่ายโอนในรอบนี้</span>';
+      updateStatusbar();
+      return;
+    }
+
+    var cls = "warn", label;
+    if (ls.running) { cls = "warn"; label = "กำลังถ่ายโอน..."; }
+    else if (ls.status === "completed") { cls = "ok"; label = "ถ่ายโอนสำเร็จ"; }
+    else if (ls.status === "failed") { cls = "err"; label = "ถ่ายโอนไม่สำเร็จ"; }
+    else { label = ls.status; }
+
+    var when = ls.finishedAt ? new Date(ls.finishedAt).toLocaleString("th-TH") : (ls.running ? "กำลังทำงาน" : "-");
+    wrap.innerHTML = '<span class="db-led ' + cls + '"></span><span class="db-state">' + label + '</span>' +
+      '<span class="db-hint" style="margin-left:10px;color:#333;">รอบล่าสุด: ' + esc(when) +
+      (ls.running ? "" : " · รวม " + (ls.totalRows || 0) + " แถว" + (ls.duration ? " · " + (ls.duration / 1000).toFixed(1) + " วิ" : "")) +
+      "</span>";
+
+    if (ls.error) {
+      var e = document.createElement("p");
+      e.className = "db-errmsg";
+      e.textContent = "ข้อผิดพลาด: " + ls.error;
+      wrap.appendChild(e);
+    }
+
+    var res = ls.tableResults || {};
+    var keys = Object.keys(res);
+    if (keys.length) {
+      var ul = document.createElement("ul");
+      ul.className = "db-list";
+      ul.style.marginTop = "8px";
+      ul.style.border = "1px solid #808080";
+      keys.forEach(function (k) {
+        var r = res[k];
+        var li = document.createElement("li");
+        var info = (r.count == null ? "-" : r.count) + " แถว";
+        if (r.status === "success") {
+          li.innerHTML = "<span>" + esc(k) + "</span><span class=\"muted\">" + info + "</span>";
+        } else {
+          li.innerHTML = "<span>" + esc(k) + "</span><span class=\"bad\">" + info + " · " + esc(r.error || "failed") + "</span>";
+        }
+        ul.appendChild(li);
+      });
+      wrap.appendChild(ul);
+    }
+
+    if (ls.verification) {
+      var p = document.createElement("p");
+      p.className = ls.verification.allMatch ? "db-okmsg" : "db-errmsg";
+      p.textContent = ls.verification.allMatch
+        ? "✓ ตรวจสอบแล้ว จำนวนแถวเท่ากันทุกตาราง (" + keys.length + " ตาราง)"
+        : "✗ จำนวนแถวไม่ตรงกันบางตาราง";
+      wrap.appendChild(p);
+    }
+
+    updateStatusbar();
+  }
+
+  // --- โหลดข้อมูลทั้งหมด ---
+  function loadAll() {
+    clearMsg("pageMsg");
+    return api("/api/admin/db-config", { credentials: "same-origin" })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          setMsg("pageMsg", (d && d.message) || "โหลดข้อมูลไม่สำเร็จ", false);
+          return;
+        }
+        renderSupa(d.supabase);
+        renderPg(d.pg);
+        renderSync(d.lastSync);
+        if (!el("revealSupabase").checked) toggleReveal();
+      })
+      .catch(function () { setMsg("pageMsg", "เครือข่ายขัดข้อง กรุณาลองใหม่", false); });
+  }
+
+  // --- Modal แก้ไข ---
+  window.openDbEdit = function () {
+    clearMsg("dbPassErr");
+    el("dbPassInput").value = "";
+    el("dbPassStep").classList.remove("hidden");
+    el("dbFormStep").classList.add("hidden");
+    el("dbEditMask").classList.remove("hidden");
+    setTimeout(function () { el("dbPassInput").focus(); }, 60);
+  };
+
+  window.closeDbEdit = function () {
+    el("dbEditMask").classList.add("hidden");
+  };
+
+  window.verifyDbPass = function () {
+    var pass = el("dbPassInput").value;
+    if (!pass) { setMsg("dbPassErr", "กรุณากรอกรหัสผ่าน", false); return; }
+    el("dbPassBtn").disabled = true;
+    api("/api/admin/db-config/verify-pass", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pass }),
+      credentials: "same-origin"
+    }).then(function (d) {
+      el("dbPassBtn").disabled = false;
+      if (!d.ok) { setMsg("dbPassErr", d.message || "รหัสผ่านไม่ถูกต้อง", false); return; }
+      clearMsg("dbPassErr");
+      showForm(pass);
+    }).catch(function () {
+      el("dbPassBtn").disabled = false;
+      setMsg("dbPassErr", "เครือข่ายขัดข้อง กรุณาลองใหม่", false);
+    });
+  };
+
+  function showForm(pass) {
+    el("dbPassStep").classList.add("hidden");
+    el("dbFormStep").classList.remove("hidden");
+    if (state.pg) {
+      el("pgFHost").value = state.pg.host || "";
+      el("pgFPort").value = state.pg.port || "5432";
+      el("pgFDb").value = state.pg.database || "";
+      el("pgFUser").value = state.pg.user || "";
+      el("pgFPass").value = state.pg.password || "";
+      el("pgFSsl").value = state.pg.ssl ? "true" : "";
+    }
+    clearMsg("pgFormOk");
+    clearMsg("pgFormErr");
+    el("dbSaveBtn").disabled = true;
+    el("pgFHost").focus();
+    el.__pgPass = pass;
+  }
+
+  function formValues() {
+    return {
+      host: el("pgFHost").value.trim(),
+      port: el("pgFPort").value.trim(),
+      database: el("pgFDb").value.trim(),
+      user: el("pgFUser").value.trim(),
+      pgpass: el("pgFPass").value,
+      ssl: el("pgFSsl").value === "true"
+    };
+  }
+
+  window.dbTestForm = function () {
+    clearMsg("pgFormOk");
+    clearMsg("pgFormErr");
+    var v = formValues();
+    el("dbTestBtn").disabled = true;
+    api("/api/admin/db-test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "postgres", host: v.host, port: v.port, database: v.database, user: v.user, password: v.pgpass, ssl: v.ssl }),
+      credentials: "same-origin"
+    }).then(function (d) {
+      el("dbTestBtn").disabled = false;
+      if (d.ok) {
+        setMsg("pgFormOk", "เชื่อมต่อฐานข้อมูลได้ถูกต้อง", true);
+        el("dbSaveBtn").disabled = false;
+      } else {
+        setMsg("pgFormErr", d.message || "ไม่สามารถเชื่อมต่อได้", false);
+        el("dbSaveBtn").disabled = true;
+      }
+    }).catch(function () {
+      el("dbTestBtn").disabled = false;
+      setMsg("pgFormErr", "เครือข่ายขัดข้อง กรุณาลองใหม่", false);
+    });
+  };
+
+  window.dbSaveForm = function () {
+    clearMsg("pgFormOk");
+    clearMsg("pgFormErr");
+    var v = formValues();
+    if (!v.host || !v.database || !v.user) { setMsg("pgFormErr", "กรุณากรอก Host, Database และ User ให้ครบ", false); return; }
+    el("dbSaveBtn").disabled = true;
+    api("/api/admin/db-config/save-pg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        password: el.__pgPass || "",
+        host: v.host, port: v.port, database: v.database, user: v.user, pgpass: v.pgpass, ssl: v.ssl
+      }),
+      credentials: "same-origin"
+    }).then(function (d) {
+      el("dbSaveBtn").disabled = false;
+      if (!d.ok) {
+        setMsg("pgFormErr", d.message || "บันทึกไม่สำเร็จ", false);
+        return;
+      }
+      setMsg("pgFormOk", d.message || "บันทึกแล้ว", true);
+      setTimeout(function () { closeDbEdit(); loadAll(); }, 900);
+    }).catch(function () {
+      el("dbSaveBtn").disabled = false;
+      setMsg("pgFormErr", "เครือข่ายขัดข้อง กรุณาลองใหม่", false);
+    });
+  };
+
+  // --- ถ่ายโอน ---
+  window.syncNow = function () {
+    if (state.pg && !state.pg.configured) {
+      setMsg("pageMsg", "ยังไม่ได้ตั้งค่า PGSQL — กดแก้ไขฐานข้อมูลเพื่อตั้งค่าก่อน", false);
+      return;
+    }
+    el("syncBtn").disabled = true;
+    api("/api/admin/db-sync/start", { method: "POST", credentials: "same-origin" })
+      .then(function (d) {
+        el("syncBtn").disabled = false;
+        if (!d.ok) { setMsg("pageMsg", d.message || "เริ่มถ่ายโอนไม่สำเร็จ", false); return; }
+        clearMsg("pageMsg");
+        el("syncBtn").textContent = "กำลังถ่ายโอน...";
+        pollSync();
+      })
+      .catch(function () {
+        el("syncBtn").disabled = false;
+        setMsg("pageMsg", "เครือข่ายขัดข้อง กรุณาลองใหม่", false);
+      });
+  };
+
+  function pollSync() {
+    if (syncTimer) clearInterval(syncTimer);
+    syncTimer = setInterval(function () {
+      api("/api/admin/db-sync/status", { credentials: "same-origin" })
+        .then(function (d) {
+          if (!d || !d.ok) return;
+          renderSync(d.lastSync);
+          if (!d.lastSync.running) {
+            clearInterval(syncTimer);
+            syncTimer = null;
+            el("syncBtn").textContent = "ถ่ายโอนตอนนี้";
+            loadAll();
+          }
+        })
+        .catch(function () {});
+    }, 1500);
+  }
+
+  // --- เริ่มต้น ---
+  // ยังไม่โหลดข้อมูล รอให้ผ่านหน้าล็อกอิน (admin / wan2024) ก่อน → dbGateLogin()
+  guest().then(function (authed) {
+    if (!authed) { window.location.replace("/admin-login.html"); return; }
+  }).catch(function () { window.location.replace("/admin-login.html"); });
+
+  window.dbGateLogin = function () {
+    var user = (document.getElementById("dbGateUser").value || "").trim();
+    var pass = document.getElementById("dbGatePass").value || "";
+    var errBox = document.getElementById("dbGateErr");
+    var btn = document.getElementById("dbGateBtn");
+    if (!user || !pass) {
+      errBox.textContent = "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน";
+      errBox.classList.remove("hidden");
+      shakeGate();
+      return;
+    }
+    btn.disabled = true;
+    api("/api/admin/db-config/verify-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ user: user, pass: pass })
+    }).then(function (d) {
+      btn.disabled = false;
+      if (!d.ok) {
+        errBox.textContent = d.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+        errBox.classList.remove("hidden");
+        document.getElementById("dbGatePass").value = "";
+        document.getElementById("dbGatePass").focus();
+        shakeGate();
+        return;
+      }
+      errBox.classList.add("hidden");
+      document.getElementById("dbGate").classList.add("hidden");
+      document.getElementById("dbShell").classList.remove("hidden");
+      loadAll();
+    }).catch(function () {
+      btn.disabled = false;
+      errBox.textContent = "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่";
+      errBox.classList.remove("hidden");
+      shakeGate();
+    });
+  };
+
+  function shakeGate() {
+    var w = document.getElementById("dbGateWin");
+    w.classList.remove("db-gate-shake");
+    void w.offsetWidth;
+    w.classList.add("db-gate-shake");
+  }
+
+  document.getElementById("dbEditMask").addEventListener("click", function (e) {
+    if (e.target === this) closeDbEdit();
+  });
+})();
+</script>
+</body>
+</html>

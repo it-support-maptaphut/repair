@@ -148,8 +148,14 @@
     pop = overlay;
   }
 
-  if (window.EventSource) {
-    var es = new EventSource("/api/notify/stream");
+  // ---------- สตรีมแจ้งเตือน (ผูกกับ visitor_id ผ่าน cookie vst_token) ----------
+  var es = null;
+  var started = false;
+
+  function start() {
+    if (started || !window.EventSource) return;
+    started = true;
+    es = new EventSource("/api/notify/stream", { withCredentials: true });
     es.onmessage = function (ev) {
       var d;
       try {
@@ -157,10 +163,50 @@
       } catch (e) {
         return;
       }
-      if (!d) return;
+      if (!d || d.type === "ping") return;
       if (ev.lastEventId) d.id = ev.lastEventId;
       if (d.type === "approved") showApproved(d);
       else if (d.type === "accepted") showAccepted(d);
     };
+    es.onerror = function () {
+      // ยังไม่เข้าสู่ระบบ (401) หรือเน็ตหลุด — ปิดแล้วรอเชื่อมใหม่เมื่อยังล็อกอินอยู่
+      if (es) { es.close(); es = null; }
+      started = false;
+      setTimeout(function () {
+        if (isAuthed()) start();
+      }, 5000);
+    };
   }
+
+  function stop() {
+    started = false;
+    if (es) { es.close(); es = null; }
+  }
+
+  function isAuthed() {
+    if (!window.WanGate) return true; // หน้าที่ไม่มีเกตติ้ง → เชื่อมได้เลย
+    var st = window.WanGate.state && window.WanGate.state();
+    return !!(st && st.authed);
+  }
+
+  if (window.WanGate && window.WanGate.check) {
+    // ต้องเข้าสู่ระบบก่อน จึงจะรับแจ้งเตือนได้
+    window.WanGate.check().then(function (st) {
+      if (st.authed) start();
+    }).catch(function () {});
+    window.WanGate.onAuthed(function () { start(); });
+  } else if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      if (window.WanGate && window.WanGate.check) return; // ให้ตัวแรกจัดการแทน
+      start();
+    });
+    window.addEventListener("load", function () {
+      if (window.WanGate && window.WanGate.check) return;
+      start();
+    });
+  } else {
+    start();
+  }
+
+  window.__repairNotify = { start: start, stop: stop };
 })();

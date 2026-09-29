@@ -2,14 +2,7 @@
   "use strict";
 
   var toastTimer = null;
-  var gate = document.getElementById("verifyGate");
-  var nameInput = document.getElementById("verifyName");
-  var posInput = document.getElementById("verifyPosition");
-  var verifySubmit = document.getElementById("verifySubmit");
-  var verifyErr = document.getElementById("verifyErr");
   var listEl = document.getElementById("myList");
-  var visitorBar = document.getElementById("visitorBar");
-  var visitorBarText = document.getElementById("visitorBarText");
   var loadingEl = document.getElementById("loadingOverlay");
   var loadingMsg = document.getElementById("loadingMsg");
   var newBtn = document.getElementById("newTicketBtn");
@@ -111,7 +104,6 @@
           '<svg class="mt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
         "</div>" +
         '<div class="mt-body">' +
-          '<div class="mt-row"><span class="mt-k">หมวด</span><span class="mt-v">' + esc(t.device || "-") + "</span></div>" +
           '<div class="mt-row"><span class="mt-k">สาขา</span><span class="mt-v">' + esc(loc.branch) + "</span></div>" +
           '<div class="mt-row"><span class="mt-k">ตำแหน่ง</span><span class="mt-v">' + esc(loc.position) + "</span></div>" +
           (t.handler_name
@@ -135,13 +127,7 @@
     );
   }
 
-  function render(visitor, tickets) {
-    if (visitorBar && visitorBarText) {
-      visitorBarText.textContent =
-        (visitor.name || "") + (visitor.position ? " · " + visitor.position : "");
-      visitorBar.classList.remove("hidden");
-    }
-
+  function render(tickets) {
     listEl.innerHTML = "";
     if (!tickets || !tickets.length) {
       listEl.innerHTML =
@@ -181,22 +167,22 @@
 
   function loadMine() {
     setLoading(true, "กำลังโหลดประวัติ...");
-    fetch("/api/tickets/mine")
+    fetch("/api/tickets/mine", { credentials: "same-origin" })
       .then(function (r) {
         return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; });
       })
       .then(function (res) {
         setLoading(false);
         if (res.status === 401) {
-          showGate();
+          // ยังไม่เข้าสู่ระบบ — เปิดเกตติ้งสมัคร/เข้าสู่ระบบ แล้วโหลดใหม่อัตโนมัติเมื่อสำเร็จ
+          openLoginGate();
           return;
         }
         if (!res.ok) {
           showListError(res.d.message || "โหลดประวัติไม่สำเร็จ");
           return;
         }
-        hideGate();
-        render(res.d.visitor, res.d.tickets);
+        render(res.d.tickets);
       })
       .catch(function () {
         setLoading(false);
@@ -205,57 +191,27 @@
   }
   window.__mtLoad = loadMine;
 
-  // ----- verify gate -----
-  function showGate() {
-    gate.classList.remove("hidden");
-    setTimeout(function () { nameInput.focus(); }, 80);
-  }
-
-  function hideGate() {
-    gate.classList.add("hidden");
-  }
-
-  function verify() {
-    var name = nameInput.value.trim();
-    var position = posInput.value.trim();
-    verifyErr.classList.add("hidden");
-    if (!name || !position) {
-      verifyErr.textContent = "กรุณากรอกทั้งชื่อและตำแหน่ง";
-      verifyErr.classList.remove("hidden");
-      (name ? posInput : nameInput).focus();
+  // เปิดเกตติ้งตามสถานะบัญชี: เคยตั้งรหัสผ่านแล้ว → เข้าสู่ระบบ / ยังไม่ตั้ง → สมัครขั้นที่ 2
+  function openLoginGate() {
+    if (!window.WanGate) {
+      showListError("กรุณาเข้าสู่ระบบก่อนดูประวัติ");
       return;
     }
-    verifySubmit.disabled = true;
-    verifySubmit.textContent = "กำลังตรวจสอบ...";
-    fetch("/api/visitors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name, position: position })
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        verifySubmit.disabled = false;
-        verifySubmit.textContent = "เข้าใช้งานระบบ";
-        if (!d.ok) {
-          verifyErr.textContent = d.message || "ยืนยันตัวตนไม่สำเร็จ";
-          verifyErr.classList.remove("hidden");
-          return;
-        }
-        hideGate();
-        loadMine();
-      })
-      .catch(function () {
-        verifySubmit.disabled = false;
-        verifySubmit.textContent = "เข้าใช้งานระบบ";
-        verifyErr.textContent = "เชื่อมต่อไม่ได้ กรุณาลองใหม่";
-        verifyErr.classList.remove("hidden");
+    window.WanGate.check().then(function (st) {
+      window.WanGate.open({
+        mode: st.registered && !st.needsCredentials ? "login" : "register",
+        step: st.registered && st.needsCredentials ? "2" : "1",
+        state: st
       });
+    }).catch(function () {
+      window.WanGate.open({ mode: "register" });
+    });
   }
 
-  verifySubmit.addEventListener("click", verify);
-  nameInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); posInput.focus(); } });
-  posInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); verify(); } });
-  gate.addEventListener("click", function (e) { if (e.target === gate) return; });
+  // หลังสมัคร/เข้าสู่ระบบสำเร็จ ให้โหลดประวัติใหม่อัตโนมัติ
+  if (window.WanGate) {
+    window.WanGate.onAuthed(function () { loadMine(); });
+  }
 
   // ----- expand / collapse -----
   listEl.addEventListener("click", function (e) {
@@ -319,5 +275,6 @@
     }, 2600);
   }
 
+  // หน้านี้ต้องมีบัญชี — ยังไม่เข้าสู่ระบบให้เปิดเกตติ้งก่อน
   loadMine();
 })();
