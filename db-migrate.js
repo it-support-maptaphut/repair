@@ -80,6 +80,8 @@ const TABLE_ORDER = [
   "warranty_checks",
   "password_notes",
   "system_users",
+  "app_settings",
+  "travel_claims",
 ];
 
 const BATCH_SIZE = 500;
@@ -189,6 +191,7 @@ async function createSchema(pgPool, addLog) {
     "supabase-schema.sql",
     "supabase-schema-counters.sql",
     "supabase-migrate-finish.sql",
+    "supabase-travel-expense.sql",
   ];
 
   // ข้าม statement เฉพาะ Supabase (roles/policy/grant) ที่ PostgreSQL ทั่วไปไม่มี
@@ -379,6 +382,7 @@ async function resetSequences(pgPool, addLog) {
     { table: "warranty_checks", col: "id" },
     { table: "password_notes", col: "id" },
     { table: "system_users", col: "id" },
+    { table: "travel_claims", col: "id" },
   ];
   
   for (const seq of sequences) {

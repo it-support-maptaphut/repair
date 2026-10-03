@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <script src="no-zoom.js"></script>
   <title>ระบบแจ้งซ่อม IT — จัดการงาน (มือถือ)</title>
-  <link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
+  <link rel="icon" type="image/png" href="Favorite%20Icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -2756,6 +2756,8 @@
   <!-- ธีมระบบ: 90S (กำหนดเป็นธีมหลักของระบบ) -->
   <link rel="stylesheet" href="admin-retro.css">
   <link rel="stylesheet" href="admin-mobile.css">
+<!-- ระบบบันทึกเบิกค่าเดินทาง (ใช้ stylesheet เดียวกับ desktop) -->
+<link rel="stylesheet" href="admin-travel.css">
 </head>
 <body class="mobile-admin">
   <div class="mob-topbar">
@@ -2772,6 +2774,7 @@
         <button class="mob-cat is-active" data-cat="tickets" type="button">ระบบแจ้งซ่อม</button>
         <button class="mob-cat" data-cat="care" type="button">ดูแลอุปกรณ์</button>
         <button class="mob-cat" data-cat="notes" type="button">โน้ต</button>
+        <button class="mob-cat" data-cat="travel" type="button">ระบบบันทึกเบิกค่าเดินทาง</button>
         <button class="mob-cat" data-cat="private" type="button">ระบบ Private</button>
       </div>
       <nav class="side-nav" id="adminTabs" aria-label="เมนูหลัก">
@@ -2813,6 +2816,12 @@
           <button class="side-btn" data-tab="workNotes" data-perm="workNotes" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
             <span>โน้ตขั้นตอนการทำงาน</span>
+          </button>
+        </div>
+        <div class="mob-cat-body" data-cat-body="travel" hidden>
+          <button class="side-btn" data-tab="travelExpense" data-perm="travelExpense" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v11"/><path d="M2 16h20v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 8h8M6 12h5"/></svg>
+            <span>บันทึกเบิกค่าเดินทาง</span>
           </button>
         </div>
       </nav>
@@ -2911,7 +2920,7 @@
       <div class="devices-toolbar" style="align-items:flex-start;gap:14px">
         <div>
           <h3 class="tab-title" style="margin:0 0 4px">ระบบบัญชีผู้ใช้งานภายนอก</h3>
-          <p class="tf-field-hint" style="margin:0">ผู้ใช้สมัครบัญชีด้วยชื่อผู้ใช้ + รหัสผ่าน เข้าใช้งานได้ทุกเครื่องทุกเครือข่าย — ผู้ใช้ที่ยังไม่ตั้งบัญชีจะยังเข้าถึงระบบไม่ได้</p>
+          <p class="tf-field-hint" style="margin:0">ผู้ใช้เข้าใช้งานด้วยชื่อ + ตำแหน่ง และใช้ Key Pass 5 ตัวกลับเข้าบัญชีเดิมจากเครื่องอื่น — ถ้าผู้ใช้ทำ Key Pass หาย ให้กดปุ่ม "Key Pass" เพื่อออกใหม่</p>
         </div>
       </div>
       <div class="table-wrap">
@@ -2920,7 +2929,8 @@
             <tr>
               <th>ชื่อ</th>
               <th>ตำแหน่ง</th>
-              <th>ชื่อผู้ใช้</th>
+              <th>สาขา</th>
+              <th>Key Pass</th>
               <th>IP ล่าสุด</th>
               <th style="text-align:right">ครั้งที่แจ้ง</th>
               <th>เข้าใช้งานล่าสุด</th>
@@ -2949,9 +2959,14 @@
             <input id="visitorEditPosition" type="text" />
           </div>
           <div class="form-field">
-            <label>ชื่อผู้ใช้ (username)</label>
-            <input id="visitorEditUsername" type="text" placeholder="a-z 0-9 . _ - (4-30 ตัว)" />
-            <p class="tf-field-hint">เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน</p>
+            <label>ประจำสาขา</label>
+            <input id="visitorEditBranch" type="text" list="visitorBranchList" placeholder="เลือกหรือพิมพ์ชื่อสาขา" />
+            <datalist id="visitorBranchList">
+              <option value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)"></option>
+              <option value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)"></option>
+              <option value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)"></option>
+              <option value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)"></option>
+            </datalist>
           </div>
           <p class="tf-field-hint" id="visitorEditIpInfo"></p>
           <div class="modal-actions">
@@ -2962,21 +2977,21 @@
       </div>
     </div>
 
-    <div class="modal-mask hidden" id="visitorResetMask" role="dialog" aria-modal="true" aria-label="รีเซ็ตรหัสผ่านผู้ใช้" onclick="if(event.target===this) closeVisitorReset()">
+    <div class="modal-mask hidden" id="visitorResetMask" role="dialog" aria-modal="true" aria-label="ออก Key Pass ใหม่" onclick="if(event.target===this) closeVisitorReset()">
       <div class="modal">
         <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorReset()">&times;</button>
         <div class="modal-body">
-          <h3 class="modal-title">รีเซ็ตรหัสผ่าน</h3>
+          <h3 class="modal-title">ออก Key Pass ใหม่</h3>
           <p class="tf-field-hint" id="visitorResetInfo"></p>
-          <div class="form-field">
-            <label>รหัสผ่านใหม่</label>
-            <input id="visitorResetPassword" type="text" placeholder="อย่างน้อย 6 ตัวอักษร ไม่มีช่องว่าง" />
-            <p class="tf-field-hint">กดปุ่มด้านล่างเพื่อสร้างรหัสผ่านแบบสุ่มให้อัตโนมัติ แล้วส่งให้ผู้ใช้ทางช่องทางที่สะดวก</p>
+          <p class="tf-field-hint" style="color:var(--danger);font-weight:600">Key Pass เก่าของผู้ใช้รายนี้จะใช้ไม่ได้ทันทีหลังกดออกใหม่</p>
+          <div class="form-field" id="visitorResetResult" style="display:none">
+            <label>Key Pass ใหม่ (แสดงครั้งเดียว)</label>
+            <p style="font-family:monospace;font-size:24px;font-weight:700;letter-spacing:.22em;text-align:center;padding:12px 8px;border:2px dashed var(--green);border-radius:12px;background:var(--green-soft,#eaf5ef)" id="visitorResetKp"></p>
+            <p class="tf-field-hint">บันทึกไว้ตอนนี้แล้วส่งให้ผู้ใช้ ระบบจะไม่แสดง Key Pass นี้ให้อีก</p>
           </div>
           <div class="modal-actions" style="flex-wrap:wrap">
-            <button class="btn btn-ghost" type="button" onclick="genVisitorPassword()">สร้างรหัสผ่านให้</button>
-            <button class="btn btn-ghost" onclick="closeVisitorReset()">ยกเลิก</button>
-            <button class="btn btn-primary" type="button" onclick="saveVisitorReset()">บันทึกรหัสผ่าน</button>
+            <button class="btn btn-ghost" onclick="closeVisitorReset()">ปิด</button>
+            <button class="btn btn-primary" type="button" id="visitorResetIssueBtn" onclick="saveVisitorReset()">ออก Key Pass ใหม่</button>
           </div>
         </div>
       </div>
@@ -3345,6 +3360,232 @@
       </main>
     </section>
 
+    <section id="travelExpenseView" hidden>
+
+      <section class="stats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v11"/><path d="M2 16h20v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>
+          </div>
+          <div><div class="stat-num" id="trvStatAll">0</div><div class="stat-label">ใบเบิกทั้งหมด</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+          </div>
+          <div><div class="stat-num" id="trvStatTrips">0</div><div class="stat-label">จำนวนเที่ยว</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div><div class="stat-num" id="trvStatAmount">0.00</div><div class="stat-label">ยอดรวมทั้งหมด (บาท)</div></div>
+        </div>
+      </section>
+
+      <main>
+        <div class="mbar">
+          <input id="trvSearch" type="search" placeholder="ค้นเลขที่ใบเบิก / ชื่อผู้เบิก / หมายเหตุ" oninput="renderTravelClaims()" />
+          <button class="btn btn-ghost" type="button" onclick="openTravelSettings()">ตั้งค่าระบบ</button>
+          <button class="btn btn-primary" type="button" onclick="openTravelClaimForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            สร้างใบเบิกค่าเดินทาง
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="trv-table">
+            <thead>
+              <tr>
+                <th>เลขที่</th>
+                <th>วันที่</th>
+                <th>ผู้เบิก</th>
+                <th class="mid">เที่ยว</th>
+                <th class="num">ระยะทาง (กม.)</th>
+                <th class="num">ยอดรวม (บาท)</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="trvBody"></tbody>
+          </table>
+        </div>
+        <div id="trvEmpty" class="empty hidden">
+          <p>ยังไม่มีใบเบิกค่าเดินทาง — กด "สร้างใบเบิกค่าเดินทาง" เพื่อเริ่มบันทึก</p>
+        </div>
+      </main>
+    </section>
+
+    <div class="modal-mask hidden" id="travelClaimMask" role="dialog" aria-modal="true" aria-label="บันทึกเบิกค่าเดินทาง" onclick="if(event.target===this) closeTravelClaimForm()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeTravelClaimForm()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title" id="trvFormTitle">สร้างใบเบิกค่าเดินทาง</h3>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="trvClaimer">ผู้เบิก (เลือกจากรายชื่อในระบบ)</label>
+              <select id="trvClaimer"></select>
+            </div>
+            <div class="trv-field">
+              <label for="trvClaimDate">วันที่</label>
+              <input id="trvClaimDate" type="date" />
+            </div>
+          </div>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="trvPosition">ตำแหน่ง</label>
+              <input id="trvPosition" type="text" placeholder="เช่น IT Support" />
+            </div>
+            <div class="trv-field">
+              <label for="trvAccountName">ชื่อบัญชี (ผู้เบิก)</label>
+              <input id="trvAccountName" type="text" />
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label>รายการเดินทาง (เพิ่มได้เท่าที่ต้องการ)</label>
+            <div class="trv-trips-wrap">
+              <table class="trv-trips">
+                <thead>
+                  <tr>
+                    <th style="width:130px">วันที่</th>
+                    <th>รายการ / รายละเอียดการเดินทาง</th>
+                    <th style="width:84px">ระยะทาง (กม.)</th>
+                    <th style="width:120px">ประเภทรถ</th>
+                    <th style="width:84px">จำนวนเงิน</th>
+                    <th style="width:36px"></th>
+                  </tr>
+                </thead>
+                <tbody id="trvTripsBody"></tbody>
+              </table>
+            </div>
+            <div style="margin-top:8px">
+              <button class="trv-btn" type="button" onclick="addTravelTripRow()">+ เพิ่มรายการเดินทาง</button>
+            </div>
+            <div class="trv-totals" id="trvTotals"></div>
+          </div>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="trvBankName">บัญชีธนาคาร</label>
+              <input id="trvBankName" type="text" />
+            </div>
+            <div class="trv-field">
+              <label for="trvBankAccount">เลขที่บัญชี</label>
+              <input id="trvBankAccount" type="text" />
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label for="trvNote">หมายเหตุ</label>
+            <input id="trvNote" type="text" placeholder="ไม่บังคับ" />
+          </div>
+
+          <p class="trv-msg" id="trvFormMsg"></p>
+
+          <div class="modal-actions">
+            <button class="btn btn-ghost" type="button" onclick="closeTravelClaimForm()">ยกเลิก</button>
+            <button class="btn btn-primary" type="button" id="trvSaveBtn" onclick="saveTravelClaim()">บันทึกใบเบิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-mask hidden" id="travelSettingsMask" role="dialog" aria-modal="true" aria-label="ตั้งค่าระบบเบิกค่าเดินทาง" onclick="if(event.target===this) closeTravelSettings()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeTravelSettings()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title">ตั้งค่าระบบบันทึกเบิกค่าเดินทาง</h3>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="trvRateMoto">อัตราค่าน้ำมัน มอเตอร์ไซค์ (บาท/กม.)</label>
+              <input id="trvRateMoto" type="number" step="0.25" min="0" />
+            </div>
+            <div class="trv-field">
+              <label for="trvRateCar">อัตราค่าน้ำมัน รถยนต์ (บาท/กม.)</label>
+              <input id="trvRateCar" type="number" step="0.25" min="0" />
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label>คอลัมน์ประเภทรถในตารางพิมพ์</label>
+            <div class="trv-checks">
+              <label class="trv-check">
+                <input type="checkbox" id="trvShowMoto" onchange="trvApplyVehicleLimit(); trvRenderTripTotals();" />
+                <span>มอเตอร์ไซค์</span>
+              </label>
+              <label class="trv-check">
+                <input type="checkbox" id="trvShowCar" onchange="trvApplyVehicleLimit(); trvRenderTripTotals();" />
+                <span>รถยนต์</span>
+              </label>
+            </div>
+            <p class="trv-hint">ติ๊กได้ทั้งสองประเภท หรือเลือกเพียงประเภทเดียว ถ้าเลือกประเภทใดไว้ ตารางในใบเบิกจะแสดงเฉพาะคอลัมน์นั้น</p>
+          </div>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="trvSetCompany">ชื่อหน่วยงาน / บริษัท</label>
+              <input id="trvSetCompany" type="text" />
+            </div>
+            <div class="trv-field">
+              <label for="trvSetBank">ธนาคารเริ่มต้น</label>
+              <input id="trvSetBank" type="text" />
+            </div>
+          </div>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="trvSetApprover">ชื่อผู้อนุมัติ</label>
+              <input id="trvSetApprover" type="text" />
+            </div>
+            <div class="trv-field">
+              <label for="trvSetApproverTitle">ตำแหน่งผู้อนุมัติ</label>
+              <input id="trvSetApproverTitle" type="text" />
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label>ผู้ตรวจสอบ</label>
+            <div class="trv-grid2">
+              <div class="trv-field">
+                <label for="trvSetChecker">ชื่อผู้ตรวจสอบ</label>
+                <input id="trvSetChecker" type="text" />
+              </div>
+              <div class="trv-field">
+                <label for="trvSetCheckerTitle">ตำแหน่งผู้ตรวจสอบ</label>
+                <input id="trvSetCheckerTitle" type="text" />
+              </div>
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label>ผู้ตรวจสอบ</label>
+            <div class="trv-grid2">
+              <div class="trv-field">
+                <label for="trvSetChecker2">ชื่อผู้ตรวจสอบ</label>
+                <input id="trvSetChecker2" type="text" />
+              </div>
+              <div class="trv-field">
+                <label for="trvSetChecker2Title">ตำแหน่งผู้ตรวจสอบ</label>
+                <input id="trvSetChecker2Title" type="text" />
+              </div>
+            </div>
+          </div>
+
+          <p class="trv-hint">อัตรานี้จะถูกบันทึกไว้กับใบเบิกแต่ละรายการ การเปลี่ยนอัตราในภายหลังจะไม่กระทบใบเบิกเก่า</p>
+          <p class="trv-hint">ช่องชื่อ/ตำแหน่งที่เว้นว่างไว้ จะแสดงเป็นเส้นประสำหรับลงนามด้วยปากกาในเอกสาร</p>
+          <p class="trv-msg" id="trvSetMsg"></p>
+
+          <div class="modal-actions">
+            <button class="btn btn-ghost" type="button" onclick="closeTravelSettings()">ปิด</button>
+            <button class="btn btn-primary" type="button" id="trvSetSaveBtn" onclick="saveTravelSettings()">บันทึกการตั้งค่า</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <section id="workNotesView" hidden>
 
       <section class="stats">
@@ -3621,7 +3862,15 @@
           <div class="modal-no"><span class="tno" id="editNo"></span></div>
           <div class="form-field">
             <label>หมวด / อุปกรณ์</label>
-            <input id="editDevice">
+            <select id="editDeviceCat" onchange="editDeviceCatChange()">
+              <option value="">— เลือกหมวด —</option>
+              <option value="Hardware">Hardware</option>
+              <option value="Software">Software</option>
+              <option value="Disk">Disk</option>
+            </select>
+            <select id="editDevice" style="margin-top:8px">
+              <option value="">— เลือกอุปกรณ์ —</option>
+            </select>
           </div>
           <div class="form-field">
             <label>รายละเอียด</label>
@@ -4559,6 +4808,524 @@
       }
     })();
 
+    // ============================================================
+    // ระบบบันทึกเบิกค่าเดินทาง (Travel Expense) — ฝั่ง MOBILE
+    // โค้ดชุดเดียวกับ public/admin.html (ข้อมูลผ่าน API เดียวกัน)
+    // ============================================================
+    var travelClaims = [];
+    var travelSettings = {};
+    var travelClaimers = [];
+    var travelClaimsLoaded = false;
+    var travelEditingId = null;
+
+    function trvNum(v) {
+      var n = Number(v);
+      return isFinite(n) ? n : 0;
+    }
+
+    function trvMoney(v) {
+      return trvNum(v).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function trvRateMoto() { return trvNum(travelSettings.fuel_rate_motorcycle) || 0; }
+    function trvRateCar() { return trvNum(travelSettings.fuel_rate_car) || 0; }
+
+    function trvRateOf(vehicle) {
+      return String(vehicle) === "car" ? trvRateCar() : trvRateMoto();
+    }
+
+    function trvParseTrips(claim) {
+      var raw = claim && claim.trips_json;
+      if (Array.isArray(raw)) return raw;
+      try {
+        var p = JSON.parse(raw || "[]");
+        return Array.isArray(p) ? p : [];
+      } catch (e) { return []; }
+    }
+
+    function trvShortDate(value) {
+      var s = String(value == null ? "" : value).slice(0, 10);
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+      return m ? m[3] + "/" + m[2] + "/" + (+m[1] + 543) : (s || "-");
+    }
+
+    function trvToday() {
+      var d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+
+    // ---------- โหลดข้อมูล ----------
+    function loadTravelClaims(force) {
+      if (travelClaimsLoaded && !force) return Promise.resolve();
+      var body = document.getElementById("trvBody");
+      if (body) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">กำลังโหลดข้อมูล...</td></tr>';
+      }
+      return Promise.all([
+        fetch("/api/admin/travel-claims", { credentials: "same-origin" }).then(function (r) { return r.json(); }),
+        fetch("/api/admin/travel-settings", { credentials: "same-origin" }).then(function (r) { return r.json(); })
+      ]).then(function (res) {
+        if (!res[0].ok) throw new Error(res[0].message || "โหลดรายการไม่สำเร็จ");
+        travelClaims = res[0].claims || [];
+        travelSettings = res[1].settings || {};
+        travelClaimsLoaded = true;
+        renderTravelClaims();
+      }).catch(function (err) {
+        travelClaimsLoaded = false;
+        if (body) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--red)">โหลดข้อมูลไม่สำเร็จ: ' +
+            esc(err.message) + "</td></tr>";
+        }
+      });
+    }
+
+    function renderTravelClaims() {
+      var body = document.getElementById("trvBody");
+      var empty = document.getElementById("trvEmpty");
+      if (!body) return;
+
+      var q = String((document.getElementById("trvSearch") || {}).value || "").trim().toLowerCase();
+      var list = travelClaims.filter(function (c) {
+        if (!q) return true;
+        return [c.doc_no, c.claimer_name, c.position, c.note, c.bank_name, c.account_name]
+          .join(" ").toLowerCase().indexOf(q) !== -1;
+      });
+
+      var totalTrips = 0;
+      var totalAmount = 0;
+      travelClaims.forEach(function (c) {
+        totalTrips += trvParseTrips(c).length;
+        totalAmount += trvNum(c.total_amount);
+      });
+      var sAll = document.getElementById("trvStatAll");
+      var sTrips = document.getElementById("trvStatTrips");
+      var sAmount = document.getElementById("trvStatAmount");
+      if (sAll) sAll.textContent = String(travelClaims.length);
+      if (sTrips) sTrips.textContent = String(totalTrips);
+      if (sAmount) sAmount.textContent = trvMoney(totalAmount);
+
+      if (!list.length) {
+        body.innerHTML = "";
+        if (empty) empty.classList.remove("hidden");
+        return;
+      }
+      if (empty) empty.classList.add("hidden");
+
+      body.innerHTML = list.map(function (c) {
+        var trips = trvParseTrips(c);
+        return '<tr data-trv-id="' + esc(c.id) + '">' +
+          '<td class="trv-doc">' + esc(c.doc_no || "-") + "</td>" +
+          "<td>" + esc(trvShortDate(c.claim_date)) + "</td>" +
+          "<td>" + esc(c.claimer_name || "-") +
+            (c.position ? '<div style="font-size:12px;color:var(--muted)">' + esc(c.position) + "</div>" : "") + "</td>" +
+          '<td class="mid">' + trips.length + "</td>" +
+          '<td class="num">' + esc(trvMoney(c.total_km)) + "</td>" +
+          '<td class="num"><b>' + esc(trvMoney(c.total_amount)) + "</b></td>" +
+          '<td><div class="trv-acts">' +
+            '<button class="trv-btn primary" type="button" data-trv-act="print" title="พิมพ์ฟอร์ม">พิมพ์</button>' +
+            '<button class="trv-btn" type="button" data-trv-act="edit">แก้ไข</button>' +
+            '<button class="trv-btn danger" type="button" data-trv-act="del">ลบ</button>' +
+          "</div></td>" +
+        "</tr>";
+      }).join("");
+    }
+
+    // ---------- ผู้เบิก (ดึงเฉพาะชื่อ/ตำแหน่ง) ----------
+    function loadTravelClaimers() {
+      return fetch("/api/admin/travel-claimers", { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          travelClaimers = d.ok ? (d.claimers || []) : [];
+          return travelClaimers;
+        })
+        .catch(function () { travelClaimers = []; return travelClaimers; });
+    }
+
+    // ---------- ฟอร์มใบเบิก ----------
+    function addTravelTripRow(trip) {
+      var body = document.getElementById("trvTripsBody");
+      if (!body) return;
+      var t = trip || {};
+      var vehicle = String(t.vehicle || "motorcycle");
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="date" data-f="date" value="' + esc(t.date || trvToday()) + '"></td>' +
+        '<td><textarea rows="1" data-f="purpose" placeholder="รายละเอียดการเดินทาง (กด Enter เพื่อขึ้นบรรทัดใหม่)">' + esc(t.purpose || "") + '</textarea></td>' +
+        '<td><input type="number" data-f="km" step="0.1" min="0" value="' + (t.km != null && t.km !== "" ? esc(t.km) : "") + '"></td>' +
+        '<td><select data-f="vehicle">' +
+          '<option value="motorcycle"' + (vehicle === "motorcycle" ? " selected" : "") + ">มอเตอร์ไซค์</option>" +
+          '<option value="car"' + (vehicle === "car" ? " selected" : "") + ">รถยนต์</option>" +
+        "</select></td>" +
+        '<td class="n" data-amt>0.00</td>' +
+        '<td class="c"><button class="trv-del" type="button" data-trv-del="1" title="ลบแถว">&times;</button></td>';
+      body.appendChild(tr);
+      trvApplyVehicleLimit();
+      trvRenderTripTotals();
+      trvAutoGrowTrip(tr.querySelector("[data-f='purpose']"));
+    }
+
+    // ปรับความสูงช่องรายละเอียดให้เท่าจำนวนบรรทัดที่พิมพ์
+    function trvAutoGrowTrip(ta) {
+      if (!ta) return;
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + 2 + "px";
+    }
+
+    function trvTripsFromDom() {
+      var rows = Array.prototype.slice.call(document.querySelectorAll("#trvTripsBody tr"));
+      return rows.map(function (tr) {
+        var g = function (f) { var el = tr.querySelector("[data-f='" + f + "']"); return el ? el.value : ""; };
+        return { date: g("date"), purpose: g("purpose"), km: g("km"), vehicle: g("vehicle") };
+      }).filter(function (t) { return trvNum(t.km) > 0 || String(t.purpose).trim(); });
+    }
+
+    function trvRenderTripTotals() {
+      // อ่านจากแต่ละแถวโดยตรง (ไม่จับคู่ด้วย index ของรายการที่กรองแล้ว)
+      // เพราะถ้ามีแถวว่างถูกข้าม ยอดของแต่ละแถวจะเลื่อนผิดตำแหน่ง
+      var rows = Array.prototype.slice.call(document.querySelectorAll("#trvTripsBody tr"));
+      var count = 0;
+      var sumKm = 0;
+      var sumAmount = 0;
+      rows.forEach(function (tr) {
+        var g = function (f) { var el = tr.querySelector("[data-f='" + f + "']"); return el ? el.value : ""; };
+        var cell = tr.querySelector("[data-amt]");
+        var km = trvNum(g("km"));
+        var purpose = String(g("purpose") || "").trim();
+        if (km <= 0 && !purpose) {
+          if (cell) cell.textContent = "0.00";
+          return;
+        }
+        count++;
+        sumKm += km;
+        var amt = Math.round(km * trvRateOf(g("vehicle")) * 100) / 100;
+        sumAmount += amt;
+        if (cell) cell.textContent = trvMoney(amt);
+      });
+      var box = document.getElementById("trvTotals");
+      if (box) {
+        box.innerHTML =
+          "<span>จำนวนเที่ยว <b>" + count + "</b></span>" +
+          "<span>ระยะทางรวม <b>" + trvMoney(sumKm) + "</b> กม.</span>" +
+          "<span>ยอดรวม <b>" + trvMoney(sumAmount) + "</b> บาท</span>" +
+          '<span class="trv-rate">อัตรา: มอเตอร์ไซค์ ' + trvMoney(trvRateMoto()) +
+          " บาท/กม. · รถยนต์ " + trvMoney(trvRateCar()) + " บาท/กม.</span>";
+      }
+      return { count: count, sumKm: sumKm, sumAmount: sumAmount };
+    }
+
+    function trvSetMsg(id, text, kind) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text || "";
+      el.className = "trv-msg" + (kind ? " " + kind : "");
+    }
+
+    function trvFillClaimerSelect(selectedId) {
+      var sel = document.getElementById("trvClaimer");
+      if (!sel) return;
+      sel.innerHTML = '<option value="">— เลือกผู้เบิก —</option>' + travelClaimers.map(function (v) {
+        return '<option value="' + esc(v.id) + '">' + esc(v.name || "-") +
+          (v.position ? " (" + esc(v.position) + ")" : "") + "</option>";
+      }).join("");
+      if (selectedId) sel.value = String(selectedId);
+    }
+
+    function openTravelClaimForm(id) {
+      loadTravelClaimers();
+      travelEditingId = id ? Number(id) : null;
+      var title = document.getElementById("trvFormTitle");
+      if (title) title.textContent = travelEditingId ? "แก้ไขใบเบิกค่าเดินทาง" : "สร้างใบเบิกค่าเดินทาง";
+
+      var body = document.getElementById("trvTripsBody");
+      if (body) body.innerHTML = "";
+      trvSetMsg("trvFormMsg", "");
+
+      var claim = null;
+      if (travelEditingId) {
+        claim = travelClaims.filter(function (c) { return Number(c.id) === travelEditingId; })[0] || null;
+        if (!claim) { toast("ไม่พบใบเบิกค่าเดินทางที่ต้องการแก้ไข"); return; }
+      }
+
+      trvFillClaimerSelect(claim ? claim.claimer_visitor_id : "");
+      var el = function (id2) { return document.getElementById(id2); };
+      if (el("trvClaimDate")) el("trvClaimDate").value = claim ? String(claim.claim_date || "").slice(0, 10) : trvToday();
+      if (el("trvPosition")) el("trvPosition").value = claim ? claim.position || "" : "";
+      if (el("trvAccountName")) el("trvAccountName").value = claim ? claim.account_name || "" : "";
+      if (el("trvBankName")) el("trvBankName").value = claim ? claim.bank_name || "" : (travelSettings.travel_bank_name || "");
+      if (el("trvBankAccount")) el("trvBankAccount").value = claim ? claim.bank_account || "" : "";
+      if (el("trvNote")) el("trvNote").value = claim ? claim.note || "" : "";
+
+      var trips = claim ? trvParseTrips(claim) : [];
+      if (!trips.length) addTravelTripRow();
+      else trips.forEach(function (t) { addTravelTripRow(t); });
+      trvApplyVehicleLimit();
+      trvRenderTripTotals();
+
+      var mask = document.getElementById("travelClaimMask");
+      if (mask) { mask.classList.remove("hidden"); mask.style.display = "flex"; }
+    }
+
+    function closeTravelClaimForm() {
+      var mask = document.getElementById("travelClaimMask");
+      if (mask) { mask.classList.add("hidden"); mask.style.display = ""; }
+      travelEditingId = null;
+    }
+
+    function trvApplyClaimerMeta() {
+      var sel = document.getElementById("trvClaimer");
+      if (!sel) return;
+      var v = travelClaimers.filter(function (x) { return String(x.id) === String(sel.value); })[0];
+      var pos = document.getElementById("trvPosition");
+      var acc = document.getElementById("trvAccountName");
+      if (!v) return;
+      if (pos && !pos.value.trim()) pos.value = v.position || "";
+      if (acc && !acc.value.trim()) acc.value = v.name || "";
+    }
+
+    function saveTravelClaim() {
+      var btn = document.getElementById("trvSaveBtn");
+      var sel = document.getElementById("trvClaimer");
+      var trips = trvTripsFromDom();
+      var visitorId = sel && sel.value ? Number(sel.value) : null;
+      var v = visitorId ? travelClaimers.filter(function (x) { return Number(x.id) === visitorId; })[0] : null;
+      var accName = (document.getElementById("trvAccountName") || {}).value || "";
+      var claimerName = (v && v.name) || accName.trim();
+      if (!claimerName) { trvSetMsg("trvFormMsg", "กรุณาเลือกผู้เบิก", "err"); return; }
+      if (!trips.length) { trvSetMsg("trvFormMsg", "เพิ่มรายการเดินทางอย่างน้อย 1 รายการ", "err"); return; }
+
+      var payload = {
+        claimerVisitorId: visitorId,
+        claimerName: claimerName,
+        claimDate: (document.getElementById("trvClaimDate") || {}).value || trvToday(),
+        position: ((document.getElementById("trvPosition") || {}).value || "").trim(),
+        bankName: ((document.getElementById("trvBankName") || {}).value || "").trim(),
+        bankAccount: ((document.getElementById("trvBankAccount") || {}).value || "").trim(),
+        accountName: accName.trim() || claimerName,
+        note: ((document.getElementById("trvNote") || {}).value || "").trim(),
+        trips: trips
+      };
+
+      if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก..."; }
+      trvSetMsg("trvFormMsg", "");
+      var url = travelEditingId ? "/api/admin/travel-claims/" + travelEditingId : "/api/admin/travel-claims";
+      fetch(url, {
+        method: travelEditingId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.message || "บันทึกไม่สำเร็จ");
+          closeTravelClaimForm();
+          toast(travelEditingId ? "แก้ไขใบเบิกค่าเดินทางเรียบร้อย" : "บันทึกใบเบิกค่าเดินทางเรียบร้อย");
+          return loadTravelClaims(true);
+        })
+        .catch(function (err) { trvSetMsg("trvFormMsg", err.message, "err"); })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.textContent = "บันทึกใบเบิก"; }
+        });
+    }
+
+    function deleteTravelClaim(id) {
+      if (!confirm("ยืนยันการลบใบเบิกค่าเดินทางนี้?\nการลบถาวรและกู้คืนไม่ได้")) return;
+      fetch("/api/admin/travel-claims/" + id, { method: "DELETE", credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) throw new Error(d.message || "ลบไม่สำเร็จ");
+          toast("ลบใบเบิกค่าเดินทางเรียบร้อย");
+          return loadTravelClaims(true);
+        })
+        .catch(function (err) { toast("ลบไม่สำเร็จ: " + err.message); });
+    }
+
+    // ---------- พิมพ์ ----------
+    function printTravelClaim(id) {
+      var frame = document.getElementById("trvPrintFrame");
+      if (!frame) {
+        frame = document.createElement("iframe");
+        frame.id = "trvPrintFrame";
+        frame.setAttribute("aria-hidden", "true");
+        frame.style.cssText = "position:fixed;width:0;height:0;border:0;visibility:hidden";
+        document.body.appendChild(frame);
+      }
+      var onReady = function (ev) {
+        if (!ev.data) return;
+        if (ev.data.type === "travel-print-failed") {
+          window.removeEventListener("message", onReady);
+          toast("เปิดหน้าต่างพิมพ์ไม่สำเร็จ: ไม่สามารถโหลดใบเบิกค่าเดินทาง");
+          return;
+        }
+        if (ev.data.type !== "travel-print-ready") return;
+        window.removeEventListener("message", onReady);
+        try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+        catch (e) { toast("เปิดหน้าต่างพิมพ์ไม่สำเร็จ"); }
+      };
+      window.addEventListener("message", onReady);
+      frame.src = "/travel-print.html?id=" + encodeURIComponent(id);
+    }
+
+    // ---------- ตั้งค่าระบบ ----------
+    // ค่าประเภทรถที่บันทึกไว้ ใช้เป็นตัวตั้งต้น (ค่าผิดรูปแบบ = ทั้งคู่)
+    function trvVehicleAllowedSaved() {
+      var cols = String(travelSettings.travel_vehicle_columns || "moto,car")
+        .toLowerCase().split(",");
+      var a = { moto: cols.indexOf("moto") >= 0, car: cols.indexOf("car") >= 0 };
+      if (!a.moto && !a.car) { a.moto = true; a.car = true; }
+      return a;
+    }
+
+    // อ่านค่าช่องติ๊กประเภทรถจากหน้าตั้งค่า (ถ้าไม่ได้ติ๊กเลย ให้ถือว่ายังเป็นค่าเดิมที่บันทึกไว้
+    // เพื่อไม่ให้ตารางหายคอลัมน์)
+    function trvVehicleCols() {
+      var a = trvVehicleAllowed();
+      return (a.moto ? "moto" : "") + (a.car ? (a.moto ? "," : "") + "car" : "");
+    }
+
+    // ประเภทรถที่อนุญาตให้เลือก
+    function trvVehicleAllowed() {
+      var m = document.getElementById("trvShowMoto");
+      var c = document.getElementById("trvShowCar");
+      // ยังไม่ได้เปิดหน้าตั้งค่า (ช่องติ๊กยังไม่มีใน DOM) = ยึดค่าที่บันทึกไว้
+      if (!m || !c) return trvVehicleAllowedSaved();
+      var a = { moto: m.checked, car: c.checked };
+      // ไม่ได้ติ๊กอะไรเลย = ไม่จำกัด (ยึดค่าเดิมของที่บันทึกไว้) กันตารางหายคอลัมน์
+      if (!a.moto && !a.car) return trvVehicleAllowedSaved();
+      return a;
+    }
+
+    // จำกัดตัวเลือกประเภทรถในฟอร์มบันทึกเบิก ให้ตรงกับที่ติ๊กไว้
+    // เพื่อไม่ให้กรอกรถที่ตารางไม่มีคอลัมน์รองรับ (ทำให้ยอดตกผิดช่อง)
+    // ทำกับทุกแถวของตารางเที่ยว เพราะแต่ละแถวมี select ของตัวเอง
+    function trvApplyVehicleLimit() {
+      var a = trvVehicleAllowed();
+      var sels = document.querySelectorAll("#trvTripsBody select[data-f='vehicle']");
+      for (var i = 0; i < sels.length; i++) {
+        var s = sels[i];
+        var oMoto = s.querySelector("option[value='motorcycle']");
+        var oCar = s.querySelector("option[value='car']");
+        if (oMoto) {
+          oMoto.hidden = !a.moto;
+          oMoto.disabled = !a.moto;
+        }
+        if (oCar) {
+          oCar.hidden = !a.car;
+          oCar.disabled = !a.car;
+        }
+        // ค่าที่เลือกอยู่ถูกปิดไป -> สลับไปประเภทที่ยังเปิดอยู่
+        var cur = s.options[s.selectedIndex];
+        if (!cur || cur.disabled) {
+          if (a.moto && oMoto) s.value = "motorcycle";
+          else if (a.car && oCar) s.value = "car";
+        }
+      }
+    }
+
+    function openTravelSettings() {
+      var el = function (id2) { return document.getElementById(id2); };
+      if (el("trvRateMoto")) el("trvRateMoto").value = travelSettings.fuel_rate_motorcycle != null ? travelSettings.fuel_rate_motorcycle : 3;
+      if (el("trvRateCar")) el("trvRateCar").value = travelSettings.fuel_rate_car != null ? travelSettings.fuel_rate_car : 5;
+      var savedVeh = trvVehicleAllowedSaved();
+      if (el("trvShowMoto")) el("trvShowMoto").checked = savedVeh.moto;
+      if (el("trvShowCar")) el("trvShowCar").checked = savedVeh.car;
+      trvApplyVehicleLimit();
+      if (el("trvSetCompany")) el("trvSetCompany").value = travelSettings.travel_company || "";
+      if (el("trvSetBank")) el("trvSetBank").value = travelSettings.travel_bank_name || "";
+      if (el("trvSetApprover")) el("trvSetApprover").value = travelSettings.travel_approver_name || "";
+      if (el("trvSetApproverTitle")) el("trvSetApproverTitle").value = travelSettings.travel_approver_title || "";
+      if (el("trvSetChecker")) el("trvSetChecker").value = travelSettings.travel_checker_name || "";
+      if (el("trvSetCheckerTitle")) el("trvSetCheckerTitle").value = travelSettings.travel_checker_title || "";
+      if (el("trvSetChecker2")) el("trvSetChecker2").value = travelSettings.travel_checker2_name || "";
+      if (el("trvSetChecker2Title")) el("trvSetChecker2Title").value = travelSettings.travel_checker2_title || "";
+      trvSetMsg("trvSetMsg", "");
+      var mask = document.getElementById("travelSettingsMask");
+      if (mask) { mask.classList.remove("hidden"); mask.style.display = "flex"; }
+    }
+
+    function closeTravelSettings() {
+      var mask = document.getElementById("travelSettingsMask");
+      if (mask) { mask.classList.add("hidden"); mask.style.display = ""; }
+    }
+
+    function saveTravelSettings() {
+      var btn = document.getElementById("trvSetSaveBtn");
+      var val = function (id2) { var e = document.getElementById(id2); return e ? e.value.trim() : ""; };
+      var payload = {
+        fuel_rate_motorcycle: val("trvRateMoto"),
+        fuel_rate_car: val("trvRateCar"),
+        travel_company: val("trvSetCompany"),
+        travel_bank_name: val("trvSetBank"),
+        travel_approver_name: val("trvSetApprover"),
+        travel_approver_title: val("trvSetApproverTitle"),
+        travel_checker_name: val("trvSetChecker"),
+        travel_checker_title: val("trvSetCheckerTitle"),
+        travel_checker2_name: val("trvSetChecker2"),
+        travel_checker2_title: val("trvSetChecker2Title"),
+        travel_vehicle_columns: trvVehicleCols()
+      };
+      if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก..."; }
+      fetch("/api/admin/travel-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) throw new Error(d.message || "บันทึกไม่สำเร็จ");
+          travelSettings = d.settings || travelSettings;
+          closeTravelSettings();
+          toast("บันทึกการตั้งค่าเรียบร้อย");
+          renderTravelClaims();
+        })
+        .catch(function (err) { trvSetMsg("trvSetMsg", err.message, "err"); })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.textContent = "บันทึกการตั้งค่า"; }
+        });
+    }
+
+    // ---------- Event delegation ----------
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("#trvBody [data-trv-act]") : null;
+      if (btn) {
+        var tr = btn.closest("tr[data-trv-id]");
+        var id = tr ? tr.getAttribute("data-trv-id") : "";
+        var act = btn.getAttribute("data-trv-act");
+        if (act === "edit") openTravelClaimForm(id);
+        else if (act === "del") deleteTravelClaim(id);
+        else if (act === "print") printTravelClaim(id);
+        return;
+      }
+      var del = e.target.closest ? e.target.closest("#trvTripsBody [data-trv-del]") : null;
+      if (del) {
+        var row = del.closest("tr");
+        if (row) row.remove();
+        trvRenderTripTotals();
+      }
+    });
+
+    document.addEventListener("change", function (e) {
+      if (e.target && e.target.id === "trvClaimer") trvApplyClaimerMeta();
+    });
+
+    document.addEventListener("input", function (e) {
+      var el = e.target;
+      if (el && el.closest && el.closest("#trvTripsBody")) trvRenderTripTotals();
+    });
+
+    // expose ให้เรียกจาก inline handler ได้
+    window.loadTravelClaims = loadTravelClaims;
+    window.renderTravelClaims = renderTravelClaims;
+    window.addTravelTripRow = addTravelTripRow;
+    window.openTravelClaimForm = openTravelClaimForm;
+    window.closeTravelClaimForm = closeTravelClaimForm;
+    window.saveTravelClaim = saveTravelClaim;
+    window.deleteTravelClaim = deleteTravelClaim;
+    window.openTravelSettings = openTravelSettings;
+    window.closeTravelSettings = closeTravelSettings;
+    window.saveTravelSettings = saveTravelSettings;
+    window.printTravelClaim = printTravelClaim;
+
     // ---------- TABS ----------
     var deviceUsers = [];
 
@@ -4575,6 +5342,7 @@
       document.getElementById("analyticsView").hidden = tab !== "analytics";
       document.getElementById("deviceNotesView").hidden = tab !== "deviceNotes";
       document.getElementById("maintenanceView").hidden = tab !== "maintenance";
+      document.getElementById("travelExpenseView").hidden = tab !== "travelExpense";
       document.getElementById("workNotesView").hidden = tab !== "workNotes";
       document.getElementById("repairNotesView").hidden = tab !== "repairNotes";
       document.getElementById("warrantyView").hidden = tab !== "warranty";
@@ -4592,6 +5360,7 @@
       if (tab === "deviceNotes" && !deviceEntries.length) loadDeviceNotes();
       if (tab === "maintenance") loadMaintenance();
       if (tab === "workNotes" && !workNotesLoaded) loadWorkNotes();
+      if (tab === "travelExpense" && !travelClaimsLoaded) loadTravelClaims();
       if (tab === "repairNotes") { if (typeof openTicketForm === "function") openTicketForm(); }
       if (tab === "warranty") startWarranty();
       if (tab === "worklog") renderWorklog();
@@ -4779,7 +5548,7 @@
       var empty = document.getElementById("visitorsEmpty");
       if (!body) return Promise.resolve();
       body.innerHTML =
-        '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+        '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
       return fetch("/api/admin/visitors")
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -4788,7 +5557,7 @@
         })
         .catch(function () {
           body.innerHTML =
-            '<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ตรวจสอบว่าตั้งค่าตาราง external_visitors ใน Supabase แล้ว)</td></tr>';
+            '<tr><td colspan="8" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ตรวจสอบว่าตั้งค่าตาราง external_visitors ใน Supabase แล้ว)</td></tr>';
         });
     }
 
@@ -4806,20 +5575,20 @@
       if (empty) empty.classList.add("hidden");
       visitors.forEach(function (v) {
         var tr = document.createElement("tr");
-        var hasCred = !!v.username;
         tr.innerHTML =
           "<td>" + esc(v.name || "-") + "</td>" +
           "<td>" + esc(v.position || "-") + "</td>" +
-          "<td>" + (hasCred
-            ? "<code style='font-size:12px'>" + esc(v.username) + "</code>"
-            : "<span style='color:var(--muted);font-size:12px'>ยังไม่ตั้งบัญชี</span>") + "</td>" +
+          "<td>" + esc(v.branch || "-") + "</td>" +
+          "<td>" + (v.hasKeypass
+            ? "<span style='color:var(--green);font-weight:700'>มี Key Pass</span>"
+            : "<span style='color:var(--muted);font-size:12px'>ยังไม่มี Key Pass</span>") + "</td>" +
           "<td><code style='font-size:12px'>" + esc(v.ip || "-") + "</code></td>" +
           "<td style='text-align:right'>" + (v.ticket_count || 0) + "</td>" +
           "<td>" + esc(fmtVisitorDate(v.last_seen_at)) + "</td>" +
           "<td style='text-align:right;white-space:nowrap'>" +
             "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button> " +
             "<button class='btn btn-ghost btn-sm' type='button' data-vedit='" + (v.id || "") + "'>แก้ไข</button> " +
-            (hasCred ? "<button class='btn btn-ghost btn-sm' type='button' data-vreset='" + (v.id || "") + "'>รีเซ็ตรหัสผ่าน</button> " : "") +
+            "<button class='btn btn-ghost btn-sm' type='button' data-vreset='" + (v.id || "") + "'>Key Pass</button> " +
             "<button class='btn btn-ghost btn-sm' type='button' data-vdel='" + (v.id || "") + "' style='color:var(--red)'>ลบ</button>" +
           "</td>";
         body.appendChild(tr);
@@ -4843,11 +5612,11 @@
       visitorEditId = v.id;
       document.getElementById("visitorEditName").value = v.name || "";
       document.getElementById("visitorEditPosition").value = v.position || "";
-      var un = document.getElementById("visitorEditUsername");
-      if (un) un.value = "";
+      var editBranch = document.getElementById("visitorEditBranch");
+      if (editBranch) editBranch.value = v.branch || "";
       var ipInfo = document.getElementById("visitorEditIpInfo");
       if (ipInfo) {
-        ipInfo.textContent = "บัญชี: " + (v.username || "ยังไม่ตั้ง") +
+        ipInfo.textContent = (v.hasKeypass ? "มี Key Pass แล้ว" : "ยังไม่มี Key Pass") +
           " · IP ปัจจุบัน: " + (v.ip || "-") +
           " · แจ้งซ่อม " + (v.ticket_count || 0) + " ครั้ง" +
           " · เข้าครั้งแรก " + fmtVisitorDate(v.created_at);
@@ -4862,10 +5631,10 @@
     function saveVisitorEdit() {
       var name = document.getElementById("visitorEditName").value.trim();
       var position = document.getElementById("visitorEditPosition").value.trim();
-      var username = document.getElementById("visitorEditUsername") ? document.getElementById("visitorEditUsername").value.trim() : "";
+      var branchEl = document.getElementById("visitorEditBranch");
+      var branch = branchEl ? branchEl.value.trim() : "";
       if (!name) { toast("กรุณากรอกชื่อ"); return; }
-      var payload = { name: name, position: position };
-      if (username) payload.username = username;
+      var payload = { name: name, position: position, branch: branch };
       fetch("/api/admin/visitors/" + visitorEditId, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -4890,10 +5659,14 @@
       visitorResetId = v.id;
       var info = document.getElementById("visitorResetInfo");
       if (info) {
-        info.textContent = (v.name || "-") + " (" + (v.position || "-") + ") · ชื่อผู้ใช้: " + (v.username || "-");
+        info.textContent = (v.name || "-") + " (" + (v.position || "-") + ")";
       }
-      var input = document.getElementById("visitorResetPassword");
-      if (input) { input.value = ""; }
+      var result = document.getElementById("visitorResetResult");
+      if (result) { result.style.display = "none"; }
+      var kp = document.getElementById("visitorResetKp");
+      if (kp) { kp.textContent = ""; }
+      var issueBtn = document.getElementById("visitorResetIssueBtn");
+      if (issueBtn) { issueBtn.disabled = false; issueBtn.textContent = "ออก Key Pass ใหม่"; }
       document.getElementById("visitorResetMask").classList.remove("hidden");
     }
 
@@ -4901,33 +5674,31 @@
       document.getElementById("visitorResetMask").classList.add("hidden");
     }
 
-    function genVisitorPassword() {
-      var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-      var out = "";
-      for (var i = 0; i < 10; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
-      var input = document.getElementById("visitorResetPassword");
-      if (input) { input.value = out; input.select(); }
-      return out;
-    }
-
     function saveVisitorReset() {
-      var input = document.getElementById("visitorResetPassword");
-      var password = input ? input.value : "";
-      if (!password || password.length < 6) { toast("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"); return; }
-      if (/\s/.test(password)) { toast("รหัสผ่านห้ามมีช่องว่าง"); return; }
-      fetch("/api/admin/visitors/" + visitorResetId + "/reset-password", {
+      var issueBtn = document.getElementById("visitorResetIssueBtn");
+      if (issueBtn) { issueBtn.disabled = true; issueBtn.textContent = "กำลังออก..."; }
+      fetch("/api/admin/visitors/" + visitorResetId + "/issue-keypass", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: password })
+        headers: { "Content-Type": "application/json" }
       })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (!d.ok) { toast(d.message || "รีเซ็ตรหัสผ่านไม่สำเร็จ"); return; }
-          closeVisitorReset();
-          toast("รีเซ็ตรหัสผ่านให้ " + (d.username || "ผู้ใช้") + " แล้ว — รหัสผ่านใหม่: " + d.password);
+          if (!d.ok) {
+            toast(d.message || "ออก Key Pass ไม่สำเร็จ");
+            if (issueBtn) { issueBtn.disabled = false; issueBtn.textContent = "ออก Key Pass ใหม่"; }
+            return;
+          }
+          var result = document.getElementById("visitorResetResult");
+          var kp = document.getElementById("visitorResetKp");
+          if (result) result.style.display = "";
+          if (kp) { kp.textContent = d.keypass || "-----"; }
+          toast("ออก Key Pass ใหม่ให้ " + (d.name || "ผู้ใช้") + " แล้ว");
           loadVisitors();
         })
-        .catch(function () { toast("รีเซ็ตรหัสผ่านไม่สำเร็จ กรุณาลองใหม่"); });
+        .catch(function () {
+          toast("ออก Key Pass ไม่สำเร็จ กรุณาลองใหม่");
+          if (issueBtn) { issueBtn.disabled = false; issueBtn.textContent = "ออก Key Pass ใหม่"; }
+        });
     }
 
     function deleteVisitor(id) {
@@ -6007,13 +6778,81 @@
       return m ? m[1] : "";
     }
 
+    // ---------- หมวด / อุปกรณ์ (ดึงตัวเลือกจาก Master "จัดการอุปกรณ์") ----------
+    var editDeviceOptions = null;
+    var editDeviceOptionsPromise = null;
+    var editDeviceExtra = [];
+
+    function loadEditDeviceOptions() {
+      if (editDeviceOptions) return Promise.resolve(editDeviceOptions);
+      if (editDeviceOptionsPromise) return editDeviceOptionsPromise;
+      editDeviceOptionsPromise = fetch("/api/admin/device-options")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var grouped = { Hardware: [], Software: [], Disk: [] };
+          if (data && data.ok && Array.isArray(data.options)) {
+            data.options.forEach(function (o) {
+              var c = String(o.category || "");
+              if (grouped[c]) grouped[c].push(String(o.name || ""));
+            });
+            ["Hardware", "Software", "Disk"].forEach(function (c) {
+              grouped[c].sort(function (a, b) { return a.localeCompare(b); });
+            });
+          }
+          editDeviceOptions = grouped;
+          return grouped;
+        })
+        .catch(function () {
+          editDeviceOptions = { Hardware: [], Software: [], Disk: [] };
+          return editDeviceOptions;
+        });
+      return editDeviceOptionsPromise;
+    }
+
+    function editDeviceCatChange(keep) {
+      var cat = document.getElementById("editDeviceCat").value;
+      var devSel = document.getElementById("editDevice");
+      if (!cat) {
+        devSel.innerHTML = '<option value="">— เลือกอุปกรณ์ —</option>';
+        return;
+      }
+      var build = function () {
+        var list = (editDeviceOptions && editDeviceOptions[cat]) || [];
+        var opts = ['<option value="">— เลือกอุปกรณ์ —</option>'];
+        list.forEach(function (n) {
+          opts.push('<option value="' + esc(n) + '">' + esc(n) + '</option>');
+        });
+        if (keep && list.indexOf(keep) === -1) {
+          opts.push('<option value="' + esc(keep) + '">' + esc(keep) + ' (เดิม)</option>');
+        }
+        devSel.innerHTML = opts.join("");
+        devSel.value = keep || "";
+      };
+      if (editDeviceOptions) build();
+      else loadEditDeviceOptions().then(build);
+    }
+
+    window.editDeviceCatChange = editDeviceCatChange;
+
+    function setEditDevice(deviceStr) {
+      var parts = parseDeviceParts(deviceStr);
+      editDeviceExtra = parts.slice(1);
+      var first = parts[0] || "";
+      var type = "", label = "";
+      if (first) { type = deviceType(first); label = deviceLabel(first); }
+      if (type !== "Hardware" && type !== "Software" && type !== "Disk") type = first ? "Hardware" : "";
+      document.getElementById("editDeviceCat").value = type;
+      editDeviceCatChange(label);
+    }
+
     function openEdit(row) {
       currentRow = row;
       openDetail(row);
       var loc = parseLocation(row.location);
       var created = new Date(row.created_at);
       document.getElementById("editNo").textContent = row.ticket_no;
-      document.getElementById("editDevice").value = row.device || "";
+      loadEditDeviceOptions();
+      setEditDevice(row.device || "");
       document.getElementById("editSymptom").value = row.symptom || "";
       document.getElementById("editCreatedAt").value = localInputValue(created);
       document.getElementById("editStatus").value = row.status === "working" ? "working" : row.status === "done" ? "done" : "new";
@@ -6159,8 +6998,14 @@
       var location = branch + (pos ? " · " + pos : "");
       var createdAt = document.getElementById("editCreatedAt").value;
       var status = document.getElementById("editStatus").value;
+      var devCat = document.getElementById("editDeviceCat").value.trim();
+      var devLabel = document.getElementById("editDevice").value.trim();
+      var devParts = [];
+      if (devCat && devLabel) devParts.push(devCat + " · " + devLabel);
+      else if (devLabel) devParts.push(devLabel);
+      editDeviceExtra.forEach(function (p) { if (p) devParts.push(p); });
       var payload = {
-        device: document.getElementById("editDevice").value,
+        device: devParts.join(", "),
         symptom: document.getElementById("editSymptom").value.trim(),
         location: location.trim(),
         handler_name: document.getElementById("editHandler").value.trim()
@@ -8302,6 +9147,7 @@ function applyMobileSuUser(username, permissions) {
     tickets: ["tickets"],
     care: ["deviceNotes", "maintenance", "warranty"],
     notes: ["workNotes"],
+    travel: ["travelExpense"],
     private: ["devices", "visitors"],
     settings: ["settings"]
   };

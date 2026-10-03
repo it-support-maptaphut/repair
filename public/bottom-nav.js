@@ -82,7 +82,7 @@
     if (window.WanGate && window.WanGate.open) {
       window.WanGate.check().then(function (st) {
         if (st.authed) return;
-        window.WanGate.open({ mode: "login", state: st });
+        window.WanGate.open({ state: st });
       });
     }
   }

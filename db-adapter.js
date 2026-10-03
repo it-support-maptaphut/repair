@@ -91,6 +91,14 @@ function createSupabaseAdapter() {
       return supabaseModule.getVisitorCredentials(id);
     },
 
+    async setVisitorKeypass(id, data) {
+      return supabaseModule.setVisitorKeypass(id, data);
+    },
+
+    async findVisitorByKeypassLookup(lookup) {
+      return supabaseModule.findVisitorByKeypassLookup(lookup);
+    },
+
     async getTicketOwner(ticketNo) {
       return supabaseModule.getTicketOwner(ticketNo);
     },
@@ -201,6 +209,34 @@ function createSupabaseAdapter() {
     
     async deleteWorkNote(id) {
       return supabaseModule.deleteWorkNote(id);
+    },
+
+    async getTravelSettings() {
+      return supabaseModule.getTravelSettings();
+    },
+
+    async saveTravelSettings(patch) {
+      return supabaseModule.saveTravelSettings(patch);
+    },
+
+    async listTravelClaims(limit) {
+      return supabaseModule.listTravelClaims(limit);
+    },
+
+    async getTravelClaim(id) {
+      return supabaseModule.getTravelClaim(id);
+    },
+
+    async createTravelClaim(claim) {
+      return supabaseModule.createTravelClaim(claim);
+    },
+
+    async updateTravelClaim(id, claim) {
+      return supabaseModule.updateTravelClaim(id, claim);
+    },
+
+    async deleteTravelClaim(id) {
+      return supabaseModule.deleteTravelClaim(id);
     },
     
     async listRepairNotes(limit = 500) {
@@ -327,6 +363,25 @@ function createPostgresAdapter() {
     }
   };
 
+  // รันหลายคำสั่งภายใน transaction เดียวกัน (ใช้กับการออกเลขที่เอกสารเพื่อกันเลขชนกัน)
+  const queryTx = async (fn) => {
+    const client = await pgPool.connect();
+    try {
+      await client.query("BEGIN");
+      const out = await fn({
+        query: (text, params) => client.query(text, params),
+        lock: (key) => client.query("SELECT pg_advisory_xact_lock($1)", [key])
+      });
+      await client.query("COMMIT");
+      return out;
+    } catch (err) {
+      try { await client.query("ROLLBACK"); } catch (_) { /* ignore */ }
+      throw err;
+    } finally {
+      client.release();
+    }
+  };
+
   // เตรียมคอลัมน์บัญชีผู้ใช้ให้ PostgreSQL ตรงกับ Supabase (รันครั้งเดียวต่อ process)
   let visitorCredColsReady = false;
   const ensureVisitorCredCols = async () => {
@@ -337,8 +392,15 @@ function createPostgresAdapter() {
         ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS password_hash text DEFAULT '';
         ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS password_enc text DEFAULT '';
         ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS credentials_at timestamptz;
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS keypass_lookup text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS keypass_hash text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS keypass_enc text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS keypass_at timestamptz;
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS branch text DEFAULT '';
         CREATE UNIQUE INDEX IF NOT EXISTS external_visitors_username_lower_idx
           ON external_visitors (lower(username)) WHERE username IS NOT NULL AND username <> '';
+        CREATE UNIQUE INDEX IF NOT EXISTS external_visitors_keypass_lookup_key
+          ON external_visitors (keypass_lookup) WHERE keypass_lookup <> '';
       `);
       visitorCredColsReady = true;
       return true;
@@ -346,6 +408,95 @@ function createPostgresAdapter() {
       console.error("[PostgreSQL] เตรียมคอลัมน์บัญชีผู้ใช้ไม่สำเร็จ:", err.message);
       return false;
     }
+  };
+
+  // เตรียมตารางระบบบันทึกเบิกค่าเดินทางให้ PostgreSQL ตรงกับ Supabase (รันครั้งเดียวต่อ process)
+  let travelTablesReady = false;
+  const ensureTravelTables = async () => {
+    if (travelTablesReady) return true;
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key text PRIMARY KEY,
+          value text NOT NULL DEFAULT '',
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE TABLE IF NOT EXISTS travel_claims (
+          id serial PRIMARY KEY,
+          doc_no text UNIQUE,
+          claimer_visitor_id integer REFERENCES external_visitors(id) ON DELETE SET NULL,
+          claimer_name text NOT NULL DEFAULT '',
+          claim_date date NOT NULL DEFAULT CURRENT_DATE,
+          position text NOT NULL DEFAULT '',
+          bank_name text NOT NULL DEFAULT '',
+          bank_account text NOT NULL DEFAULT '',
+          account_name text NOT NULL DEFAULT '',
+          trips_json jsonb NOT NULL DEFAULT '[]'::jsonb,
+          total_km numeric(12,2) NOT NULL DEFAULT 0,
+          total_amount numeric(12,2) NOT NULL DEFAULT 0,
+          note text NOT NULL DEFAULT '',
+          status text NOT NULL DEFAULT 'รอดำเนินการ',
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+        -- เพิ่มคอลัมน์สถานะให้ตารางที่มีอยู่ก่อนแล้ว (ตารางเก่าไม่มีคอลัมน์นี้)
+        ALTER TABLE travel_claims ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'รอดำเนินการ';
+        CREATE INDEX IF NOT EXISTS travel_claims_created_at_idx ON travel_claims (created_at DESC);
+        CREATE INDEX IF NOT EXISTS travel_claims_claim_date_idx ON travel_claims (claim_date DESC);
+        INSERT INTO app_settings (key, value) VALUES
+          ('fuel_rate_motorcycle','3'),
+          ('fuel_rate_car','5'),
+          ('travel_bank_name','กรุงไทย'),
+          ('travel_doc_prefix','ใบเบิก')
+        ON CONFLICT (key) DO NOTHING;
+      `);
+      travelTablesReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมตารางเบิกค่าเดินทางไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
+  const TRAVEL_DOC_LOCK_KEY = 784421;
+  const TRAVEL_DOC_PREFIX = "ใบเบิก";
+  // รูปแบบเลขที่เอกสาร: "ใบเบิก-1", "ใบเบิก-2", ...
+  // นับต่อจากเลขเดิมที่มีอยู่ โดยลอกเฉพาะตัวเลขท้าย (รองรับทั้งรูปแบบใหม่
+  // และข้อมูลเก่าที่เคยเป็น "TRV-000001")
+  const nextTravelNo = async (tx) => {
+    const r = await (tx ? tx.query : query)(
+      `SELECT COALESCE(MAX((regexp_replace(doc_no, '\\D', '', 'g'))::bigint), 0) + 1 AS n
+         FROM travel_claims
+        WHERE doc_no IS NOT NULL AND doc_no ~ '^\\D+\\d+$'`
+    );
+    const n = Number(r.rows[0]?.n || 1);
+    return TRAVEL_DOC_PREFIX + "-" + String(n);
+  };
+
+  // สถานะใบเบิก: รับเฉพาะ 3 ค่านี้ ค่าอื่น (รวมถึงค่าว่างจากข้อมูลเก่า) ให้เป็น "รอดำเนินการ"
+  const TRAVEL_STATUSES = ["กำลังดำเนินการ", "รอดำเนินการ", "เสร็จสิ้น"];
+  const normalizeTravelStatus = (v) => {
+    const s = String(v == null ? "" : v).trim();
+    return TRAVEL_STATUSES.indexOf(s) >= 0 ? s : "รอดำเนินการ";
+  };
+
+  const travelRow = (claim) => {
+    const c = claim || {};
+    const trips = Array.isArray(c.trips) ? c.trips : [];
+    return [
+      c.claimerVisitorId == null || c.claimerVisitorId === "" ? null : Number(c.claimerVisitorId),
+      c.claimerName || "",
+      c.claimDate || new Date().toISOString().slice(0, 10),
+      c.position || "",
+      c.bankName || "",
+      c.bankAccount || "",
+      c.accountName || "",
+      JSON.stringify(trips),
+      Number(c.totalKm) || 0,
+      Number(c.totalAmount) || 0,
+      c.note || "",
+      normalizeTravelStatus(c.status)
+    ];
   };
 
   const mapTicket = (row) => ({
@@ -523,7 +674,36 @@ function createPostgresAdapter() {
          LIMIT $1`,
         [limit]
       );
-      return result.rows.map(mapTicket);
+      const rows = result.rows;
+      const ids = [];
+      rows.forEach(function (r) {
+        if (r.visitor_id != null && ids.indexOf(r.visitor_id) === -1) ids.push(r.visitor_id);
+      });
+      const vmap = {};
+      if (ids.length) {
+        try {
+          const vr = await query(
+            `SELECT id, name, position, branch FROM external_visitors WHERE id = ANY($1)`,
+            [ids]
+          );
+          vr.rows.forEach(function (v) { vmap[v.id] = v; });
+        } catch (e) {
+          // ยังไม่ได้เพิ่มคอลัมน์ branch → ดึงเท่าที่มี (ประจำสาขาจะว่าง)
+          try {
+            const vr2 = await query(
+              `SELECT id, name, position FROM external_visitors WHERE id = ANY($1)`,
+              [ids]
+            );
+            vr2.rows.forEach(function (v) { vmap[v.id] = v; });
+          } catch (e2) {}
+        }
+      }
+      return rows.map(function (r) {
+        const t = mapTicket(r);
+        t.ticket_photos = r.ticket_photos || [];
+        if (r.visitor_id != null && vmap[r.visitor_id]) t.visitor = vmap[r.visitor_id];
+        return t;
+      });
     },
     
     async acceptTicket(ticketNo) {
@@ -672,12 +852,13 @@ function createPostgresAdapter() {
       );
     },
 
-    async createVisitor({ name, position, ip, token, deviceId }) {
+    async createVisitor({ name, position, branch, ip, token, deviceId }) {
+      await ensureVisitorCredCols();
       const result = await query(
-        `INSERT INTO external_visitors (name, position, ip, token, device_id, ticket_count, last_seen_at)
-         VALUES ($1, $2, $3, $4, $5, 0, now())
+        `INSERT INTO external_visitors (name, position, branch, ip, token, device_id, ticket_count, last_seen_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 0, now())
          RETURNING *`,
-        [name || "", position || "", ip || "", token || "", deviceId || ""]
+        [name || "", position || "", branch || "", ip || "", token || "", deviceId || ""]
       );
       const row = result.rows[0];
       if (ip) await this._touchVisitorIps(row.id, ip);
@@ -763,6 +944,30 @@ function createPostgresAdapter() {
       return result.rows[0] || null;
     },
 
+    async setVisitorKeypass(id, { lookup, hash, enc }) {
+      if (!id) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      const result = await query(
+        `UPDATE external_visitors
+            SET keypass_lookup = $1, keypass_hash = $2, keypass_enc = $3, keypass_at = now()
+          WHERE id = $4
+          RETURNING id, name, position, keypass_at`,
+        [String(lookup || "").trim().toLowerCase(), hash || "", enc || "", id]
+      );
+      return result.rows[0] || null;
+    },
+
+    async findVisitorByKeypassLookup(lookup) {
+      const want = String(lookup || "").trim().toLowerCase();
+      if (!want) return null;
+      if (!(await ensureVisitorCredCols())) return null;
+      const result = await query(
+        `SELECT * FROM external_visitors WHERE keypass_lookup = $1 LIMIT 1`,
+        [want]
+      );
+      return result.rows[0] || null;
+    },
+
     async getTicketOwner(ticketNo) {
       if (!ticketNo) return null;
       const result = await query(
@@ -783,7 +988,7 @@ function createPostgresAdapter() {
       }
       const result = await query(
         `SELECT id, name, position, ip, device_id, ticket_count, last_seen_at, created_at,
-                username, credentials_at
+                username, credentials_at, keypass_at
            FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`,
         [limit]
       );
@@ -998,6 +1203,111 @@ function createPostgresAdapter() {
     async deleteWorkNote(id) {
       const result = await query(`DELETE FROM work_notes WHERE id = $1 RETURNING id`, [id]);
       return result.rows;
+    },
+
+    // ---------- TRAVEL EXPENSE (ระบบบันทึกเบิกค่าเดินทาง — ฝั่ง ADMIN) ----------
+    async getTravelSettings() {
+      await ensureTravelTables();
+      const result = await query(`SELECT key, value FROM app_settings`);
+      const out = {
+        fuel_rate_motorcycle: "3",
+        fuel_rate_car: "5",
+        travel_company: "",
+        travel_bank_name: "กรุงไทย",
+        travel_account_name: "",
+        travel_bank_account: "",
+        travel_claimer_name: "",
+        travel_claimer_position: "",
+        travel_approver_name: "",
+        travel_approver_title: "",
+        travel_checker_name: "",
+        travel_checker_title: "",
+        travel_checker2_name: "",
+        travel_checker2_title: "",
+        
+        travel_vehicle_columns: "moto,car",
+        travel_doc_prefix: TRAVEL_DOC_PREFIX
+      };
+      (result.rows || []).forEach((r) => {
+        if (r && typeof r.key === "string") out[r.key] = r.value == null ? "" : String(r.value);
+      });
+      return out;
+    },
+
+    async saveTravelSettings(patch) {
+      await ensureTravelTables();
+      const payload = patch && typeof patch === "object" ? patch : {};
+      const allowed = new Set([
+        "fuel_rate_motorcycle", "fuel_rate_car", "travel_company", "travel_bank_name",
+        "travel_account_name", "travel_bank_account", "travel_claimer_name", "travel_claimer_position",
+        "travel_approver_name", "travel_approver_title", "travel_checker_name",
+        "travel_checker_title", "travel_checker2_name", "travel_checker2_title",
+        "travel_vehicle_columns",
+        "travel_doc_prefix"
+      ]);
+      for (const [k, v] of Object.entries(payload)) {
+        if (!allowed.has(k)) continue;
+        await query(
+          `INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, now())
+             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+          [k, v == null ? "" : String(v)]
+        );
+      }
+      return this.getTravelSettings();
+    },
+
+    async listTravelClaims(limit = 500) {
+      await ensureTravelTables();
+      const result = await query(
+        `SELECT * FROM travel_claims ORDER BY created_at DESC LIMIT $1`,
+        [Number(limit) || 500]
+      );
+      return result.rows || [];
+    },
+
+    async getTravelClaim(id) {
+      await ensureTravelTables();
+      const result = await query(`SELECT * FROM travel_claims WHERE id = $1`, [id]);
+      return result.rows[0] || null;
+    },
+
+    async createTravelClaim(claim) {
+      await ensureTravelTables();
+      const v = travelRow(claim);
+      // ล็อกแบบ transaction-scoped เพื่อไม่ให้เลขที่เอกสารชนกันเมื่อบันทึกพร้อมกันหลายคน
+      return queryTx(async (tx) => {
+        await tx.lock(TRAVEL_DOC_LOCK_KEY);
+        const docNo = await nextTravelNo(tx);
+        const result = await tx.query(
+          `INSERT INTO travel_claims
+             (doc_no, claimer_visitor_id, claimer_name, claim_date, position,
+              bank_name, bank_account, account_name, trips_json, total_km, total_amount, note, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13)
+           RETURNING *`,
+          [docNo, ...v]
+        );
+        return result.rows[0] || null;
+      });
+    },
+
+    async updateTravelClaim(id, claim) {
+      await ensureTravelTables();
+      const v = travelRow(claim);
+      const result = await query(
+        `UPDATE travel_claims SET
+           claimer_visitor_id = $1, claimer_name = $2, claim_date = $3, position = $4,
+           bank_name = $5, bank_account = $6, account_name = $7, trips_json = $8::jsonb,
+           total_km = $9, total_amount = $10, note = $11, status = $12, updated_at = now()
+         WHERE id = $13 RETURNING *`,
+        [...v, id]
+      );
+      return result.rows[0] || null;
+    },
+
+    async deleteTravelClaim(id) {
+      await ensureTravelTables();
+      const result = await query(`DELETE FROM travel_claims WHERE id = $1 RETURNING id`, [id]);
+      return result.rows || [];
     },
     
     async listRepairNotes(limit = 500) {

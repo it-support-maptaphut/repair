@@ -1,6 +1,7 @@
-/* ระบบแจ้งซ่อม IT — เกตติ้งยืนยันตัวตน/สมัครบัญชี/เข้าสู่ระบบ (เชื่อมโยงทุกหน้า)
-   ขั้นตอน: ชื่อ+ตำแหน่ง  ->  ตั้ง user/password  ->  เข้าใช้งาน
-   ระบบจำผู้ใช้ด้วยบัญชี (vst_token) ไม่ผูกกับ IP เดิม จึงเปลี่ยนเน็ต/เปลี่ยนเครื่องแล้วเข้าได้ */
+/* ระบบแจ้งซ่อม IT — เกตติ้งยืนยันตัวตน (เชื่อมโยงทุกหน้า)
+   กรอกชื่อ + ตำแหน่ง  ->  เข้าใช้งานได้ทันที (ไม่บังคับอะไร)
+   ระบบจำเครื่องนี้ด้วยคุกกี้ (1 ปี) เปิดใหม่/รีเฟรชแล้วไม่ต้องกรอกซ้ำ
+   มีลิงก์เล็ก ๆ ให้ใส่ Key Pass สำหรับใครที่อยากกลับเข้าบัญชีเดิมจากเครื่องอื่น */
 (function () {
   "use strict";
 
@@ -8,8 +9,9 @@
   var gate = null;
   var els = {};
   var busy = false;
+  var canClose = false; // ปิดเกตติ้งได้เฉพาะตอนผู้ใช้ยืนยันตัวตนแล้ว (สลับบัญชี)
   var onAuthed = [];
-  var current = { step: "1", mode: "register" };
+  var current = { pane: "step1" };
 
   function toast(msg) {
     if (window.showToast) { window.showToast(msg); return; }
@@ -34,7 +36,6 @@
       cache = {
         registered: !!r.d.registered,
         authed: !!r.d.authed,
-        needsCredentials: !!r.d.needsCredentials,
         visitor: r.d.visitor || null
       };
       return cache;
@@ -59,151 +60,125 @@
     gate.setAttribute("aria-modal", "true");
     gate.innerHTML =
       '<div class="vg-box">' +
+        '<button type="button" class="vg-close hidden" id="vgClose" aria-label="ปิด">&#215;</button>' +
         '<div class="vg-head">' +
           '<div class="vg-logo"><img class="vg-logo-img" src="logo-ticket/logo-wan.jpg" alt=""></div>' +
-          '<h2 class="vg-title" id="vgTitle">ยืนยันตัวตน</h2>' +
-          '<p class="vg-sub" id="vgSub">ขอทราบว่าคุณคือใครในบริษัท<br>ระบบจะจำไว้เพื่อความปลอดภัย</p>' +
+          '<h2 class="vg-title">ขอทราบว่าคุณคือใคร</h2>' +
+          '<p class="vg-sub" id="vgSub">กรอกชื่อและตำแหน่ง แล้วเข้าใช้งานได้ทันที<br>ไม่ต้องสมัคร ไม่ต้องตั้งรหัสผ่าน</p>' +
         "</div>" +
 
-        '<div class="vg-modes" role="tablist" aria-label="โหมด">' +
-          '<button type="button" class="vg-mode is-active" data-mode="register" role="tab" aria-selected="true">สมัครบัญชี</button>' +
-          '<button type="button" class="vg-mode" data-mode="login" role="tab" aria-selected="false">เข้าสู่ระบบ</button>' +
-        "</div>" +
-
-        // ---- ขั้นที่ 1: ชื่อ + ตำแหน่ง ----
+        // ---- กรอกชื่อ + ตำแหน่ง ----
         '<div class="vg-pane" data-pane="step1">' +
-          '<div class="vg-steps"><span class="vg-dot is-on"></span><span class="vg-dot"></span></div>' +
           '<div class="vg-fields">' +
             '<label for="vgName" class="vg-label">ชื่อ <span class="vg-req">*</span></label>' +
             '<input type="text" id="vgName" class="vg-input" maxlength="60" autocomplete="given-name">' +
             '<label for="vgPosition" class="vg-label">ตำแหน่ง <span class="vg-req">*</span></label>' +
             '<input type="text" id="vgPosition" class="vg-input" maxlength="120" autocomplete="organization-title">' +
-          "</div>" +
-          '<button id="vgNext" class="vg-btn" type="button">ถัดไป</button>' +
-        "</div>" +
-
-        // ---- ขั้นที่ 2: ตั้ง user/password ----
-        '<div class="vg-pane hidden" data-pane="step2">' +
-          '<div class="vg-steps"><span class="vg-dot"></span><span class="vg-dot is-on"></span></div>' +
-          '<div class="vg-summary" id="vgSummary"></div>' +
-          '<button type="button" class="vg-link" id="vgEditName">แก้ไขชื่อ-ตำแหน่ง</button>' +
-          '<div class="vg-fields">' +
-            '<label for="vgUsername" class="vg-label">ชื่อผู้ใช้ <span class="vg-req">*</span></label>' +
-            '<input type="text" id="vgUsername" class="vg-input" maxlength="30" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">' +
-            '<label for="vgPassword" class="vg-label">รหัสผ่าน <span class="vg-req">*</span></label>' +
-            '<div class="vg-wrap">' +
-              '<input type="password" id="vgPassword" class="vg-input" maxlength="128" autocomplete="new-password">' +
-              '<button type="button" class="vg-eye" data-eye="vgPassword" aria-label="แสดงรหัสผ่าน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
-            "</div>" +
-            '<label for="vgPassword2" class="vg-label">ยืนยันรหัสผ่าน <span class="vg-req">*</span></label>' +
-            '<div class="vg-wrap">' +
-              '<input type="password" id="vgPassword2" class="vg-input" maxlength="128" autocomplete="new-password">' +
-              '<button type="button" class="vg-eye" data-eye="vgPassword2" aria-label="แสดงรหัสผ่าน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
+            '<label for="vgBranch" class="vg-label">ประจำสาขา <span class="vg-req">*</span></label>' +
+            '<div class="vg-select">' +
+              '<select id="vgBranch" class="vg-input vg-select-input is-placeholder">' +
+                '<option value="">เลือกสาขาที่คุณประจำอยู่</option>' +
+                '<option value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)">ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)</option>' +
+                '<option value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)">ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)</option>' +
+                '<option value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)</option>' +
+                '<option value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)</option>' +
+              "</select>" +
+              '<span class="vg-select-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>' +
+              '<span class="vg-select-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>' +
             "</div>" +
           "</div>" +
-          '<button id="vgFinish" class="vg-btn" type="button">ตั้งบัญชีแล้วเข้าใช้งาน</button>' +
+          '<button id="vgNext" class="vg-btn" type="button">เข้าใช้งาน</button>' +
+          '<button type="button" class="vg-link" id="vgToLogin">อยากใช้งานในชื่อเดิม? ใส่ Key Pass เพื่อกลับเข้าบัญชีเดิม</button>' +
         "</div>" +
 
-        // ---- เข้าสู่ระบบ ----
+        // ---- กรอก Key Pass เดิม (เปิดผ่านลิงก์เล็ก ๆ เท่านั้น) ----
         '<div class="vg-pane hidden" data-pane="login">' +
           '<div class="vg-fields">' +
-            '<label for="vgLoginUser" class="vg-label">ชื่อผู้ใช้</label>' +
-            '<input type="text" id="vgLoginUser" class="vg-input" maxlength="30" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">' +
-            '<label for="vgLoginPass" class="vg-label">รหัสผ่าน</label>' +
-            '<div class="vg-wrap">' +
-              '<input type="password" id="vgLoginPass" class="vg-input" maxlength="128" autocomplete="current-password">' +
-              '<button type="button" class="vg-eye" data-eye="vgLoginPass" aria-label="แสดงรหัสผ่าน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
-            "</div>" +
+            '<label for="vgKpInput" class="vg-label">Key Pass <span class="vg-req">*</span></label>' +
+            '<input type="text" id="vgKpInput" class="vg-input vg-input-kp" maxlength="8" inputmode="text" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="A B C D E">' +
           "</div>" +
-          '<button id="vgLoginBtn" class="vg-btn" type="button">เข้าสู่ระบบ</button>' +
+          '<button id="vgLoginBtn" class="vg-btn" type="button">กลับเข้าบัญชีเดิม</button>' +
+          '<button type="button" class="vg-link" id="vgBackStep1">ย้อนกลับไปกรอกชื่อ-ตำแหน่ง</button>' +
         "</div>" +
 
         '<p id="vgErr" class="vg-err hidden"></p>' +
       "</div>";
     document.body.appendChild(gate);
 
-    els.title = document.getElementById("vgTitle");
     els.sub = document.getElementById("vgSub");
     els.name = document.getElementById("vgName");
     els.position = document.getElementById("vgPosition");
+    els.branch = document.getElementById("vgBranch");
     els.next = document.getElementById("vgNext");
-    els.username = document.getElementById("vgUsername");
-    els.password = document.getElementById("vgPassword");
-    els.password2 = document.getElementById("vgPassword2");
-    els.finish = document.getElementById("vgFinish");
-    els.editName = document.getElementById("vgEditName");
-    els.summary = document.getElementById("vgSummary");
-    els.loginUser = document.getElementById("vgLoginUser");
-    els.loginPass = document.getElementById("vgLoginPass");
+    els.toLogin = document.getElementById("vgToLogin");
+    els.kpInput = document.getElementById("vgKpInput");
     els.loginBtn = document.getElementById("vgLoginBtn");
+    els.backStep1 = document.getElementById("vgBackStep1");
     els.err = document.getElementById("vgErr");
+    els.close = document.getElementById("vgClose");
 
-    gate.querySelectorAll(".vg-mode").forEach(function (b) {
-      b.addEventListener("click", function () {
-        setMode(b.getAttribute("data-mode"));
-      });
-    });
-    gate.querySelectorAll(".vg-eye").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var input = document.getElementById(b.getAttribute("data-eye"));
-        if (!input) return;
-        var show = input.type === "password";
-        input.type = show ? "text" : "password";
-        b.classList.toggle("is-on", show);
-      });
-    });
-    [els.name, els.position, els.username, els.password, els.password2, els.loginUser, els.loginPass].forEach(function (el) {
-      el.addEventListener("input", function () { el.classList.remove("invalid"); hideErr(); });
-    });
-    els.next.addEventListener("click", step1Submit);
-    els.finish.addEventListener("click", step2Submit);
-    els.loginBtn.addEventListener("click", loginSubmit);
-    els.editName.addEventListener("click", function () {
+    els.close.addEventListener("click", close);
+    els.backStep1.addEventListener("click", function () {
+      hideErr();
       showPane("step1");
-      els.name.focus();
+      setTimeout(function () { els.name.focus(); }, 80);
     });
-    [els.name, els.position].forEach(function (el) {
-      el.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); step1Submit(); } });
-    });
-    [els.username, els.password, els.password2].forEach(function (el) {
-      el.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); step2Submit(); } });
-    });
-    [els.loginUser, els.loginPass].forEach(function (el) {
-      el.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); loginSubmit(); } });
-    });
-    gate.addEventListener("click", function (e) {
-      if (e.target === gate) return; // ต้องผ่านขั้นตอน ไม่ปิดด้วยการแตะพื้นหลัง
-    });
+    // กดพื้นหลังนอกกล่องก็ปิดได้เหมือนกัน
+    gate.addEventListener("click", function (e) { if (e.target === gate) close(); });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && gate && !gate.classList.contains("hidden")) close();
+    });
+
+    [els.name, els.position, els.kpInput].forEach(function (el) {
+      el.addEventListener("input", function () { el.classList.remove("invalid"); hideErr(); });
+    });
+    if (els.branch) {
+      var syncBranch = function () {
+        els.branch.classList.toggle("is-placeholder", !els.branch.value);
+      };
+      syncBranch();
+      els.branch.addEventListener("change", function () {
+        els.branch.classList.remove("invalid");
+        hideErr();
+        syncBranch();
+      });
+    }
+    // Key Pass พิมพ์เป็นตัวใหญ่เสมอ และตัดช่องว่างออกให้อัตโนมัติ
+    els.kpInput.addEventListener("input", function () {
+      var pos = els.kpInput.selectionStart;
+      var cleaned = els.kpInput.value.toUpperCase().replace(/[^A-HJKMNP-Z2-9]/g, "");
+      if (cleaned !== els.kpInput.value) {
+        els.kpInput.value = cleaned;
+        try { els.kpInput.setSelectionRange(pos - 1, pos - 1); } catch (e) {}
+      }
+    });
+    els.next.addEventListener("click", step1Submit);
+    els.loginBtn.addEventListener("click", keypassLogin);
+    els.toLogin.addEventListener("click", function () {
+      showPane("login");
+      setTimeout(function () { els.kpInput.focus(); }, 80);
+    });
+    [els.name, els.position, els.kpInput].forEach(function (el) {
+      el.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        if (current.pane === "login") keypassLogin();
+        else step1Submit();
+      });
     });
   }
 
   // ---------- การแสดงผล ----------
   function showPane(name) {
-    current.step = name;
+    current.pane = name;
     gate.querySelectorAll(".vg-pane").forEach(function (p) {
       p.classList.toggle("hidden", p.getAttribute("data-pane") !== name);
     });
-  }
-
-  function setMode(mode) {
-    current.mode = mode;
-    gate.querySelectorAll(".vg-mode").forEach(function (b) {
-      var on = b.getAttribute("data-mode") === mode;
-      b.classList.toggle("is-active", on);
-      b.setAttribute("aria-selected", on ? "true" : "false");
-    });
-    if (mode === "login") {
-      els.title.textContent = "เข้าสู่ระบบ";
-      els.sub.innerHTML = "ใช้ชื่อผู้ใช้และรหัสผ่านเดิมของคุณ<br>เปลี่ยนเครื่องหรือเปลี่ยนเน็ตก็เข้าได้เหมือนเดิม";
-      showPane("login");
+    if (name === "login") {
+      els.sub.innerHTML = "กรอก Key Pass 5 ตัวที่คุณบันทึกไว้<br>เพื่อกลับเข้าบัญชีเดิมจากเครื่องอื่น";
     } else {
-      els.title.textContent = "สมัครใช้งานระบบ";
-      els.sub.innerHTML = "กรอกข้อมูล 2 ขั้นตอน แล้วเข้าใช้งานได้ทันที<br>ระบบจะจำบัญชีนี้ไว้ทุกเครื่องที่คุณใช้";
-      showPane("step1");
+      els.sub.innerHTML = "กรอกชื่อและตำแหน่ง แล้วเข้าใช้งานได้ทันที<br>ไม่ต้องสมัคร ไม่ต้องตั้งรหัสผ่าน";
     }
-    hideErr();
   }
 
   function showErr(msg) {
@@ -222,153 +197,95 @@
     el.focus();
   }
 
-  function lock(btn, on) {
+  function lock(on) {
     busy = on;
-    [els.next, els.finish, els.loginBtn].forEach(function (b) { if (b) b.disabled = on; });
+    [els.next, els.loginBtn].forEach(function (b) { if (b) b.disabled = on; });
   }
 
   function open(opts) {
     build();
     var o = opts || {};
     hideErr();
-    els.password.value = "";
-    els.password2.value = "";
-    if (o.username) els.username.value = o.username;
-
-    if (o.mode === "login") {
-      setMode("login");
+    els.kpInput.value = "";
+    // ปุ่มปิดมีเฉพาะตอน "สลับบัญชีด้วย Key Pass" จากหน้าตั้งค่าเท่านั้น
+    // (ตอนอื่นผู้ใช้ยังไม่ได้ยืนยันตัวตน ถ้าปิดได้เกตติ้งจะเด้งกลับมาเรื่อย -> สับสน)
+    canClose = !!o.allowClose;
+    els.close.classList.toggle("hidden", !canClose);
+    // รู้จัก user บนเครื่องนี้แล้วแต่ session หมดอายุ → เสนอหน้าใส่ Key Pass (ไม่บังคับ)
+    var known = (o.state && o.state.visitor) || (cache && cache.visitor) || null;
+    if (o.pane === "login" || known) {
+      showPane("login");
     } else {
-      setMode("register");
-      var v = (o.state && o.state.visitor) || (cache && cache.visitor) || null;
-      if (v) {
-        els.name.value = v.name || "";
-        els.position.value = v.position || "";
-      }
-      // ผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน → เริ่มที่ขั้นที่ 2 (ประวัติเดิมยังอยู่)
-      if (o.step === "2" || (o.state && o.state.registered && o.state.needsCredentials) || (cache && cache.registered && cache.needsCredentials)) {
-        updateSummary();
-        showPane("step2");
-        setTimeout(function () { els.username.focus(); }, 80);
-        gate.classList.remove("hidden");
-        return;
-      }
+      showPane("step1");
     }
     gate.classList.remove("hidden");
-    var focusEl = current.step === "login" ? els.loginUser : els.name;
-    setTimeout(function () { focusEl.focus(); }, 80);
+    var focusEl = current.pane === "login" ? els.kpInput : els.name;
+    setTimeout(function () { if (focusEl) focusEl.focus(); }, 80);
   }
 
-  function updateSummary() {
-    var v = (cache && cache.visitor) || null;
-    var name = (els.name.value || "").trim();
-    var pos = (els.position.value || "").trim();
-    if (v) { name = v.name || name; pos = v.position || pos; }
-    if (!els.summary) return;
-    els.summary.innerHTML =
-      '<span class="vg-sum-k">ชื่อ</span><span class="vg-sum-v">' + escapeHtml(name || "-") + "</span>" +
-      '<span class="vg-sum-k">ตำแหน่ง</span><span class="vg-sum-v">' + escapeHtml(pos || "-") + "</span>";
-  }
-
-  function escapeHtml(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
-    });
-  }
-
+  // ปิดเกตติ้งได้เฉพาะตอนผู้ใช้ยืนยันตัวตนแล้ว (สลับบัญชี) — ถ้ายังไม่ได้ยืนยันห้ามปิด ไม่งั้นเกตติ้งจะเด้งกลับมาเรื่อย
   function close() {
+    if (!canClose) return;
+    hideGate();
+  }
+
+  function hideGate() {
     if (gate) gate.classList.add("hidden");
   }
 
-  // ---------- ขั้นที่ 1 ----------
+  // ---------- กรอกชื่อ + ตำแหน่ง แล้วเข้าใช้งานทันที ----------
   function step1Submit() {
     if (busy) return;
     var name = els.name.value.trim();
     var position = els.position.value.trim();
+    var branch = els.branch ? els.branch.value.trim() : "";
     if (!name) { markInvalid(els.name); showErr("กรุณากรอกชื่อ"); return; }
     if (!position) { markInvalid(els.position); showErr("กรุณากรอกตำแหน่ง"); return; }
-    lock(els.next, true);
+    if (!branch) { markInvalid(els.branch); showErr("กรุณาเลือกสาขา"); return; }
+    lock(true);
     api("/api/visitors", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name, position: position })
+      body: JSON.stringify({ name: name, position: position, branch: branch })
     }).then(function (r) {
-      lock(null, false);
+      lock(false);
       if (!r.ok) { showErr(r.d.message || "บันทึกไม่สำเร็จ กรุณาลองใหม่"); return; }
-      cache = { registered: true, authed: false, needsCredentials: true, visitor: r.d.visitor || null };
-      updateSummary();
-      showPane("step2");
-      hideErr();
-      setTimeout(function () { els.username.focus(); }, 80);
+      cache = { registered: true, authed: true, visitor: r.d.visitor || null };
+      hideGate();
+      fireAuthed(cache);
     }).catch(function () {
-      lock(null, false);
+      lock(false);
       showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
     });
   }
 
-  // ---------- ขั้นที่ 2 ----------
-  function step2Submit() {
+  // ---------- กรอก Key Pass เดิม ----------
+  function keypassLogin() {
     if (busy) return;
-    var username = els.username.value.trim().toLowerCase();
-    var password = els.password.value;
-    var password2 = els.password2.value;
-    if (!username) { markInvalid(els.username); showErr("กรุณากรอกชื่อผู้ใช้"); return; }
-    if (!/^[a-z0-9][a-z0-9._-]{3,29}$/.test(username)) {
-      markInvalid(els.username);
-      showErr("ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ - ความยาว 4-30 ตัวอักษร");
-      return;
-    }
-    if (!password) { markInvalid(els.password); showErr("กรุณากรอกรหัสผ่าน"); return; }
-    if (password.length < 6) { markInvalid(els.password); showErr("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"); return; }
-    if (/\s/.test(password)) { markInvalid(els.password); showErr("รหัสผ่านห้ามมีช่องว่าง"); return; }
-    if (password !== password2) { markInvalid(els.password2); showErr("รหัสผ่านทั้งสองช่องไม่ตรงกัน"); return; }
-
-    lock(els.finish, true);
-    api("/api/visitors/credentials", {
+    var keypass = els.kpInput.value.trim().toUpperCase();
+    if (!keypass) { markInvalid(els.kpInput); showErr("กรุณากรอก Key Pass"); return; }
+    lock(true);
+    api("/api/visitors/keypass-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username, password: password, confirmPassword: password2 })
+      body: JSON.stringify({ keypass: keypass })
     }).then(function (r) {
-      lock(null, false);
+      lock(false);
       if (!r.ok) {
-        if (r.status === 409) markInvalid(els.username);
-        showErr(r.d.message || "ตั้งบัญชีไม่สำเร็จ กรุณาลองใหม่");
+        markInvalid(els.kpInput);
+        showErr(r.d.message || "กลับเข้าบัญชีเดิมไม่สำเร็จ");
         return;
       }
-      cache = { registered: true, authed: true, needsCredentials: false, visitor: r.d.visitor || null };
-      close();
-      toast("ตั้งบัญชีสำเร็จ — เข้าใช้งานได้แล้ว");
+      var before = cache && cache.visitor ? cache.visitor.name : "";
+      var afterName = (r.d.visitor && r.d.visitor.name) || "";
+      cache = { registered: true, authed: true, visitor: r.d.visitor || null };
+      hideGate();
+      toast(before && before !== afterName
+        ? "สลับไปใช้บัญชี " + afterName + " แล้ว"
+        : "ยินดีต้อนรับ " + afterName);
       fireAuthed(cache);
     }).catch(function () {
-      lock(null, false);
-      showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
-    });
-  }
-
-  // ---------- เข้าสู่ระบบ ----------
-  function loginSubmit() {
-    if (busy) return;
-    var username = els.loginUser.value.trim().toLowerCase();
-    var password = els.loginPass.value;
-    if (!username) { markInvalid(els.loginUser); showErr("กรุณากรอกชื่อผู้ใช้"); return; }
-    if (!password) { markInvalid(els.loginPass); showErr("กรุณากรอกรหัสผ่าน"); return; }
-    lock(els.loginBtn, true);
-    api("/api/auth/visitor-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username, password: password })
-    }).then(function (r) {
-      lock(null, false);
-      if (!r.ok) {
-        markInvalid(els.loginPass);
-        showErr(r.d.message || "เข้าสู่ระบบไม่สำเร็จ");
-        return;
-      }
-      cache = { registered: true, authed: true, needsCredentials: false, visitor: r.d.visitor || null };
-      close();
-      toast("เข้าสู่ระบบแล้ว ยินดีต้อนรับ " + ((cache.visitor && cache.visitor.name) || ""));
-      fireAuthed(cache);
-    }).catch(function () {
-      lock(null, false);
+      lock(false);
       showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
     });
   }
@@ -377,12 +294,8 @@
   function requireAuth(reason) {
     return check().then(function (st) {
       if (st.authed) return st;
-      open({
-        mode: st.registered && !st.needsCredentials ? "login" : "register",
-        step: st.registered && st.needsCredentials ? "2" : "1",
-        state: st
-      });
-      var e = new Error("ยังไม่ได้เข้าสู่ระบบ");
+      open({ state: st });
+      var e = new Error("ยังไม่ได้ยืนยันตัวตน");
       e.reason = reason || "auth";
       e.state = st;
       throw e;
@@ -392,7 +305,8 @@
   function logout() {
     return api("/api/auth/visitor-logout", { method: "POST" }).then(function () {
       reset();
-      close();
+      canClose = true;
+      hideGate();
     });
   }
 
@@ -407,8 +321,12 @@
     onAuthed: function (fn) { if (typeof fn === "function") onAuthed.push(fn); }
   };
 
-  // ---------- อุ่นแคชสถานะบัญชีให้หน้าอื่นได้ทันที ----------
-  function warm() { check().catch(function () {}); }
+  // ---------- เปิดเกตติ้งอัตโนมัติเมื่อยังไม่ได้ยืนยันตัวตน ----------
+  function warm() {
+    check().then(function (st) {
+      if (!st.authed) open({ state: st });
+    }).catch(function () {});
+  }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", warm);

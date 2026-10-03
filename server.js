@@ -50,12 +50,16 @@ const ADMIN_USER = config.ADMIN_USER || "admin";
 const ADMIN_PASS = config.ADMIN_PASS;
 const ADMIN_SECRET = config.ADMIN_SECRET;
 const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
-const APP_VERSION = config.APP_VERSION || "1.0.1";
-const APP_VERSION_LABEL = config.APP_VERSION_LABEL || APP_VERSION + " (TEST)";
+const APP_VERSION = config.APP_VERSION || "1.0.2";
+const APP_VERSION_LABEL = config.APP_VERSION_LABEL || "V" + APP_VERSION;
 
 // ---------- PASSWORD NOTE: เข้ารหัส AES-256-GCM + PIN ยืนยันตัวตน ----------
-const PN_PIN = String(config.PASSWORD_NOTE_PIN || "741236");
-const PN_PASS = String(config.PASSWORD_NOTE_PASS || "wan2024*");
+// บังคับให้ตั้งค่าใน .env — ไม่มีค่าเริ่มต้นที่ฝังในโค้ด (เคยเป็นช่องโหว่: ใครก็อ่านซอร์สได้)
+const PN_PIN = String(config.PASSWORD_NOTE_PIN || "");
+const PN_PASS = String(config.PASSWORD_NOTE_PASS || "");
+if (!PN_PIN || !PN_PASS) {
+  console.warn("[security] ยังไม่ได้ตั้ง PASSWORD_NOTE_PIN / PASSWORD_NOTE_PASS ใน .env — ระบบบันทึกรหัสผ่านจะปิดใช้งาน");
+}
 const PN_KEY = (function () {
   if (config.PASSWORD_NOTE_KEY) {
     return Buffer.from(String(config.PASSWORD_NOTE_KEY), "base64");
@@ -180,12 +184,147 @@ async function loadSuUser(username) {
 
 // ---------- บัญชีผู้ใช้หน้าเว็บ (external_visitors) ----------
 // ทุกการเข้าสู่ระบบผูกกับ visitor_id เท่านั้น ไม่ผูกกับ IP เดิมหรือเครื่อง
+// ---------- Key Pass (แทนรหัสผ่าน) ----------
+// ตัวอักษร A-Z ไม่รวม I L O (สับสนกับ 1 และ 0) + ตัวเลข 2-9  = 31 ตัว
+// 5 ตัว => 31^5 = 28,629,151 แบว (ผนวก rate limit จึงเดาไม่ทันในเวลาจริง)
+const KEYPASS_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const KEYPASS_LEN = 5;
+const KEYPASS_PEPPER = String(config.VISITOR_KEYPASS_PEPPER || "");
+const KEYPASS_RE = /^[A-HJ-KM-NP-Z2-9]{5}$/;
+
+function newKeypass() {
+  const bytes = crypto.randomBytes(KEYPASS_LEN * 2);
+  let out = "";
+  for (let i = 0; out.length < KEYPASS_LEN; i++) {
+    out += KEYPASS_ALPHABET[bytes[i % bytes.length] % KEYPASS_ALPHABET.length];
+  }
+  return out;
+}
+
+// ชั้นที่ 1: HMAC แบบ deterministic ใช้ทำ unique index ค้นหา O(1)
+// ชั้นที่ 2: scrypt ใช้ยืนยันซ้ำ (ช้าโดยตั้งใจ) — ขโมย DB ได้ก็ต้องผ่านทั้งสองชั้น
+function keypassLookup(keypass) {
+  return crypto.createHmac("sha256", KEYPASS_PEPPER).update(String(keypass)).digest("hex");
+}
+
+function keypassHash(keypass) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(String(keypass), salt, 32).toString("hex");
+  return "scrypt$" + salt + "$" + hash;
+}
+
+function keypassVerify(keypass, stored) {
+  try {
+    const parts = String(stored || "").split("$");
+    if (parts.length !== 3 || parts[0] !== "scrypt") return false;
+    const hash = crypto.scryptSync(String(keypass), parts[1], 32).toString("hex");
+    const a = Buffer.from(hash, "hex");
+    const b = Buffer.from(parts[2], "hex");
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch (err) {
+    return false;
+  }
+}
+
+// ---------- ชั้นที่ 3: ให้ผู้ใช้ "ดู/คัดลอก Key Pass ของตัวเอง" ในหน้า Settings ----------
+// ระบบยังไม่เก็บ Key Pass ต้นฉบับ — เก็บเฉพาะเวอร์ชันเข้ารหัส AES-256-GCM (keypass_enc)
+// ผูกกับ VISITOR_KEYPASS_ENC_KEY จึงแม้ DB รั่ว/สำรองออกไปก็อ่านไม่ได้ถ้าไม่มีคีย์นี้บนเซิร์ฟเวอร์
+const KP_ENC_KEY = (function () {
+  const raw = String(config.VISITOR_KEYPASS_ENC_KEY || "");
+  return raw ? crypto.createHash("sha256").update(raw).digest() : null;
+})();
+
+function keypassEncrypt(keypass) {
+  if (!KP_ENC_KEY) return "";
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", KP_ENC_KEY, iv);
+  const ct = Buffer.concat([cipher.update(String(keypass), "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return "e." + iv.toString("base64") + "." + tag.toString("base64") + "." + ct.toString("base64");
+}
+
+function keypassDecrypt(blob) {
+  try {
+    const parts = String(blob || "").split(".");
+    if (parts.length !== 4 || parts[0] !== "e") return null;
+    const decipher = crypto.createDecipheriv("aes-256-gcm", KP_ENC_KEY, Buffer.from(parts[1], "base64"));
+    decipher.setAuthTag(Buffer.from(parts[2], "base64"));
+    return Buffer.concat([decipher.update(Buffer.from(parts[3], "base64")), decipher.final()]).toString("utf8");
+  } catch (err) {
+    return null;
+  }
+}
+
+function normalizeKeypass(raw) {
+  return String(raw == null ? "" : raw).trim().toUpperCase().replace(/\s+/g, "");
+}
+
+function validateKeypass(raw) {
+  const k = normalizeKeypass(raw);
+  if (!k) return { ok: false, message: "กรุณากรอก Key Pass" };
+  if (!KEYPASS_RE.test(k)) {
+    return { ok: false, message: "Key Pass ต้องเป็นตัวอักษร/ตัวเลข 5 ตัว (ไม่ใช่ I L O และ 0 1)" };
+  }
+  return { ok: true, keypass: k };
+}
+
+function keypassReady() {
+  return !!KEYPASS_PEPPER;
+}
+
+function keypassEncReady() {
+  return !!KP_ENC_KEY;
+}
+
+// สุ่ม Key Pass ใหม่ให้ visitor (เก็บ hash + รุ่นเข้ารหัสแบบอ่านกลับได้สำหรับหน้า Settings)
+async function issueKeypass(adapter, visitorId) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const keypass = newKeypass();
+    const lookup = keypassLookup(keypass);
+    const taken = await adapter.findVisitorByKeypassLookup(lookup);
+    if (taken && String(taken.id) !== String(visitorId)) continue;
+    await adapter.setVisitorKeypass(visitorId, {
+      lookup,
+      hash: keypassHash(keypass),
+      enc: keypassEncrypt(keypass)
+    });
+    return keypass;
+  }
+  throw new Error("ออก Key Pass ไม่สำเร็จ กรุณาลองใหม่");
+}
+
+// ---------- rate limit แบบ in-memory ----------
+// กันเดา Key Pass และกันยิงใบแจ้งซ่อมถี่ ๆ (Key Pass 5 ตัวสั้นมาก ต้องล็อก)
+const RL_BUCKETS = new Map();
+function rateLimit(bucket, max, windowMs) {
+  return function (req, res, next) {
+    const key = bucket + "|" + clientIp(req);
+    const now = Date.now();
+    const hit = RL_BUCKETS.get(key);
+    if (!hit || now > hit.reset) {
+      RL_BUCKETS.set(key, { count: 1, reset: now + windowMs });
+      if (RL_BUCKETS.size > 5000) {
+        for (const [k, v] of RL_BUCKETS) if (now > v.reset) RL_BUCKETS.delete(k);
+      }
+      return next();
+    }
+    hit.count++;
+    if (hit.count > max) {
+      const secs = Math.max(1, Math.ceil((hit.reset - now) / 1000));
+      res.set("Retry-After", String(secs));
+      return res.status(429).json({
+        ok: false,
+        message: "พยายามบ่อยเกินไป กรุณารอ " + Math.ceil(secs / 60) + " นาทีแล้วลองใหม่อีกครั้ง"
+      });
+    }
+    return next();
+  };
+}
+
 const VISITOR_SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 วัน
 const VISITOR_COOKIE_MAXAGE = 30 * 24 * 60 * 60;      // วินาที
 const VISITOR_TOKEN_TTL = 365 * 24 * 60 * 60;        // cookie จำเบราว์เซอร์ 1 ปี
-const VISITOR_PASS_MIN = 6;
 const VISITOR_IP_FALLBACK_HOURS = 12;                 // ใช้ IP ช่วยระบุตัวตนได้เฉพาะของเก่าในช่วงนี้
-const VISITOR_USERNAME_RE = /^[a-z0-9][a-z0-9._-]{3,29}$/;
 
 function signVisitorToken(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -232,77 +371,26 @@ function clearVisitorSessionCookie(req, res) {
 }
 
 function setVisitorTokenCookie(req, res, token) {
-  res.append("Set-Cookie", "visitor_token=" + encodeURIComponent(token) + "; Max-Age=" + VISITOR_TOKEN_TTL + "; " + cookieFlags(req));
+  res.append("Set-Cookie", "visitor_token=" + encodeURIComponent(token) + "; HttpOnly; Max-Age=" + VISITOR_TOKEN_TTL + "; " + cookieFlags(req));
 }
 
 function clearVisitorTokenCookie(req, res) {
-  res.append("Set-Cookie", "visitor_token=; Max-Age=0; " + cookieFlags(req));
+  res.append("Set-Cookie", "visitor_token=; HttpOnly; Max-Age=0; " + cookieFlags(req));
 }
 
 function setVisitorCookie(req, res, token) {
   setVisitorTokenCookie(req, res, token);
 }
 
-// ---------- รหัสผ่านผู้ใช้: เก็บทั้ง scrypt hash (ตรวจตอนล็อกอิน) และ AES-256-GCM (แสดงค่าเดิมในหน้าตั้งค่า) ----------
-const VC_KEY = crypto.createHash("sha256").update(String(ADMIN_SECRET) + ":visitor_cred_v1").digest();
-
-function vcEncrypt(plain) {
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", VC_KEY, iv);
-  const pt = Buffer.from(String(plain == null ? "" : plain), "utf8");
-  const ct = Buffer.concat([cipher.update(pt), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return [iv.toString("base64"), tag.toString("base64"), ct.toString("base64")].join(".");
-}
-
-function vcDecrypt(blob) {
-  const parts = String(blob || "").split(".");
-  if (parts.length !== 3) throw new Error("ข้อมูลรหัสผ่านเข้ารหัสไม่ถูกต้อง");
-  const decipher = crypto.createDecipheriv("aes-256-gcm", VC_KEY, Buffer.from(parts[0], "base64"));
-  decipher.setAuthTag(Buffer.from(parts[1], "base64"));
-  const pt = Buffer.concat([decipher.update(Buffer.from(parts[2], "base64")), decipher.final()]);
-  return pt.toString("utf8");
-}
-
-function normalizeUsername(raw) {
-  return String(raw || "").trim().toLowerCase();
-}
-
-function validateUsername(raw) {
-  const u = normalizeUsername(raw);
-  if (!u) return { ok: false, message: "กรุณากรอกชื่อผู้ใช้" };
-  if (!VISITOR_USERNAME_RE.test(u)) {
-    return { ok: false, message: "ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ - ความยาว 4-30 ตัวอักษร" };
-  }
-  return { ok: true, username: u };
-}
-
-function validatePassword(raw) {
-  const p = String(raw == null ? "" : raw);
-  if (!p) return { ok: false, message: "กรุณากรอกรหัสผ่าน" };
-  if (p.length < VISITOR_PASS_MIN) return { ok: false, message: "รหัสผ่านต้องมีอย่างน้อย " + VISITOR_PASS_MIN + " ตัวอักษร" };
-  if (p.length > 128) return { ok: false, message: "รหัสผ่านยาวเกินไป (สูงสุด 128 ตัวอักษร)" };
-  if (/\s/.test(p)) return { ok: false, message: "รหัสผ่านห้ามมีช่องว่าง" };
-  return { ok: true, password: p };
-}
-
-function randomPassword() {
-  const chars = "abcdefghijkmnopqrstuvwxyz23456789";
-  let out = "";
-  const bytes = crypto.randomBytes(10);
-  for (let i = 0; i < bytes.length; i++) out += chars[bytes[i] % chars.length];
-  return out;
-}
-
-// เปิดดูข้อมูลบัญชี (ไม่ส่ง token/ip/รหัสผ่านกลับไปที่เบราว์เซอร์)
+// เปิดดูข้อมูลบัญชี (ไม่ส่ง token/ip/Key Pass กลับไปที่เบราว์เซอร์)
 function publicVisitor(v) {
   if (!v) return null;
   return {
     id: v.id,
     name: v.name || "",
     position: v.position || "",
-    username: v.username || "",
-    hasCredentials: !!v.credentials_at
+    branch: v.branch || "",
+    hasKeypass: !!v.keypass_at
   };
 }
 
@@ -337,6 +425,7 @@ app.use("/api/admin", (req, res, next) => {
   if (/^\/system-users/.test(path)) return has("settings") ? next() : deny();
   if (/^\/repair-notes\b/.test(path)) return has("repairNotes") ? next() : deny();
   if (/^\/work-notes\b/.test(path)) return has("workNotes") ? next() : deny();
+  if (/^\/travel-/.test(path)) return has("travelExpense") ? next() : deny();
   if (/^\/maintenance/.test(path)) return has("maintenance") ? next() : deny();
   if (/^\/visitors/.test(path)) return has("visitors") ? next() : deny();
   if (/^\/users(\/|$)/.test(path)) return has("devices") ? next() : deny();
@@ -450,6 +539,9 @@ app.get("/admin-mobile.html", serveAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin-mobile.html"));
 });
 app.get("/admin-db", serveAdminPage, (req, res) => res.redirect("/admin-db.html"));
+app.get("/travel-print.html", serveAdminPage, (req, res) => {
+res.sendFile(path.join(__dirname, "public", "travel-print.html"));
+});
 app.get("/admin-db.html", serveAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin-db.html"));
 });
@@ -472,7 +564,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024, files: 12 }
 });
 
-app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name: "audio", maxCount: 1 }]), async (req, res) => {
+app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields([{ name: "photos", maxCount: 12 }, { name: "audio", maxCount: 1 }]), async (req, res) => {
   try {
     const body = req.body || {};
     const device = String(body.device || "").trim();
@@ -485,10 +577,22 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
     const statusDateRaw = String(body.status_date || "").trim();
     const statusDate = /^\d{4}-\d{2}-\d{2}$/.test(statusDateRaw) ? statusDateRaw : null;
     const statusTime = String(body.status_time || "").trim();
-    const statusValue = String(body.status || "new").trim();
-    const status = ["new", "working", "done"].includes(statusValue) ? statusValue : "new";
     const sourceRaw = String(body.source || "external").trim();
     const source = sourceRaw === "internal" ? "internal" : "external";
+    // ใบแจ้งจากภายนอกถูกบังคับ status/ผู้รับผิดชอบ/วันเวลาเป็นค่าเริ่มต้นเสมอ
+    // (ผู้ใช้ทั่วไปห้ามส่ง status=done หรือแต่งชื่อคนซ่อมเอง — ป้องกัน mass assignment)
+    const isStaffCaller = isAdminAuthed(req) || isUserAuthed(req);
+    let status = "new";
+    let effHandlerName = "";
+    let effStatusDate = null;
+    let effStatusTime = "";
+    if (source === "internal" || isStaffCaller) {
+      const statusValue = String(body.status || "new").trim();
+      status = ["new", "working", "done"].includes(statusValue) ? statusValue : "new";
+      effHandlerName = handlerName;
+      effStatusDate = statusDate;
+      effStatusTime = statusTime;
+    }
     // ใบแจ้งภายในเข้าระบบทันที / ใบแจ้งจากภายนอกจะรอ IT กด "ตอบรับ" ก่อนถึงจะเข้าระบบบันทึกรายการ
     const acceptedAt = source === "internal" ? new Date().toISOString() : null;
 
@@ -500,17 +604,17 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
 
-    // ใบแจ้งจากภายนอกต้องเข้าสู่ระบบด้วย user/password ก่อน (ผูก visitor_id เท่านั้น ไม่ผูก IP)
+    // ใบแจ้งจากภายนอกต้องมี session ผู้ใช้ (ได้จากกรอกชื่อ+ตำแหน่ง หรือกรอก Key Pass)
     // ใบแจ้งภายในต้องเป็นผู้ดูแลระบบ/พนักงานเท่านั้น — ห้ามแอบส่ง source:"internal" จากหน้าเว็บสาธารณะ
     let visitor = null;
     if (source === "internal") {
-      if (!isAdminAuthed(req) && !isUserAuthed(req)) {
+      if (!isStaffCaller) {
         return res.status(403).json({ ok: false, message: "ใบแจ้งภายในต้องเข้าสู่ระบบฝ่าย IT ก่อน" });
       }
     } else {
       visitor = await requireVisitorSession(req);
       if (!visitor) {
-        return res.status(401).json({ ok: false, needsCredentials: true, message: "กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านก่อนแจ้งซ่อม" });
+        return res.status(401).json({ ok: false, needsIdentity: true, message: "กรุณากรอกชื่อและตำแหน่งก่อนแจ้งซ่อม" });
       }
     }
 
@@ -547,9 +651,9 @@ app.post("/api/tickets", upload.fields([{ name: "photos", maxCount: 12 }, { name
       reporterPhone: phone,
       reporterLineId,
       status,
-      handlerName,
-      statusDate,
-      statusTime,
+      effHandlerName,
+      effStatusDate,
+      effStatusTime,
       source,
       acceptedAt,
       audioUrl,
@@ -785,14 +889,16 @@ app.get("/api/visitors/me", async (req, res) => {
     const visitor = await resolveVisitor(req);
     if (!visitor) {
       clearVisitorSessionCookie(req, res);
-      return res.json({ ok: true, registered: false, authed: false, needsCredentials: true, visitor: null });
+      return res.json({ ok: true, registered: false, authed: false, visitor: null });
     }
-    const authed = visitor.matchedBy === "session" && !!visitor.credentials_at;
+    // รู้จักด้วย cookie/เลขเครื่อง (token เก่า 1 ปี) แต่ session สั้นหมดอายุแล้ว → ต่ออายุ session ให้ตรงกับ token ยาว
+    if (visitor.matchedBy === "token" || visitor.matchedBy === "device") {
+      setVisitorSessionCookie(req, res, visitor.id);
+    }
     res.json({
       ok: true,
       registered: true,
-      authed: authed,
-      needsCredentials: !visitor.credentials_at,
+      authed: true,
       visitor: publicVisitor(visitor)
     });
   } catch (err) {
@@ -801,7 +907,23 @@ app.get("/api/visitors/me", async (req, res) => {
   }
 });
 
-// PATCH /api/visitors/me — แก้ชื่อ / ตำแหน่ง / ชื่อผู้ใช้ / เปลี่ยนรหัสผ่าน
+// GET /api/visitors/me/keypass — ดู Key Pass ของตัวเองในหน้า Settings (ผู้ใช้เก่าที่ยังไม่มี keypass_enc จะดูไม่ได้ ต้องให้แอดมินออกใหม่)
+app.get("/api/visitors/me/keypass", async (req, res) => {
+  try {
+    const visitor = await requireVisitorSession(req);
+    if (!visitor) return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน" });
+    const keypass = keypassDecrypt(visitor.keypass_enc);
+    if (!keypass) {
+      return res.status(404).json({ ok: false, message: "Key Pass นี้ถูกออกก่อนเพิ่มระบบดูด้วยตัวเอง กรุณาติดต่อฝ่าย IT เพื่อออกใหม่" });
+    }
+    res.json({ ok: true, keypass: keypass });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// PATCH /api/visitors/me — แก้ชื่อ / ตำแหน่ง (Key Pass แก้ไขไม่ได้)
 app.patch("/api/visitors/me", async (req, res) => {
   try {
     const adapter = db.getAdapter();
@@ -810,41 +932,9 @@ app.patch("/api/visitors/me", async (req, res) => {
     }
     const visitor = await requireVisitorSession(req);
     if (!visitor) {
-      return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อนแก้ไขข้อมูลผู้ใช้" });
+      return res.status(401).json({ ok: false, message: "กรุณากรอกชื่อและตำแหน่งก่อนแก้ไขข้อมูลผู้ใช้" });
     }
     const body = req.body || {};
-
-    if (body.newPassword !== undefined || body.currentPassword !== undefined) {
-      const cur = validatePassword(body.currentPassword);
-      if (!cur.ok) return res.status(400).json({ ok: false, message: "กรอกรหัสผ่านเดิมให้ถูกต้อง" });
-      const cred = await adapter.getVisitorCredentials(visitor.id);
-      if (!cred || !cred.password_hash || !verifyPassword(cur.password, cred.password_hash)) {
-        return res.status(401).json({ ok: false, message: "รหัสผ่านเดิมไม่ถูกต้อง" });
-      }
-      const next = validatePassword(body.newPassword);
-      if (!next.ok) return res.status(400).json({ ok: false, message: next.message });
-      await adapter.setVisitorPassword(visitor.id, {
-        passwordHash: hashPassword(next.password),
-        passwordEnc: vcEncrypt(next.password)
-      });
-    }
-
-    if (body.username !== undefined) {
-      const u = validateUsername(body.username);
-      if (!u.ok) return res.status(400).json({ ok: false, message: u.message });
-      if (u.username !== normalizeUsername(visitor.username)) {
-        const taken = await adapter.findVisitorByUsername(u.username);
-        if (taken && String(taken.id) !== String(visitor.id)) {
-          return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น" });
-        }
-        try {
-          await adapter.renameVisitor(visitor.id, u.username);
-        } catch (err) {
-          if (err && err.code === "DUP_USERNAME") return res.status(409).json({ ok: false, message: err.message });
-          throw err;
-        }
-      }
-    }
 
     const patch = {};
     if (body.name !== undefined) {
@@ -854,6 +944,11 @@ app.patch("/api/visitors/me", async (req, res) => {
     if (body.position !== undefined) {
       patch.position = String(body.position).trim();
       if (!patch.position) return res.status(400).json({ ok: false, message: "กรุณากรอกตำแหน่ง" });
+    }
+    if (body.branch !== undefined) {
+      patch.branch = String(body.branch).trim();
+      if (!patch.branch) return res.status(400).json({ ok: false, message: "กรุณาเลือกสาขา" });
+      if (patch.branch.length > 120) return res.status(400).json({ ok: false, message: "ชื่อสาขายาวเกินไป (สูงสุด 120 ตัวอักษร)" });
     }
     if (Object.keys(patch).length) await adapter.updateVisitor(visitor.id, patch);
 
@@ -865,138 +960,81 @@ app.patch("/api/visitors/me", async (req, res) => {
   }
 });
 
-// GET /api/visitors/me/credential — เปิดเผยรหัสผ่านเดิม (หน้าตั้งค่า) ต้องเข้าสู่ระบบแล้วเท่านั้น
-app.get("/api/visitors/me/credential", async (req, res) => {
+// POST /api/visitors — เข้าใช้งาน: กรอกชื่อ + ตำแหน่ง แล้วระบบออก Key Pass ให้ 1 ครั้ง
+app.post("/api/visitors", rateLimit("visitor", 10, 60 * 60 * 1000), async (req, res) => {
   try {
     const adapter = db.getAdapter();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const visitor = await requireVisitorSession(req);
-    if (!visitor) return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อน" });
-    const cred = await adapter.getVisitorCredentials(visitor.id);
-    if (!cred || !cred.username) {
-      return res.status(404).json({ ok: false, message: "ยังไม่ได้ตั้งชื่อผู้ใช้และรหัสผ่าน" });
+    if (!keypassReady()) {
+      return res.status(503).json({ ok: false, message: "ยังไม่ได้ตั้งค่า VISITOR_KEYPASS_PEPPER ใน .env (ต้องรีสตาร์ตเซิร์ฟเวอร์หลังแก้)" });
     }
-    let password = "";
-    if (cred.password_enc) {
-      try {
-        password = vcDecrypt(cred.password_enc);
-      } catch (e) {
-        password = "";
-      }
-    }
-    res.json({
-      ok: true,
-      credential: {
-        username: cred.username || "",
-        password: password,
-        createdAt: cred.credentials_at || null
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, message: "server error" });
-  }
-});
-
-// POST /api/visitors — ขั้นที่ 1 ของการสมัคร (ชื่อ + ตำแหน่ง)
-app.post("/api/visitors", async (req, res) => {
-  try {
-    const adapter = db.getAdapter();
-    if (!adapter.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    if (!keypassEncReady()) {
+      return res.status(503).json({ ok: false, message: "ยังไม่ได้ตั้งค่า VISITOR_KEYPASS_ENC_KEY ใน .env (ต้องรีสตาร์ตเซิร์ฟเวอร์หลังแก้)" });
     }
     const body = req.body || {};
     const name = String(body.name || "").trim();
     const position = String(body.position || "").trim();
+    const branch = String(body.branch || "").trim();
     if (!name) return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อ" });
     if (!position) return res.status(400).json({ ok: false, message: "กรุณากรอกตำแหน่ง" });
+    if (!branch) return res.status(400).json({ ok: false, message: "กรุณาเลือกสาขา" });
+    if (name.length > 60) return res.status(400).json({ ok: false, message: "ชื่อยาวเกินไป (สูงสุด 60 ตัวอักษร)" });
+    if (position.length > 120) return res.status(400).json({ ok: false, message: "ตำแหน่งยาวเกินไป (สูงสุด 120 ตัวอักษร)" });
+    if (branch.length > 120) return res.status(400).json({ ok: false, message: "ชื่อสาขายาวเกินไป (สูงสุด 120 ตัวอักษร)" });
     const ip = clientIp(req);
     const deviceId = String(body.device_id || req.headers["x-device-id"] || "").trim().slice(0, 200);
     const token = crypto.randomBytes(24).toString("hex");
-    const visitor = await adapter.createVisitor({ name, position, ip, token, deviceId });
+    const visitor = await adapter.createVisitor({ name, position, branch, ip, token, deviceId });
     setVisitorCookie(req, res, token);
-    res.json({ ok: true, needsCredentials: true, visitor: publicVisitor(visitor) });
+    setVisitorSessionCookie(req, res, visitor.id);
+    // เก็บ hash + รุ่นเข้ารหัส (keypass_enc) ไว้ให้ผู้ใช้ดูเองในหน้า Settings
+    const keypass = await issueKeypass(adapter, visitor.id);
+    const fresh = await adapter.getVisitorById(visitor.id);
+    res.json({ ok: true, keypass: keypass, visitor: publicVisitor(fresh || visitor) });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, message: "server error" });
-  }
-});
-
-// POST /api/visitors/credentials — ขั้นที่ 2 ของการสมัคร (ตั้ง user/password แล้วเข้าใช้งานได้เลย)
-app.post("/api/visitors/credentials", async (req, res) => {
-  try {
-    const adapter = db.getAdapter();
-    if (!adapter.ready) {
-      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
-    }
-    // ขั้นนี้ต้องระบุตัวตนจาก cookie เครื่องหรือเลขเครื่องเท่านั้น (ห้ามใช้ IP เด็ดขาด)
-    const visitor = await resolveVisitor(req, { allowIpFallback: false });
-    if (!visitor) {
-      return res.status(401).json({ ok: false, message: "ข้อมูลไม่ครบ กรุณากรอกชื่อและตำแหน่งก่อน" });
-    }
-    if (visitor.credentials_at) {
-      return res.status(409).json({ ok: false, message: "บัญชีนี้ตั้งชื่อผู้ใช้แล้ว หากลืมรหัสผ่านกรุณาเข้าสู่ระบบหรือให้ทีม IT รีเซ็ตให้" });
-    }
-    const body = req.body || {};
-    const u = validateUsername(body.username);
-    if (!u.ok) return res.status(400).json({ ok: false, message: u.message });
-    const p = validatePassword(body.password);
-    if (!p.ok) return res.status(400).json({ ok: false, message: p.message });
-    if (body.confirmPassword !== undefined && String(body.confirmPassword) !== p.password) {
-      return res.status(400).json({ ok: false, message: "รหัสผ่านทั้งสองช่องไม่ตรงกัน" });
-    }
-    const taken = await adapter.findVisitorByUsername(u.username);
-    if (taken) {
-      return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น" });
-    }
-    const updated = await adapter.setVisitorCredentials(visitor.id, {
-      username: u.username,
-      passwordHash: hashPassword(p.password),
-      passwordEnc: vcEncrypt(p.password)
-    });
-    setVisitorSessionCookie(req, res, updated ? updated.id : visitor.id);
-    const fresh = await adapter.getVisitorById(updated ? updated.id : visitor.id);
-    res.json({ ok: true, authed: true, visitor: publicVisitor(fresh || visitor) });
-  } catch (err) {
-    if (err && err.code === "DUP_USERNAME") {
-      return res.status(409).json({ ok: false, message: err.message });
-    }
     console.error(err);
     res.status(500).json({ ok: false, message: (err && err.message) || "server error" });
   }
 });
 
-// POST /api/auth/visitor-login — เข้าสู่ระบบด้วย user/password (ทุกเครื่อง ทุกเครือข่าย)
-app.post("/api/auth/visitor-login", async (req, res) => {
+// POST /api/visitors/keypass-login — กลับมาใช้ user เดิมบนเครื่องใหม่ด้วย Key Pass 5 ตัว
+app.post("/api/visitors/keypass-login", rateLimit("kp", 5, 15 * 60 * 1000), async (req, res) => {
   try {
     const adapter = db.getAdapter();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const body = req.body || {};
-    const u = validateUsername(body.username);
-    if (!u.ok) return res.status(400).json({ ok: false, message: "กรุณากรอกชื่อผู้ใช้" });
-    const password = String(body.password == null ? "" : body.password);
-    if (!password) return res.status(400).json({ ok: false, message: "กรุณากรอกรหัสผ่าน" });
+    if (!keypassReady()) {
+      return res.status(503).json({ ok: false, message: "ยังไม่ได้ตั้งค่า VISITOR_KEYPASS_PEPPER ใน .env" });
+    }
+    const k = validateKeypass((req.body || {}).keypass);
+    if (!k.ok) return res.status(400).json({ ok: false, message: k.message });
 
-    const row = await adapter.findVisitorByUsername(u.username);
-    const cred = row ? await adapter.getVisitorCredentials(row.id) : null;
-    if (!cred || !cred.password_hash || !verifyPassword(password, cred.password_hash)) {
-      return res.status(401).json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    const row = await adapter.findVisitorByKeypassLookup(keypassLookup(k.keypass));
+    // เทียบ scrypt เสมอ แม้ไม่เจอแถว เพื่อไม่ให้เวลาตอบบอกว่า Key Pass นี้มีอยู่จริงหรือไม่
+    const ok = keypassVerify(k.keypass, row ? row.keypass_hash : keypassHash(k.keypass));
+    if (!row || !ok) {
+      return res.status(401).json({ ok: false, message: "ไม่พบ Key Pass นี้ หรือกรอกไม่ถูกต้อง" });
     }
-    setVisitorSessionCookie(req, res, row.id);
-    // ผูกเบราว์เซอร์นี้กับบัญชี เพื่อให้จำสถานะได้เร็วขึ้นในครั้งถัดไป
-    const ip = clientIp(req);
+
+    // ผูกเบราว์เซอร์นี้เข้ากับบัญชี Key Pass นี้ทันที (สลับ cookie/session มาเป็นของบัญชีใหม่)
+    // => ถ้าเครื่องนี้จำบัญชีอื่นอยู่ด้วยคุกกี้เดิม คุกกี้จะถูกเขียนแทนด้วยของบัญชีนี้ จึง "สลับบัญชี" ได้จริง
     const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200);
-    try {
-      if (!row.device_id && deviceId) await adapter.updateVisitor(row.id, { device_id: deviceId });
-    } catch (e) {
-      console.warn("[auth] ผูกเบราว์เซอร์กับบัญชีไม่สำเร็จ:", e.message);
+    const patch = { last_seen_at: new Date().toISOString() };
+    if (deviceId && !row.device_id) patch.device_id = deviceId;
+    let token = row.token || "";
+    if (!token) {
+      token = crypto.randomBytes(24).toString("hex");
+      patch.token = token;
     }
-    const fresh = await adapter.getVisitorById(row.id);
-    res.json({ ok: true, authed: true, visitor: publicVisitor(fresh || row) });
+    await adapter.updateVisitor(row.id, patch);
+    setVisitorTokenCookie(req, res, token);
+    setVisitorSessionCookie(req, res, row.id);
+
+    const fresh = (await adapter.getVisitorById(row.id)) || row;
+    res.json({ ok: true, authed: true, visitor: publicVisitor(fresh) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });
@@ -1018,19 +1056,19 @@ app.get("/api/admin/visitors", async (req, res) => {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
     const rows = await adapter.listVisitors();
-    // ไม่ส่งข้อมูลลับ (รหัสผ่าน/โทเคน) ไปที่หน้าจอหลังบ้าน
+    // ไม่ส่งข้อมูลลับ (Key Pass / โทเคน) ไปที่หน้าจอหลังบ้าน
     const visitors = rows.map(function (v) {
       return {
         id: v.id,
         name: v.name || "",
         position: v.position || "",
+        branch: v.branch || "",
         ip: v.ip || "",
         ticket_count: v.ticket_count || 0,
         last_seen_at: v.last_seen_at,
         created_at: v.created_at,
-        username: v.username || "",
-        hasCredentials: !!v.credentials_at,
-        credentials_at: v.credentials_at || null
+        hasKeypass: !!v.keypass_at,
+        keypass_at: v.keypass_at || null
       };
     });
     res.json({ ok: true, visitors });
@@ -1055,7 +1093,7 @@ app.get("/api/admin/visitors/:id/ips", async (req, res) => {
   }
 });
 
-// PATCH /api/admin/visitors/:id — แก้ชื่อ / ตำแหน่ง / ชื่อผู้ใช้
+// PATCH /api/admin/visitors/:id — แก้ชื่อ / ตำแหน่ง (Key Pass แก้ไขไม่ได้ ต้องออกใหม่เท่านั้น)
 app.patch("/api/admin/visitors/:id", async (req, res) => {
   try {
     const adapter = db.getAdapter();
@@ -1067,23 +1105,9 @@ app.patch("/api/admin/visitors/:id", async (req, res) => {
     const patch = {};
     if (body.name !== undefined) patch.name = String(body.name).trim();
     if (body.position !== undefined) patch.position = String(body.position).trim();
-
-    // เปลี่ยนชื่อผู้ใช้ (ต้องผ่านการตรวจรูปแบบ + กรณีซ้ำ)
-    if (body.username !== undefined && String(body.username).trim()) {
-      const uv = validateUsername(body.username);
-      if (!uv.ok) return res.status(400).json({ ok: false, message: uv.message });
-      const dup = await adapter.findVisitorByUsername(uv.username);
-      if (dup && Number(dup.id) !== id) {
-        return res.status(409).json({ ok: false, message: "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว" });
-      }
-      await adapter.renameVisitor(id, uv.username);
-    }
-
+    if (body.branch !== undefined) patch.branch = String(body.branch).trim();
     if (!Object.keys(patch).length) {
-      // เปลี่ยนแค่ชื่อผู้ใช้
-      const row = await adapter.getVisitorById(id);
-      if (!row) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
-      return res.json({ ok: true, visitor: publicVisitor(row) });
+      return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
     }
     const visitor = await adapter.updateVisitor(id, patch);
     if (!visitor) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
@@ -1094,32 +1118,29 @@ app.patch("/api/admin/visitors/:id", async (req, res) => {
   }
 });
 
-// POST /api/admin/visitors/:id/reset-password — แอดมินสุ่มรหัสผ่านใหม่ให้ผู้ใช้ (คืนค่าเป็นข้อความ 1 ครั้ง)
-app.post("/api/admin/visitors/:id/reset-password", async (req, res) => {
+// POST /api/admin/visitors/:id/issue-keypass — แอดมินออก Key Pass ใหม่ให้ผู้ใช้ (คืนค่าเป็นข้อความ 1 ครั้ง)
+app.post("/api/admin/visitors/:id/issue-keypass", async (req, res) => {
   try {
     const adapter = db.getAdapter();
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
+    if (!keypassReady()) {
+      return res.status(503).json({ ok: false, message: "ยังไม่ได้ตั้งค่า VISITOR_KEYPASS_PEPPER ใน .env" });
+    }
+    if (!keypassEncReady()) {
+      return res.status(503).json({ ok: false, message: "ยังไม่ได้ตั้งค่า VISITOR_KEYPASS_ENC_KEY ใน .env" });
+    }
     const id = Number(req.params.id);
     const row = await adapter.getVisitorById(id);
     if (!row) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
-    if (!row.username) {
-      return res.status(400).json({ ok: false, message: "ผู้ใช้นี้ยังไม่ได้ตั้งชื่อผู้ใช้ ต้องให้เขาสมัครก่อนจึงจะรีเซ็ตรหัสผ่านได้" });
-    }
-    const body = req.body || {};
-    const next = body.password !== undefined ? validatePassword(body.password) : { ok: true, password: randomPassword() };
-    if (!next.ok) return res.status(400).json({ ok: false, message: next.message });
-    await adapter.setVisitorPassword(id, {
-      passwordHash: hashPassword(next.password),
-      passwordEnc: vcEncrypt(next.password)
-    });
+    const keypass = await issueKeypass(adapter, id);
     res.json({
       ok: true,
       id,
-      username: row.username,
-      password: next.password,
-      message: "รีเซ็ตรหัสผ่านให้ " + (row.name || "ผู้ใช้") + " แล้ว (ส่งต่อให้ผู้ใช้ทันที ระบบจะไม่แสดงซ้ำ)"
+      keypass,
+      name: row.name || "",
+      message: "ออก Key Pass ใหม่ให้ " + (row.name || "ผู้ใช้") + " แล้ว (ส่งต่อให้ผู้ใช้ทันที ระบบจะไม่แสดงซ้ำ)"
     });
   } catch (err) {
     console.error(err);
@@ -1550,6 +1571,224 @@ app.delete("/api/admin/work-notes/:id", async (req, res) => {
   }
 });
 
+// ---------- ระบบบันทึกเบิกค่าเดินทาง (Travel Expense) ----------
+const TRAVEL_VEHICLES = ["motorcycle", "car"];
+
+// หมายเหตุ: ใช้ ?? ไม่ใช่ || เพราะอัตรา 0 บาท/กม. เป็นค่าที่ตั้งใจได้ ไม่ควรถูกแทนด้วยค่าเริ่มต้น
+function travelRate(vehicle, settings) {
+  const n = vehicle === "car" ? settings.travel_rate_car_resolved : settings.travel_rate_moto_resolved;
+  const num = Number(n);
+  return n == null || n === "" || !isFinite(num) || num < 0 ? (vehicle === "car" ? 5 : 3) : num;
+}
+
+// คำนวณยอดฝั่ง server (ไม่เชื่อค่าที่ client ส่งมาเรื่องยอดเงิน)
+function normalizeTrips(input, settings) {
+  const list = Array.isArray(input) ? input : [];
+  const out = [];
+  let totalKm = 0;
+  let totalAmount = 0;
+  list.forEach(function (t) {
+    const row = t && typeof t === "object" ? t : {};
+    const vehicle = TRAVEL_VEHICLES.indexOf(String(row.vehicle || "").toLowerCase()) >= 0
+      ? String(row.vehicle).toLowerCase()
+      : "motorcycle";
+    const km = Math.max(0, Math.round((Number(row.km) || 0) * 100) / 100);
+    const rate = travelRate(vehicle, settings);
+    const amount = Math.round(km * rate * 100) / 100;
+    totalKm += km;
+    totalAmount += amount;
+    out.push({
+      date: String(row.date || "").slice(0, 10),
+      purpose: String(row.purpose || "").trim().slice(0, 300),
+      km: km,
+      vehicle: vehicle,
+      rate: rate,
+      amount: amount
+    });
+  });
+  return { trips: out, totalKm: Math.round(totalKm * 100) / 100, totalAmount: Math.round(totalAmount * 100) / 100 };
+}
+
+// สถานะใบเบิกที่ระบบรับได้ (ต้องตรงกับ normalizeTravelStatus ใน db-adapter / supabase)
+const TRAVEL_STATUS_LIST = ["กำลังดำเนินการ", "รอดำเนินการ", "เสร็จสิ้น"];
+
+function travelClaimPayload(body, settings) {
+  const b = body || {};
+  const calc = normalizeTrips(b.trips, settings);
+  return {
+    claimerVisitorId: b.claimerVisitorId == null || b.claimerVisitorId === "" ? null : Number(b.claimerVisitorId),
+    claimerName: String(b.claimerName || "").trim().slice(0, 150),
+    claimDate: String(b.claimDate || "").slice(0, 10) || new Date().toISOString().slice(0, 10),
+    position: String(b.position || "").trim().slice(0, 150),
+    bankName: String(b.bankName || "").trim().slice(0, 150),
+    bankAccount: String(b.bankAccount || "").trim().slice(0, 100),
+    accountName: String(b.accountName || "").trim().slice(0, 150),
+    trips: calc.trips,
+    totalKm: calc.totalKm,
+    totalAmount: calc.totalAmount,
+    note: String(b.note || "").trim().slice(0, 500),
+    status: TRAVEL_STATUS_LIST.indexOf(String(b.status || "").trim()) >= 0
+      ? String(b.status).trim()
+      : "รอดำเนินการ"
+  };
+}
+
+app.get("/api/admin/travel-settings", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const settings = await adapter.getTravelSettings();
+    settings.travel_rate_moto_resolved = settings.fuel_rate_motorcycle;
+    settings.travel_rate_car_resolved = settings.fuel_rate_car;
+    res.json({ ok: true, settings });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/travel-settings", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    const patch = {};
+    if (body.fuel_rate_motorcycle != null) {
+      const n = Number(body.fuel_rate_motorcycle);
+      patch.fuel_rate_motorcycle = String(isFinite(n) && n >= 0 ? n : 0);
+    }
+    if (body.fuel_rate_car != null) {
+      const n = Number(body.fuel_rate_car);
+      patch.fuel_rate_car = String(isFinite(n) && n >= 0 ? n : 0);
+    }
+    ["travel_company", "travel_bank_name", "travel_account_name", "travel_bank_account",
+      "travel_claimer_name", "travel_claimer_position",
+      "travel_approver_name", "travel_approver_title", "travel_checker_name", "travel_checker_title",
+      "travel_checker2_name", "travel_checker2_title"]
+      .forEach(function (k) {
+        if (body[k] != null) patch[k] = String(body[k]).trim().slice(0, 200);
+      });
+    // คอลัมน์รถที่จะแสดงในตาราง: รับเฉพาะ "moto" / "car" เท่านั้น
+    // ถ้าไม่ได้ติ๊กอะไรเลย ให้ยึดค่าเดิมไว้ (ไม่บังคับ) เพื่อไม่ให้ตารางว่างเปล่า
+    if (body.travel_vehicle_columns != null) {
+      const cols = String(body.travel_vehicle_columns)
+        .split(",")
+        .map(function (x) { return x.trim().toLowerCase(); })
+        .filter(function (x) { return x === "moto" || x === "car"; });
+      if (cols.length) {
+        const seen = [];
+        cols.forEach(function (x) { if (seen.indexOf(x) < 0) seen.push(x); });
+        patch.travel_vehicle_columns = seen.join(",");
+      }
+    }
+    if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้บันทึก" });
+    const settings = await adapter.saveTravelSettings(patch);
+    settings.travel_rate_moto_resolved = settings.fuel_rate_motorcycle;
+    settings.travel_rate_car_resolved = settings.fuel_rate_car;
+    res.json({ ok: true, settings });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// รายชื่อผู้เบิก (ส่งเฉพาะ id/ชื่อ/ตำแหน่ง ไม่เปิดเผยข้อมูลอื่นของผู้ใช้ภายนอก)
+app.get("/api/admin/travel-claimers", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const list = await adapter.listVisitors(1000);
+    const claimers = (list || []).map(function (v) {
+      return { id: v.id, name: v.name || "", position: v.position || "" };
+    });
+    res.json({ ok: true, claimers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/travel-claims", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const claims = await adapter.listTravelClaims();
+    res.json({ ok: true, claims });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/travel-claims/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const claim = await adapter.getTravelClaim(id);
+    if (!claim) return res.status(404).json({ ok: false, message: "ไม่พบใบเบิกค่าเดินทาง" });
+    res.json({ ok: true, claim });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/travel-claims", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const settings = await adapter.getTravelSettings();
+    settings.travel_rate_moto_resolved = settings.fuel_rate_motorcycle;
+    settings.travel_rate_car_resolved = settings.fuel_rate_car;
+    const payload = travelClaimPayload(req.body, settings);
+    if (!payload.claimerName) return res.status(400).json({ ok: false, message: "กรอกชื่อผู้เบิกก่อน" });
+    if (!payload.trips.length) return res.status(400).json({ ok: false, message: "เพิ่มรายการเดินทางอย่างน้อย 1 รายการ" });
+    const claim = await adapter.createTravelClaim(payload);
+    res.json({ ok: true, claim });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/travel-claims/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const settings = await adapter.getTravelSettings();
+    settings.travel_rate_moto_resolved = settings.fuel_rate_motorcycle;
+    settings.travel_rate_car_resolved = settings.fuel_rate_car;
+    const payload = travelClaimPayload(req.body, settings);
+    if (!payload.claimerName) return res.status(400).json({ ok: false, message: "กรอกชื่อผู้เบิกก่อน" });
+    if (!payload.trips.length) return res.status(400).json({ ok: false, message: "เพิ่มรายการเดินทางอย่างน้อย 1 รายการ" });
+    const claim = await adapter.updateTravelClaim(id, payload);
+    if (!claim) return res.status(404).json({ ok: false, message: "ไม่พบใบเบิกค่าเดินทาง" });
+    res.json({ ok: true, claim });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/travel-claims/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteTravelClaim(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบใบเบิกค่าเดินทาง" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 // ---------- โน๊ตแจ้งซ่อม (Repair Notes) ----------
 app.get("/api/admin/repair-notes", async (req, res) => {
   try {
@@ -1735,7 +1974,8 @@ function verifyPassword(password, stored) {
 
 const SYSTEM_PERMISSION_KEYS = [
   "repairNotes", "tickets", "devices", "visitors", "deviceNotes",
-  "maintenance", "workNotes", "warranty", "analytics", "worklog", "settings"
+  "maintenance", "workNotes", "warranty", "analytics", "worklog", "settings",
+  "travelExpense"
 ];
 
 function sanitizePermissions(raw) {
@@ -2017,9 +2257,9 @@ app.get("/api/tickets/mine", async (req, res) => {
     if (!visitor) {
       return res.status(401).json({
         ok: false,
-        needsCredentials: true,
+        needsIdentity: true,
         registered: !!(await resolveVisitor(req)),
-        message: "กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านก่อนดูประวัติ"
+        message: "กรุณากรอกชื่อและตำแหน่ง หรือใช้ Key Pass ก่อนดูประวัติ"
       });
     }
     const reporterName = (visitor.name + (visitor.position ? (" · " + visitor.position) : "")).trim();

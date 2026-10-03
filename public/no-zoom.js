@@ -67,10 +67,5 @@
     if (k === "+" || k === "=" || k === "-" || k === "0" || k === "Add" || k === "Subtract") e.preventDefault();
   }, { passive: false });
 
-  // 7) กันลาก/วางข้อความบน iOS ให้ใช้ได้ (กัน double-tap แบบเดิม)
-  document.addEventListener("selectstart", function (e) {
-    var t = e.target;
-    if (t && t.closest && t.closest("input, textarea")) return;
-    e.preventDefault();
-  });
+  // 7) ไม่กันการเลือก/คัดลอกข้อความ — ผู้ใช้ต้องคัดลอก Key Pass และรายละเอียดงานได้
 })();

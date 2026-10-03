@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title></title>
+<link rel="stylesheet" href="/travel-print.css">
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <button type="button" id="btnPrint" class="primary">พิมพ์ / บันทึกเป็น PDF</button>
+  <p class="print-hint no-print">
+    เบราว์เซอร์จะใส่ชื่อเว็บ/ที่อยู่/เลขหน้า/วันเวลา ใต้หัวกระดาษและท้ายกระดาษให้เอง
+    ให้เอาติ๊กออกที่ “หัวกระดาษและท้ายกระดาษ” ในหน้าต่างพิมพ์ จึงจะได้เอกสารเปล่าตามต้องการ
+  </p>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="loading" id="msg">กำลังโหลดข้อมูล…</div>
+</div>
+
+<script src="/travel-doc-config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var T = window.TravelDoc;
+  var sheet = document.getElementById("sheet");
+  var btnPrint = document.getElementById("btnPrint");
+
+  // ขนาด A4 ในหน่วย mm (ใช้คำนวณสเกลให้พอดีหนึ่งหน้า)
+  var A4_H = 297;
+  var A4_W = 210;
+  var MARGIN = 15;
+  var AVAIL_H = A4_H - MARGIN * 2;   // พื้นที่เนื้อหาที่ใช้ได้จริง
+
+  var AUTO = new URLSearchParams(location.search).get("auto") === "1";
+
+  function esc(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // ---------- แถวเดินทาง ----------
+  // คอลัมน์ "มอเตอร์ไซค์ / รถยนต์" แสดง "อัตราต่อกิโลเมตร" ตามที่ตั้งค่าไว้
+  // ทุกแถวเหมือนกัน (ไม่ใช่ยอดเงินของรายการ) ส่วนยอดเงินอยู่ที่คอลัมน์ยอดรวม
+  // ถ้าแถวนั้นมีอัตรากำหนดเอง ก็ใช้ค่านั้นในช่องของรถที่ใช้จริง
+  function tripRow(d, t) {
+    var moto = T.money(t.vehicle === "motorcycle" ? t.rate : d.rateMoto);
+    var car = T.money(t.vehicle === "car" ? t.rate : d.rateCar);
+
+    var cells =
+      '<td class="c-date">' + esc(T.fmtDate(t.date)) + '</td>' +
+      '<td class="c-purpose">' + esc(t.purpose) + '</td>' +
+      '<td class="c-num">' + esc(T.money(t.km)) + '</td>';
+    // แสดงเฉพาะคอลัมน์รถที่ติ๊กไว้ในหน้าตั้งค่า
+    if (d.showMoto) cells += '<td class="c-num">' + esc(moto) + '</td>';
+    if (d.showCar) cells += '<td class="c-num">' + esc(car) + '</td>';
+    cells += '<td class="c-num">' + esc(T.money(t.amount)) + '</td>';
+
+    return '<tr>' + cells + '</tr>';
+  }
+
+  // ---------- คอลัมน์ตามที่ติ๊กในหน้าตั้งค่า ----------
+  // คืน HTML ของ <colgroup> และ <thead> ที่ตรงกับคอลัมน์ที่แสดงจริง
+  function tableCols(d) {
+    return '<col style="width:' + d.cols.date + '%">' +
+      '<col style="width:' + d.cols.purpose + '%">' +
+      '<col style="width:' + d.cols.km + '%">' +
+      (d.showMoto ? '<col style="width:' + d.cols.moto + '%">' : '') +
+      (d.showCar ? '<col style="width:' + d.cols.car + '%">' : '') +
+      '<col style="width:' + d.cols.total + '%">';
+  }
+
+  // หัวคอลัมน์รถ 2 บรรทัด รูปแบบเดียวกันทุกโหมด (ติ๊กครบ / ติ๊กรถเดียว)
+  //   บรรทัดบน : "บาท/ต่อกิโลเมตร"  + เส้นคั่น
+  //   บรรทัดล่าง: "รถมอเตอร์ไซค์"
+  // คนอ่านจึงรู้ว่าคอลัมน์นี้เป็นรถอะไร และหน่วยเงินคิดต่อกิโลเมตร
+  function vehHead(v) {
+    return '<th class="veh">' +
+      '<span class="veh-rate">' + esc(v.rate) + '</span>' +
+      '<span class="veh-name">' + esc(v.name) + '</span>' +
+    '</th>';
+  }
+
+  function tableHead(d) {
+    return '<tr>' +
+      '<th>' + esc(d.heads.date) + '</th>' +
+      '<th>' + esc(d.heads.purpose) + '</th>' +
+      '<th>' + esc(d.heads.km) + '</th>' +
+      (d.showMoto ? vehHead(d.heads.moto) : '') +
+      (d.showCar ? vehHead(d.heads.car) : '') +
+      '<th>' + esc(d.heads.total) + '</th>' +
+    '</tr>';
+  }
+
+  // แถวรวม: ป้าย "รวม" ครอบวันที่+รายการ, แล้วตามด้วยช่องว่างตามจำนวนคอลัมน์รถ
+  function tableFoot(d) {
+    var blanks = (d.showMoto ? '<td></td>' : '') + (d.showCar ? '<td></td>' : '');
+    return '<tr>' +
+      '<td colspan="2" class="t-label">' + esc(d.totalLabel) + '</td>' +
+      '<td class="c-num">' + esc(T.money(d.sumKm)) + '</td>' +
+      blanks +
+      '<td class="c-num">' + esc(T.money(d.sumTotal)) + '</td>' +
+    '</tr>';
+  }
+
+  // ---------- ช่องกรอกข้อมูล ----------
+  // เส้นกรอกชื่อ / ตำแหน่ง ไม่ใส่วงเล็บ (เหลือวงเล็บเฉพาะเส้นลายเซ็นเท่านั้น)
+  function fillLine() {
+    return '<span class="fill"><span class="line"></span></span>';
+  }
+
+  // ---------- ช่องลงนาม ----------
+  // เรียง: (เส้นประสำหรับลงนาม) → ชื่อ → ตำแหน่ง → (หน้าที่)
+  // ถ้าไม่ได้ตั้งชื่อ/ตำแหน่ง จะเป็นเส้นให้เขียนเอง (ไม่มีป้ายนำหน้า)
+  function sigSlot(person, role) {
+    var nameHtml = person.name ? esc(person.name) : fillLine();
+    var pos = (person.position || []).filter(function (x) { return x; });
+    var posHtml = pos.length ? esc(pos.join(" ")) : fillLine();
+
+    return '<div class="sig">' +
+      '<div class="sig-rule">' +
+        '<span class="par">(</span><span class="dot"></span><span class="par">)</span>' +
+      '</div>' +
+      '<div class="sig-name">' + nameHtml + '</div>' +
+      '<div class="sig-position">' + posHtml + '</div>' +
+      '<div class="sig-role">(' + esc(role) + ')</div>' +
+    '</div>';
+  }
+
+  // ---------- เรนเดอร์เอกสาร ----------
+  function render(claim, settings) {
+    var d = T.build(claim, settings);
+
+    var rows = d.trips.map(function (t) { return tripRow(d, t); }).join("");
+
+    sheet.innerHTML =
+      '<div class="doc" id="doc">' +
+      '<div class="doc-head">' +
+        '<div class="doc-title">' + esc(d.title) + '</div>' +
+        '<div class="doc-sub">' + esc(d.subtitle) + '</div>' +
+      '</div>' +
+
+      '<table class="grid">' +
+        '<colgroup>' + tableCols(d) + '</colgroup>' +
+        '<thead>' + tableHead(d) + '</thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '<tfoot>' + tableFoot(d) + '</tfoot>' +
+      '</table>' +
+
+      '<table class="info">' +
+        '<tr><td class="k">บัญชีธนาคาร</td><td class="v">' + esc(d.bankName || '-') + '</td></tr>' +
+        '<tr><td class="k">เลขที่บัญชี</td><td class="v">' + esc(d.bankAccount || '-') + '</td></tr>' +
+        '<tr><td class="k">ชื่อบัญชี</td><td class="v">' + esc(d.accountName || '-') + '</td></tr>' +
+      '</table>' +
+
+      // 4 ช่องลงนาม: ผู้เบิก (กึ่งกลาง) → ผู้ตรวจสอบ 2 คน (คู่กัน) → ผู้อนุมัติ (กึ่งกลาง)
+      '<div class="signs">' +
+        '<div class="signs-top">' + sigSlot(d.claimer, d.roles.claimer) + '</div>' +
+        '<div class="signs-mid">' +
+          sigSlot(d.checker, d.roles.checkerAcc) +
+          sigSlot(d.checker2, d.roles.checkerHr) +
+        '</div>' +
+        '<div class="signs-bottom">' + sigSlot(d.approver, d.roles.approver) + '</div>' +
+      '</div>' +
+
+      (d.note ? '<div class="note">หมายเหตุ: ' + esc(d.note) + '</div>' : '') +
+      '</div>';
+
+    document.title = "";
+    // รอฟอนต์โหลดเสร็จก่อนวัด ไม่งั้นความสูงจะเพี้ยนตอนพิมพ์จริง
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { fitToPage(); onReady(); });
+    } else {
+      fitToPage();
+      onReady();
+    }
+  }
+
+  // ------------------------------------------------------------
+  // ปรับขนาดให้พอดีหนึ่งหน้า A4
+  //   ขั้นที่ 1 : หาสเกลที่ "ใหญ่ที่สุดที่ยังพอดีหนึ่งหน้า" (ไม่เกิน 1.25 เพื่อไม่ให้ตัวใหญ่เกินจริง)
+  //   ขั้นที่ 2 : พื้นที่ที่เหลือแบบยังมี ไม่ยืดตัวอักษร แต่เติมเข้าความสูงแถว
+  //              ระยะบนตารางข้อมูลธนาคาร และช่องลงนาม เพื่อให้เอกสารจบพอดีหน้า A4
+  //
+  // วัดจาก #doc (เนื้อหาจริง) ไม่ใช่ .sheet เพราะ .sheet มี min-height
+  // บังคับให้สูง 297 มม. ตามขนาดกระดาษ ถ้าวัดที่นั่นจะได้ค่าคงที่เสมอ
+  //
+  // ใช้ binary search เพราะความสูงไม่ได้แปรผันตามสเกลแบบเชิงเส้น —
+  // พอตัวอักษรใหญ่ขึ้น ข้อความในช่องก็จะตัดบรรทัดเพิ่ม
+  // การวนปรับทีละก้าวจะ "สั่น" ไม่ลงตัว จึงต้องแบ่งช่วงหา
+  // ------------------------------------------------------------
+  var SCALE_MIN = 0.55;
+  var SCALE_MAX = 1.25;
+  var TOL = 0.5;   // ยอมให้ล้นได้ไม่เกินครึ่งมิลลิเมตร
+  var PX_PER_MM = 3.7795;
+
+  function docEl() {
+    return document.getElementById("doc");
+  }
+
+  function applyScale(s) {
+    sheet.style.setProperty("--s", s.toFixed(4));
+  }
+
+  function applyExtras(row, info, sign) {
+    sheet.style.setProperty("--row-extra", row.toFixed(2) + "mm");
+    sheet.style.setProperty("--info-extra", info.toFixed(2) + "mm");
+    sheet.style.setProperty("--sign-extra", sign.toFixed(2) + "mm");
+  }
+
+  function heightMM() {
+    var d = docEl();
+    return d ? d.getBoundingClientRect().height / PX_PER_MM : 0;
+  }
+
+  function fits() {
+    return heightMM() <= AVAIL_H + TOL;
+  }
+
+  function tryScale(s) {
+    applyScale(s);
+    return fits();
+  }
+
+  // เติมพื้นที่ว่างที่เหลือกลับเข้าไป โดยแจกแบบมีเพดาน ไม่ให้แถวสูงเกินจริง
+  function fillRemainder(left) {
+    var d = docEl();
+    var rows = Math.max(1, d.querySelectorAll("table.grid tbody tr").length);
+    var infos = Math.max(1, d.querySelectorAll("table.info tr").length);
+
+    var cap = function (v, m) { return Math.max(0, Math.min(v, m)); };
+
+    var eRow = cap(left * 0.45 / rows, 30);
+    var eInfo = cap(left * 0.12 / infos, 4);
+    var eSign = cap(left * 0.43, 34);
+
+    applyExtras(eRow, eInfo, eSign);
+
+    // กันพลาดเพราะการวัด/การปัดเศษ: ถ้ายังล้นอยู่ ให้ค่อย ๆ ย่อส่วนที่เติม
+    var guard = 0;
+    while (!fits() && guard < 12) {
+      guard++;
+      eRow *= 0.85; eInfo *= 0.85; eSign *= 0.85;
+      applyExtras(eRow, eInfo, eSign);
+    }
+
+    // ยังล้นอยู่แม้ไม่ได้เติมพื้นที่แล้ว -> ย่อสเกลทีละน้อยจนพอดี
+    guard = 0;
+    while (!fits() && guard < 25) {
+      guard++;
+      applyScale(Math.max(0.4, SCALE_MIN - guard * 0.02));
+    }
+  }
+
+  function fitToPage() {
+    if (!docEl()) return;
+
+    var s;
+    applyExtras(0, 0, 0);
+
+    if (tryScale(SCALE_MAX)) {
+      s = SCALE_MAX;
+    } else if (tryScale(SCALE_MIN)) {
+      // หาสเกลที่ใหญ่ที่สุดที่ยังพอดี
+      var lo = SCALE_MIN, hi = SCALE_MAX;
+      for (var i = 0; i < 12; i++) {
+        var mid = (lo + hi) / 2;
+        if (tryScale(mid)) lo = mid; else hi = mid;
+      }
+      s = lo;
+    } else {
+      // รายการเยอะมากจนพอดีที่สเกลต่ำสุดก็ไม่ลง -> ย่อลงอีกจนพอดี
+      s = SCALE_MIN;
+      while (s > 0.4 && !tryScale(s)) s -= 0.02;
+      s = Math.max(s, 0.4);
+    }
+
+    applyScale(s);
+    applyExtras(0, 0, 0);
+
+    var left = AVAIL_H - heightMM();
+    if (left > 1) fillRemainder(left);
+  }
+
+  // ---------- ข้อความผิดพลาด ----------
+  function fail(msg) {
+    sheet.innerHTML = '<div class="error">' + esc(msg) + '</div>';
+    var m = document.getElementById("msg");
+    if (m) m.remove();
+    try { window.parent.postMessage({ type: "travel-print-failed" }, location.origin); } catch (e) {}
+  }
+
+  // ---------- เรียกหลังจัดขนาดเสร็จ ----------
+  function onReady() {
+    if (AUTO) setTimeout(function () { window.print(); }, 300);
+    try { window.parent.postMessage({ type: "travel-print-ready" }, location.origin); } catch (e) {}
+  }
+
+  btnPrint.addEventListener("click", function () { window.print(); });
+  window.addEventListener("resize", fitToPage);
+
+  // ---------- โหลดข้อมูล ----------
+  var id = Number(new URLSearchParams(location.search).get("id"));
+
+  if (!isFinite(id) || id <= 0) {
+    fail("ไม่พบรหัสใบเบิกค่าเดินทาง");
+  } else {
+    Promise.all([
+      fetch("/api/admin/travel-claims/" + id, { credentials: "same-origin" })
+        .then(function (r) {
+          if (!r.ok) throw new Error("โหลดใบเบิกค่าเดินทางไม่สำเร็จ");
+          return r.json();
+        }),
+      fetch("/api/admin/travel-settings", { credentials: "same-origin" })
+        .then(function (r) {
+          if (!r.ok) throw new Error("โหลดการตั้งค่าไม่สำเร็จ");
+          return r.json();
+        })
+    ]).then(function (res) {
+      render(res[0].claim || {}, res[1].settings || {});
+    }).catch(function (e) {
+      fail(e.message || "เกิดข้อผิดพลาด");
+    });
+  }
+})();
+</script>
+</body>
+</html>

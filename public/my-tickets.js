@@ -5,7 +5,6 @@
   var listEl = document.getElementById("myList");
   var loadingEl = document.getElementById("loadingOverlay");
   var loadingMsg = document.getElementById("loadingMsg");
-  var newBtn = document.getElementById("newTicketBtn");
   var toastEl = document.getElementById("toast");
 
   var STATUS = {
@@ -136,7 +135,6 @@
           "<p>ยังไม่มีรายการที่เคยแจ้งซ่อมด้วยชื่อนี้</p>" +
           '<a class="mt-empty-link" href="ticket.html">ไปหน้าแจ้งซ่อม</a>' +
         "</div>";
-      newBtn.classList.remove("hidden");
       return;
     }
     var i, html = "";
@@ -152,7 +150,6 @@
         "<p>" + esc(msg) + "</p>" +
         '<button class="mt-empty-link" type="button" onclick="window.__mtLoad && window.__mtLoad()">ลองใหม่</button>' +
       "</div>";
-    newBtn.classList.remove("hidden");
   }
 
   // ----- loading overlay -----
@@ -191,24 +188,21 @@
   }
   window.__mtLoad = loadMine;
 
-  // เปิดเกตติ้งตามสถานะบัญชี: เคยตั้งรหัสผ่านแล้ว → เข้าสู่ระบบ / ยังไม่ตั้ง → สมัครขั้นที่ 2
+  // เปิดเกตติ้งยืนยันตัวตน (ชื่อ-ตำแหน่ง หรือ Key Pass เดิม)
   function openLoginGate() {
     if (!window.WanGate) {
-      showListError("กรุณาเข้าสู่ระบบก่อนดูประวัติ");
+      showListError("กรุณายืนยันตัวตนก่อนดูประวัติ");
       return;
     }
     window.WanGate.check().then(function (st) {
-      window.WanGate.open({
-        mode: st.registered && !st.needsCredentials ? "login" : "register",
-        step: st.registered && st.needsCredentials ? "2" : "1",
-        state: st
-      });
+      if (st.visitor) window.WanGate.open({ state: st });
+      else window.WanGate.open({ pane: "login" });
     }).catch(function () {
-      window.WanGate.open({ mode: "register" });
+      window.WanGate.open();
     });
   }
 
-  // หลังสมัคร/เข้าสู่ระบบสำเร็จ ให้โหลดประวัติใหม่อัตโนมัติ
+  // หลังยืนยันตัวตนสำเร็จ ให้โหลดประวัติใหม่อัตโนมัติ
   if (window.WanGate) {
     window.WanGate.onAuthed(function () { loadMine(); });
   }

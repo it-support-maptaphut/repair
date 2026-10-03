@@ -1,0 +1,151 @@
+/* ============================================================
+   admin-travel.css — ระบบบันทึกเบิกค่าเดินทาง (ฝั่ง ADMIN)
+   ทุก class ของโมดูลนี้ขึ้นต้นด้วย .trv- จึงไม่กระทบหน้าจออื่น
+   ============================================================ */
+
+/* ---------- ตารางรายการ ---------- */
+.trv-table { width: 100%; }
+.trv-table td.num, .trv-table th.num { text-align: right; white-space: nowrap; }
+.trv-table td.mid, .trv-table th.mid { text-align: center; white-space: nowrap; }
+.trv-doc { font-family: monospace; font-weight: 600; white-space: nowrap; }
+
+.trv-acts { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+
+.trv-btn {
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 5px 10px;
+  border: 1px solid var(--line, #d8d8d8);
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.trv-btn:hover { background: #f4f6f5; }
+.trv-btn.primary { background: var(--green, #0b7a45); border-color: var(--green, #0b7a45); color: #fff; }
+.trv-btn.primary:hover { filter: brightness(1.08); }
+.trv-btn.danger { color: #b3261e; border-color: #e4b8b4; }
+.trv-btn.danger:hover { background: #fdf1f0; }
+.trv-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ---------- ฟอร์ม: ตารางเที่ยว ---------- */
+.trv-field { margin-bottom: 12px; }
+.trv-field > label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.trv-field input[type="text"],
+.trv-field input[type="number"],
+.trv-field input[type="date"],
+.trv-field select,
+.trv-field textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #d8d8d8);
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+}
+.trv-field textarea { resize: vertical; min-height: 60px; }
+.trv-field input:focus, .trv-field select:focus, .trv-field textarea:focus {
+  outline: 2px solid rgba(11, 122, 69, .25);
+  outline-offset: 0;
+  border-color: var(--green, #0b7a45);
+}
+
+.trv-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+/* ---------- ช่องติ๊ก (เช่น เลือกประเภทรถที่แสดงในตารางพิมพ์) ---------- */
+.trv-checks { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+
+.trv-check {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trv-check input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--green, #0b7a45);
+}
+
+.trv-check:focus-within {
+  outline: 2px solid rgba(11, 122, 69, .25);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.trv-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 12px; }
+
+.trv-trips { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.trv-trips th, .trv-trips td { border: 1px solid var(--line, #d8d8d8); padding: 5px 6px; font-size: 13px; }
+.trv-trips th { background: #f4f6f5; font-weight: 600; text-align: center; }
+.trv-trips td.c { text-align: center; }
+.trv-trips td.n { text-align: right; white-space: nowrap; }
+.trv-trips input, .trv-trips select, .trv-trips textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 6px;
+  border: 1px solid var(--line, #d8d8d8);
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+}
+.trv-trips input[type="number"] { text-align: right; }
+
+/* ช่องรายละเอียดการเดินทาง: กด Enter เพื่อขึ้นบรรทัดใหม่ได้
+   (สูงขึ้นอัตโนมัติตามจำนวนบรรทัด — ปรับความสูงใน travel-print / admin script) */
+.trv-trips textarea[data-f="purpose"] {
+  min-height: 30px;
+  line-height: 1.4;
+  resize: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+
+.trv-trips-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #666;
+}
+.trv-trips .trv-del {
+  width: 28px; height: 28px; padding: 0;
+  font-size: 16px; line-height: 1;
+  border: 1px solid #e4b8b4; border-radius: 6px;
+  background: #fff; color: #b3261e; cursor: pointer;
+}
+.trv-trips .trv-del:hover { background: #fdf1f0; }
+
+.trv-trips-wrap { overflow-x: auto; }
+
+.trv-totals {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center;
+  margin: 10px 0 4px; padding: 10px 12px;
+  background: #f4f6f5; border: 1px solid var(--line, #d8d8d8); border-radius: 6px;
+  font-size: 14px;
+}
+.trv-totals b { font-size: 16px; }
+.trv-totals .trv-rate { color: #555; font-size: 12.5px; }
+
+.trv-hint { font-size: 12.5px; color: #666; margin: 4px 0 0; }
+.trv-msg { font-size: 13px; min-height: 18px; margin: 6px 0 0; }
+.trv-msg.err { color: #b3261e; }
+.trv-msg.ok { color: var(--green, #0b7a45); }
+
+/* ---------- ปุ่มลบในตารางรายการ ---------- */
+.trv-wrap-actions { display: flex; justify-content: flex-end; gap: 6px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .trv-grid2, .trv-grid3 { grid-template-columns: 1fr; }
+  .trv-totals { font-size: 13px; }
+}

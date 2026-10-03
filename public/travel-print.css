@@ -1,0 +1,447 @@
+/* ============================================================
+   travel-print.css — ใบเบิกค่าน้ำมันและค่าเดินทาง (หน้าพิมพ์)
+   โครงสร้างอ้างอิง: public/เอ็กเซลเบิกตัวอย่าง/เบิกค่าเดินทาง.xlsx
+
+   หลักการขนาด: ทุกค่าคูณด้วย --s (สเกลที่ JS คำนวณให้พอดีหนึ่งหน้า A4)
+   รายการน้อย -> ขยายขึ้น / รายการเยอะ -> บีบลง โดยไม่ต้องแก้ CSS เอง
+   ============================================================ */
+
+@font-face {
+  font-family: "Sarabun";
+  src: url("/fonts/Sarabun-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Sarabun";
+  src: url("/fonts/Sarabun-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Sarabun";
+  src: url("/fonts/Sarabun-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #efefef;
+  color: #000;
+  font-family: "Sarabun", Tahoma, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ตัวแปรหลัก: --s คือสเกลของ "เนื้อหา" ให้พอดีหนึ่งหน้า A4
+   หมายเหตุ: ขอบกระดาษ (--pad) เป็นขนาดคงที่ ไม่คูณด้วย --s
+   เพราะเป็นระยะขอบกระดาษจริง ไม่ใช่ส่วนเนื้อหา ถ้ายืดตามจะทำให้วัดสเกลไม่ลงตัว
+
+   --row-extra / --info-extra / --sign-extra คือพื้นที่ว่างที่เหลือ
+   ซึ่ง JS เติมกลับเข้าไปให้เอกสารเต็มหน้า A4 พอดี (ไม่ใช่ยืดตัวอักษรให้ใหญ่เกินจริง) */
+.sheet {
+  --s: 1;
+  --pad: 15mm;
+  --row-extra: 0mm;
+  --info-extra: 0mm;
+  --sign-extra: 0mm;
+  --fs-base: calc(12.5px * var(--s));
+  --fs-title: calc(16px * var(--s));
+  --fs-sub: calc(12px * var(--s));
+  --fs-sm: calc(11.5px * var(--s));
+  --fs-role: calc(11.5px * var(--s));
+
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: var(--pad);
+  background: #fff;
+  font-size: var(--fs-base);
+}
+
+/* กัน margin ของลูกหลุดออกมานอกกรอบ ตอนวัดความสูงจะได้ตรงกับที่เห็นจริง */
+.doc {
+  display: flow-root;
+}
+
+/* ============================================================
+   หัวเอกสาร
+   ============================================================ */
+.doc-head {
+  text-align: center;
+}
+
+.doc-title {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.doc-sub {
+  margin: calc(1mm * var(--s)) 0 calc(2.5mm * var(--s));
+  font-size: var(--fs-sub);
+  line-height: 1.3;
+  color: #333;
+}
+
+/* ============================================================
+   ตารางหลัก
+   ============================================================ */
+table.grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 0;
+}
+
+table.grid th,
+table.grid td {
+  border: 0.5pt solid #000;
+  padding: calc(1mm * var(--s)) calc(1mm * var(--s));
+  font-size: var(--fs-base);
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+/* หัวตารางห้ามหั่นคำไทยกลางคัน
+   word-break: keep-all ให้ตัดได้ที่ "ช่องว่าง" เท่านั้น
+   ทำให้ "ระยะทาง (กิโลเมตร)" ขึ้น 2 บรรทัดที่อ่านออก
+   แทนที่จะถูกหั่นเป็น 4 บรรทัดจนเบียดกันมองไม่ออก
+   (ต้องขยายคอลัมน์ให้พอดีด้วย ดูด้านล่าง) */
+table.grid thead th {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+/* เส้นใต้ชั้นบนของหัวตารางบางกว่า เพื่อแยกส่วนโดยไม่หนักเกินไป */
+table.grid thead tr:first-child th {
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 0.5pt solid #000;
+}
+
+/* ---------- หัวคอลัมน์รถ ----------
+   รูปแบบเดียวกันทุกโหมด (ติ๊กครบ / ติ๊กรถเดียว) 2 บรรทัด
+     บรรทัดบน : "บาท/ต่อกิโลเมตร" (เล็กกว่าเล็กน้อย) + เส้นคั่น
+     บรรทัดล่าง: "รถมอเตอร์ไซค์" (หนา)
+   ตัวไม่หนาเท่าคอลัมน์อื่น และห้ามหั่นคำกลางคัน
+   ความกว้างคอลัมน์ต้องพอให้บรรทัดบนไม่ถูกตัด (คำนวณที่ travel-doc-config.js) */
+table.grid thead th.veh {
+  text-align: center;
+  font-weight: 400;
+  font-size: var(--fs-base);
+  line-height: 1.2;
+  padding: calc(0.5mm * var(--s)) calc(0.4mm * var(--s));
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+table.grid thead th.veh .veh-rate {
+  display: block;
+  white-space: nowrap;
+  font-size: calc(10.5px * var(--s));
+  line-height: 1.15;
+  padding-bottom: calc(0.3mm * var(--s));
+  border-bottom: 0.5pt solid #000;
+}
+
+table.grid thead th.veh .veh-name {
+  display: block;
+  padding-top: calc(0.3mm * var(--s));
+  font-size: calc(11px * var(--s));
+  font-weight: 700;
+  color: #000;
+}
+
+/* สัดส่วนคอลัมน์คำนวณที่ travel-doc-config.js แล้วส่งมาเป็น inline style
+   บน <colgroup> เพราะต้องเปลี่ยนตามจำนวนประเภทรถที่เลือกไว้ในหน้าตั้งค่า
+   (หน้ากว้างเนื้อหา 180 มม. = 210 - ขอบซ้าย/ขวา 15 มม.)
+   คำนวณจากความกว้างตัวอักษรจริงของฟอนต์ Sarabun ที่สเกลเต็ม --s = 1.25
+   เผื่อพื้นที่สำรองอย่างน้อย 5% ทุกช่อง เพื่อให้หัวตารางไม่ล้นกรอบ
+   และให้หน้าตาเหมือนกันทุกใบเบิก (ไม่ขึ้นกับจำนวนรายการที่บีบสเกล) */
+
+/* ---------- เนื้อหา ---------- */
+table.grid tbody td {
+  height: calc(9.2mm * var(--s) + var(--row-extra));
+}
+
+.c-date  {
+  text-align: center;
+  white-space: nowrap;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.c-purpose {
+  text-align: left;
+  padding: calc(1.2mm * var(--s)) calc(2mm * var(--s));
+  /* คงบรรทัดที่ผู้ใช้กด Enter แยกไว้ตามเดิม ไม่ตัดคำชิดกันจนอ่านยาก
+     (ตัดเฉพาะกรณีคำเดียวยาวเกินช่อง) */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* ตัวเลขทุกช่องอยู่กึ่งกลาง ใช้ padding สมมาตรสองข้าง */
+.c-num {
+  text-align: center;
+  white-space: nowrap;
+  padding-left: calc(1.2mm * var(--s));
+  padding-right: calc(1.2mm * var(--s));
+}
+
+/* ---------- แถวรวมทั้งสิ้น ---------- */
+table.grid tfoot td {
+  height: calc(7.5mm * var(--s));
+  border-top: 0.5pt solid #000;
+  font-weight: 700;
+}
+
+.t-label { text-align: center; }
+
+/* ============================================================
+   ข้อมูลการรับเงิน
+   ============================================================ */
+table.info {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: calc(4mm * var(--s));
+}
+
+table.info td {
+  border: none;
+  padding: calc(0.8mm * var(--s) + var(--info-extra)) 0;
+  font-size: var(--fs-base);
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+table.info td.k {
+  width: calc(27mm * var(--s));
+  white-space: nowrap;
+}
+
+table.info td.v {
+  padding-left: calc(2mm * var(--s));
+  overflow-wrap: break-word;
+}
+
+/* ============================================================
+ช่องลงนาม — 4 ช่อง
+      ทุกช่องเรียง: (เส้นประ) → ชื่อ → ตำแหน่ง → (หน้าที่)
+      ไม่มีป้าย "ตำแหน่ง :" — ถ้าไม่มีค่าให้ขึ้นเป็นเส้นให้เขียนเอง
+      แถว 1 ผู้เบิก      : กึ่งกลาง
+      แถว 2 ผู้ตรวจสอบ×2 : คู่กัน (ป้ายหน้าที่เขียนเหมือนกันทั้งสองคน)
+      แถว 3 ผู้อนุมัติ: กึ่งกลาง
+
+      ทุกเส้นยาวเท่ากันหมดทั้ง 4 ช่อง โดยใช้ค่าจาก .sig-rule .dot / .fill .line เดียว
+      (เส้นลายเซ็น 32 มม. / เส้นกรอกชื่อ-ตำแหน่ง 26 มม.)
+      แต่ละช่องกว้าง 85 มม. จึงพอกว่าป้ายหน้าที่ "(ผู้ตรวจสอบ)" ที่กว้าง 19.89 มม.
+    ============================================================ */
+.signs {
+  margin-top: calc(7mm * var(--s) + var(--sign-extra));
+  width: 100%;
+}
+
+.sig {
+  text-align: center;
+  width: 100%;
+}
+
+.sig-name {
+  font-size: var(--fs-base);
+  line-height: 1.4;
+  min-height: calc(6mm * var(--s));
+}
+
+.sig-position {
+  font-size: var(--fs-base);
+  line-height: 1.4;
+  min-height: calc(6mm * var(--s));
+}
+
+/* (หน้าที่) อยู่บรรทัดสุดท้ายของช่อง */
+.sig-role {
+  font-size: var(--fs-role);
+  line-height: 1.3;
+  margin-top: calc(2mm * var(--s));
+}
+
+/* เส้นกรอกชื่อ / ตำแหน่ง — เส้นประล้วน ไม่มีวงเล็บ */
+.fill {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.fill .line {
+  display: inline-block;
+  width: calc(26mm * var(--s));
+  border-bottom: 0.5pt dotted #000;
+}
+
+/* เส้นลายเซ็น — อยู่บนสุดของช่อง ครอบด้วย (........) พอดีไม่ยาวเกิน */
+.sig-rule {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: calc(2mm * var(--s));
+}
+
+.sig-rule .dot {
+  display: block;
+  width: calc(32mm * var(--s));
+  border-bottom: 0.75pt dotted #000;
+}
+
+/* แถว 1 : ผู้เบิก — กึ่งกลาง
+   แถว 3 : ผู้อนุมัติ — กึ่งกลาง
+   ความกว้างเท่ากันทั้งสองแถว เพื่อให้ช่องดูสมมาตร */
+.signs-top,
+.signs-bottom {
+  width: 52%;
+  margin: 0 auto calc(5mm * var(--s));
+}
+
+.signs-bottom {
+  margin-top: calc(2mm * var(--s));
+}
+
+/* แถว 2 : ผู้ตรวจสอบ 2 คน — คู่กันเต็มความกว้าง
+   วัดจริงแล้วแต่ละช่องได้ 85 มม. พอสำหรับทั้งเส้นลายเซ็น 32 มม.
+   และป้ายหน้าที่ "(ผู้ตรวจสอบ)" 19.89 มม. */
+.signs-mid {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(8mm * var(--s));
+  width: 100%;
+  margin: 0 0 calc(5mm * var(--s));
+}
+
+.signs-mid .sig {
+  width: calc(50% - 4mm * var(--s));
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   หมายเหตุ
+   ============================================================ */
+.note {
+  margin-top: calc(4mm * var(--s));
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  color: #333;
+}
+
+/* ============================================================
+   สถานะ
+   ============================================================ */
+.loading,
+.error {
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.error { color: #b3261e; }
+
+/* ============================================================
+   แถบเครื่องมือ (ไม่พิมพ์)
+   ============================================================ */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  background: #efefef;
+  border-bottom: 1px solid #ddd;
+}
+
+.toolbar button {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 14px;
+  border: 1px solid #c9c9c9;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.toolbar button.primary {
+  background: #0b7a45;
+  border-color: #0b7a45;
+  color: #fff;
+}
+
+.print-hint {
+  flex-basis: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #555;
+  background: #fffbe6;
+  border: 1px solid #e6d98a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 4px;
+}
+
+/* ============================================================
+   ตอนพิมพ์
+   ============================================================ */
+/* ขอบกระดาษเป็น 0 แล้วให้ .sheet จัดขอบเองด้วย --pad
+   ทำให้หน้าต่างพิมพ์กับหน้าจอวัดสเกลได้ตรงกันเป๊ะ เอกสารจึงไม่ล้นไปหน้าสอง */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .toolbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .sheet {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: var(--pad);
+  }
+
+  table.grid thead {
+    display: table-header-group;
+  }
+
+  table.grid tr,
+  table.info tr,
+  .note,
+  .signs,
+  .signs-top,
+  .signs-bottom,
+  .sig {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .fill .line,
+  .sig-rule .dot {
+    border-bottom-color: #000;
+  }
+}

@@ -4,13 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <script src="no-zoom.js"></script>
-<meta name="theme-color" content="#06c755">
+<meta name="theme-color" content="#0b7a45">
 <title>แจ้งซ่อมอุปกรณ์ IT</title>
-<link rel="icon" type="image/jpeg" href="Favorite%20Icon.jpg">
+<link rel="icon" type="image/png" href="Favorite%20Icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="ticket.css">
 <script src="splash.js" defer></script>
@@ -51,11 +50,8 @@
   <form id="ticketForm" novalidate>
 
     <section class="step is-active" data-step="1">
-      <p class="step-heading">บอกรายละเอียดงานที่ต้องการแจ้ง</p>
-
       <div class="field" id="descField">
         <label for="symptomText" class="field-label">รายละเอียดปัญหา / งานที่ต้องการ <span class="req">*</span></label>
-        <p class="field-hint">พิมพ์เอง หรือสลับไปโหมด "พิมพ์ด้วยเสียง" แล้วพูดบอกรายละเอียดได้เลย</p>
 
         <div class="mode-group" role="tablist" aria-label="โหมดการกรอก">
           <button type="button" class="mode-btn is-active" data-mode="type" role="tab" aria-selected="true">
@@ -94,19 +90,16 @@
           <label class="field-label">แนบรูปภาพ หรือภาพแคป  <span class="opt-hint">ไม่บังคับ</span></label>
           <span class="photo-count" id="photoCount">0/3</span>
         </div>
-        <p class="field-hint"> ถ้ามีภาพหน้าจอ error หรือรูปประกอบ ช่วยแนบเพื่อให้ทีมเห็นภาพชัดขึ้น (ไม่เกิน 3 รูป)</p>
         <input type="file" id="photoInput" accept="image/*" multiple hidden>
         <button id="photoBtn" class="photo-btn" type="button">
           <svg class="cam-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
           <span class="photo-btn-text">เพิ่มรูป / ภาพแคป</span>
-          <span class="photo-btn-hint">เลือกไฟล์จากคอมพิวเตอร์หรือมือถือ (ไม่เกิน 3 รูป)</span>
         </button>
         <div id="photoGrid" class="photo-grid"></div>
       </div>
 
       <div class="field" id="branchField">
         <label class="field-label">สาขา <span class="req">*</span></label>
-        <p class="field-hint">เลือกสาขาที่อุปกรณ์นี้ตั้งอยู่</p>
         <div class="loc-group" id="branchGroup">
           <input type="radio" name="branch" id="br1" value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)">
           <label for="br1" class="loc-option">
@@ -141,7 +134,6 @@
 
       <div class="field" id="positionField">
         <label for="positionText" class="field-label">ตำแหน่ง / สถานที่ <span class="req">*</span></label>
-        <p class="field-hint">ช่วยระบุจุดที่อุปกรณ์นี้อยู่ เพื่อให้ทีม IT หาเจอง่ายขึ้น <strong>จำเป็นต้องระบุ</strong></p>
         <input type="text" id="positionText" class="text-input" maxlength="120" autocomplete="off">
       </div>
 

@@ -1,4 +1,4 @@
-﻿var MAX_PHOTOS = 3;
+var MAX_PHOTOS = 3;
 
 var photos = [];
 var toastTimer = null;
@@ -303,9 +303,9 @@ function invalidField(el, msg) {
 function submitForm() {
   if (!visitorPassed) {
     if (window.WanGate) {
-      window.WanGate.open({ mode: "register" });
+      window.WanGate.open();
     }
-    showToast("กรุณาสมัครหรือเข้าสู่ระบบก่อนแจ้งซ่อม");
+    showToast("กรุณายืนยันตัวตน (ชื่อ-ตำแหน่ง หรือ Key Pass) ก่อนแจ้งซ่อม");
     return;
   }
   var symptom = symptomText.value.trim();
@@ -348,7 +348,7 @@ function submitForm() {
           // ยังไม่เข้าสู่ระบบ (เช่นเพิ่งออกจากระบบ) — ให้เข้าสู่ระบบใหม่
           hideLoading();
           submitBtn.disabled = false;
-          if (window.WanGate) window.WanGate.open({ mode: "login" });
+          if (window.WanGate) window.WanGate.open({ pane: "login" });
           return;
         }
         throw new Error("server");
@@ -542,13 +542,9 @@ if (hasDraft()) showDraftPrompt();
 if (window.WanGate) {
   window.WanGate.check().then(function (st) {
     if (st.authed) { setVisitorPassed(true); return; }
-    window.WanGate.open({
-      mode: st.registered && !st.needsCredentials ? "login" : "register",
-      step: st.registered && st.needsCredentials ? "2" : "1",
-      state: st
-    });
+    window.WanGate.open({ state: st });
   }).catch(function () {
-    if (window.WanGate) window.WanGate.open({ mode: "register" });
+    if (window.WanGate) window.WanGate.open();
   });
 }
 

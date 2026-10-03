@@ -66,6 +66,7 @@ create table if not exists public.external_visitors (
   id bigint generated always as identity primary key,
   name text not null default '',           -- ชื่อผู้แจ้ง (ชื่อเล่น)
   position text not null default '',       -- ตำแหน่งในบริษัท
+  branch text not null default '',         -- ประจำสาขา (ร้านวรรณสาขา 1/3/4/5)
   ip text not null default '',             -- IP ล่าสุด (อัปเดตเมื่อเจอเครือข่ายใหม่)
   token text not null default '',          -- รหัสจำเบราว์เซอร์ (cookie)
   ticket_count int default 0,              -- จำนวนครั้งที่แจ้งซ่อม

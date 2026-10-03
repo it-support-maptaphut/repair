@@ -3,8 +3,8 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 module.exports = {
   PORT: process.env.PORT || 3000,
-  APP_VERSION: process.env.APP_VERSION || "1.0.1",
-  APP_VERSION_LABEL: process.env.APP_VERSION_LABEL || "1.0.1 (TEST)",
+  APP_VERSION: process.env.APP_VERSION || "1.0.2",
+  APP_VERSION_LABEL: process.env.APP_VERSION_LABEL || "V1.0.2",
   ADMIN_USER: process.env.ADMIN_USER || "",
   ADMIN_PASS: process.env.ADMIN_PASS || "",
   ADMIN_SECRET: process.env.ADMIN_SECRET || "",
@@ -22,6 +22,8 @@ module.exports = {
   PG_PASSWORD: process.env.PG_PASSWORD || "",
   PG_SSL: process.env.PG_SSL || "false",
   PASSWORD_NOTE_KEY: process.env.PASSWORD_NOTE_KEY || "",
-  PASSWORD_NOTE_PIN: process.env.PASSWORD_NOTE_PIN || "741236",
-  PASSWORD_NOTE_PASS: process.env.PASSWORD_NOTE_PASS || "wan2024*"
+  PASSWORD_NOTE_PIN: process.env.PASSWORD_NOTE_PIN || "",
+  PASSWORD_NOTE_PASS: process.env.PASSWORD_NOTE_PASS || "",
+  VISITOR_KEYPASS_PEPPER: process.env.VISITOR_KEYPASS_PEPPER || "",
+  VISITOR_KEYPASS_ENC_KEY: process.env.VISITOR_KEYPASS_ENC_KEY || ""
 };
