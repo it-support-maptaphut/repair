@@ -14,6 +14,20 @@ body.my-page .my-title {
   font-size: 19px;
   font-weight: 700;
   color: var(--tk-ink);
+  padding-left: 11px;
+  border-left: 4px solid var(--tk-green);
+  line-height: 1.35;
+}
+
+body.my-page .my-title::after {
+  content: "ระบบบันทึกการแจ้งซ่อมอุปกรณ์ IT";
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--tk-muted);
+  border-left: none;
 }
 
 body.my-page .my-wrap {
@@ -35,6 +49,7 @@ body.my-page .mt-card {
   border-radius: 8px;
   box-shadow: var(--tk-shadow);
   overflow: hidden;
+  border-left: 3px solid var(--tk-green);
 }
 
 body.my-page .mt-card-head {
@@ -47,7 +62,9 @@ body.my-page .mt-card-head {
   transition: background 0.18s ease;
 }
 
-body.my-page .mt-card-head:hover { background: #f7f9f8; }
+body.my-page .mt-card-head { background: #f5f8f6; }
+
+body.my-page .mt-card-head:hover { background: #eef4f0; }
 
 body.my-page .mt-head-main {
   flex: 1;
@@ -309,6 +326,92 @@ body.my-page .mt-action.pdf {
 }
 
 body.my-page .mt-action.pdf:hover { background: var(--tk-green-deep); }
+
+body.my-page .mt-action.urgent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #c0392b;
+  background: #c0392b;
+  color: #fff;
+  font-weight: 600;
+}
+
+body.my-page .mt-action.urgent:hover { background: #a93226; }
+body.my-page .mt-action.urgent:active { background: #922b21; }
+
+/* ---------- หัวข้อย่อย + ตารางข้อมูล (โทนเป็นทางการ) ---------- */
+body.my-page .mt-sect { padding: 14px 0; }
+
+body.my-page .mt-sect + .mt-sect {
+  border-top: 1px solid var(--tk-line-soft);
+}
+
+body.my-page .mt-sect-h {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--tk-muted);
+  margin-bottom: 10px;
+  padding-left: 9px;
+  border-left: 3px solid var(--tk-green);
+  line-height: 1.3;
+}
+
+body.my-page .mt-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  background: var(--tk-line-soft);
+  border: 1px solid var(--tk-line-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+body.my-page .mt-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: #fbfcfc;
+}
+
+body.my-page .mt-cell-full { margin-top: 2px; }
+
+body.my-page .mt-lb {
+  font-size: 12px;
+  color: var(--tk-muted);
+  line-height: 1.35;
+}
+
+body.my-page .mt-vl {
+  font-size: 15px;
+  color: var(--tk-ink);
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+body.my-page .mt-mono {
+  font-family: Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+body.my-page .mt-desc { font-size: 15.5px; line-height: 1.65; }
+
+/* ---------- ช่องรูปภาพ: จัดเป็นกริดเต็มความกว้าง ---------- */
+body.my-page .mt-row-photos { display: block; }
+body.my-page .mt-row-photos .mt-k { display: none; }
+body.my-page .mt-row-photos .mt-photo-list { margin-top: 0; }
+
+/* ---------- จอกว้าง: ข้อมูล 2 คอลัมน์ ---------- */
+@media (min-width: 560px) {
+  body.my-page .mt-grid { grid-template-columns: 1fr 1fr; }
+  body.my-page .mt-cell-full { grid-column: 1 / -1; }
+}
 
 /* ---------- ว่าง ---------- */
 body.my-page .mt-empty {

@@ -65,7 +65,7 @@
     if (!list.length) return "";
     var shown = list.slice(0, 6);
     var extra = list.length - shown.length;
-    var h = '<span class="mt-k">รูปภาพ</span><div class="mt-photo-list">';
+    var h = '<div class="mt-photo-list">';
     var i;
     for (i = 0; i < shown.length; i++) {
       h += '<a class="mt-photo" href="' + esc(shown[i]) + '" target="_blank" rel="noopener" title="เปิดรูปดูใหญ่">' +
@@ -76,9 +76,24 @@
     return h + "</div>";
   }
 
+  var URGENT_PHONE = "0630050430";
+
+  function reporterOf(t) {
+    var v = t.visitor || { branch: visitorBranch || "" };
+    var loc = parseLocation(t.location);
+    var name = v.name || t.reporter_name || "-";
+    if (name.indexOf(" · ") > -1) name = name.slice(0, name.indexOf(" · "));
+    return {
+      name: name || "-",
+      position: v.position || loc.position || "-",
+      branch: v.branch || loc.branch || "-"
+    };
+  }
+
   function cardHTML(t) {
     var st = STATUS[t.status] || STATUS.new;
     var loc = parseLocation(t.location);
+    var rep = reporterOf(t);
     var pdfBtn = t.pdf_url
       ? '<a class="mt-action pdf" target="_blank" rel="noopener" href="' + esc(t.pdf_url) + '">เปิด PDF ใบเสร็จงาน</a>'
       : "";
@@ -103,30 +118,51 @@
           '<svg class="mt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
         "</div>" +
         '<div class="mt-body">' +
-          '<div class="mt-row"><span class="mt-k">สาขา</span><span class="mt-v">' + esc(loc.branch) + "</span></div>" +
-          '<div class="mt-row"><span class="mt-k">ตำแหน่ง</span><span class="mt-v">' + esc(loc.position) + "</span></div>" +
-          (t.handler_name
-            ? '<div class="mt-row"><span class="mt-k">ผู้ดำเนินการ</span><span class="mt-v">' + esc(t.handler_name) + "</span></div>"
-            : "") +
-          (t.status === "done"
-            ? '<div class="mt-row"><span class="mt-k">เสร็จสิ้น</span><span class="mt-v">' +
-              esc(fmtDateOnly(t.status_date || t.approved_at) + (t.status_time ? " " + esc(t.status_time) + " น." : "")) +
-              "</span></div>"
-            : "") +
-          '<div class="mt-row"><span class="mt-k">รายละเอียด</span><span class="mt-v mt-msg">' + esc(t.symptom || "-") + "</span></div>" +
-          (photos ? '<div class="mt-row mt-row-photos">' + photos + "</div>" : "") +
+          '<div class="mt-sect">' +
+            '<div class="mt-sect-h">ข้อมูลผู้แจ้งซ่อม</div>' +
+            '<div class="mt-grid">' +
+              '<div class="mt-cell"><span class="mt-lb">ชื่อผู้แจ้ง</span><span class="mt-vl">' + esc(rep.name) + "</span></div>" +
+              '<div class="mt-cell"><span class="mt-lb">ตำแหน่งผู้แจ้ง</span><span class="mt-vl">' + esc(rep.position) + "</span></div>" +
+              '<div class="mt-cell"><span class="mt-lb">ประจำสาขา</span><span class="mt-vl">' + esc(rep.branch) + "</span></div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="mt-sect">' +
+            '<div class="mt-sect-h">รายละเอียดการแจ้งซ่อม</div>' +
+            '<div class="mt-grid">' +
+              '<div class="mt-cell"><span class="mt-lb">เลขที่ใบแจ้งซ่อม</span><span class="mt-vl mt-mono">' + esc(t.ticket_no) + "</span></div>" +
+              '<div class="mt-cell"><span class="mt-lb">วันที่แจ้งซ่อม</span><span class="mt-vl">' + esc(fmtDate(t.created_at)) + "</span></div>" +
+              '<div class="mt-cell"><span class="mt-lb">สถานที่แจ้งซ่อม</span><span class="mt-vl">' + esc(loc.position) + "</span></div>" +
+            "</div>" +
+            '<div class="mt-cell mt-cell-full"><span class="mt-lb">รายละเอียดปัญหา</span><span class="mt-vl mt-desc">' + esc(t.symptom || "-") + "</span></div>" +
+          "</div>" +
+          '<div class="mt-sect">' +
+            '<div class="mt-sect-h">การดำเนินการ</div>' +
+            '<div class="mt-grid">' +
+              '<div class="mt-cell"><span class="mt-lb">สถานะปัจจุบัน</span><span class="mt-vl">' + st.label + "</span></div>" +
+              '<div class="mt-cell"><span class="mt-lb">ผู้ดำเนินการ</span><span class="mt-vl">' + esc(t.handler_name || "รอเจ้าหน้าที่รับงาน") + "</span></div>" +
+              (t.status === "done"
+                ? '<div class="mt-cell"><span class="mt-lb">วันที่เสร็จสิ้น</span><span class="mt-vl">' +
+                  esc(fmtDateOnly(t.status_date || t.approved_at) + (t.status_time ? " " + esc(t.status_time) + " น." : "")) +
+                  "</span></div>"
+                : "") +
+            "</div>" +
+          "</div>" +
+          (photos ? '<div class="mt-sect"><div class="mt-sect-h">รูปภาพที่แนบ</div>' + photos + "</div>" : "") +
           prog +
           '<div class="mt-note ' + st.cls + '">' + st.msg + "</div>" +
           '<div class="mt-actions">' +
             '<button class="mt-action ghost" type="button" data-copy="' + esc(t.ticket_no) + '">คัดลอกรหัสซ่อม</button>' +
             pdfBtn +
+            '<a class="mt-action urgent" href="tel:' + URGENT_PHONE + '" role="button">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
+              "ติดต่อเร่งด่วน</a>" +
           "</div>" +
         "</div>" +
       "</div>"
     );
   }
 
-  function render(tickets) {
+  function render(tickets, visitorBranch) {
     listEl.innerHTML = "";
     if (!tickets || !tickets.length) {
       listEl.innerHTML =
@@ -176,10 +212,10 @@
           return;
         }
         if (!res.ok) {
-          showListError(res.d.message || "โหลดประวัติไม่สำเร็จ");
+            showListError(res.d.message || "โหลดประวัติไม่สำเร็จ");
           return;
         }
-        render(res.d.tickets);
+        render(res.d.tickets, (res.d.visitor && res.d.visitor.branch) || "");
       })
       .catch(function () {
         setLoading(false);
