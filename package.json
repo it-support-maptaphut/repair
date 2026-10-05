@@ -1,6 +1,6 @@
 {
   "name": "system-line-oa-repair",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "ระบบแจ้งซ่อมอุปกรณ์ IT ผ่าน Line OA",
   "main": "server.js",
