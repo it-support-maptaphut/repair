@@ -2291,7 +2291,7 @@ app.get("/api/tickets/mine", async (req, res) => {
     }
     res.json({
       ok: true,
-      visitor: { id: visitor.id, name: visitor.name, position: visitor.position },
+      visitor: { id: visitor.id, name: visitor.name, position: visitor.position, branch: visitor.branch },
       tickets
     });
   } catch (err) {
