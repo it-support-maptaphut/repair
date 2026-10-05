@@ -62,7 +62,7 @@
       '<div class="vg-box">' +
         '<button type="button" class="vg-close hidden" id="vgClose" aria-label="ปิด">&#215;</button>' +
         '<div class="vg-head">' +
-          '<div class="vg-logo"><img class="vg-logo-img" src="logo-ticket/logo-wan.jpg" alt=""></div>' +
+          '<div class="vg-logo"><img class="vg-logo-img" src="logo-ticket/logo-wan.png" alt=""></div>' +
           '<h2 class="vg-title">ขอทราบว่าคุณคือใคร</h2>' +
           '<p class="vg-sub" id="vgSub">กรอกชื่อและตำแหน่ง แล้วเข้าใช้งานได้ทันที<br>ไม่ต้องสมัคร ไม่ต้องตั้งรหัสผ่าน</p>' +
         "</div>" +
