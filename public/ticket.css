@@ -75,7 +75,18 @@ body.ticket-page .navbar-logo-img {
   border-radius: 9px;
   box-shadow: 0 2px 8px rgba(12, 163, 92, 0.20);
 }
-body.ticket-page .navbar-title { font-weight: 700; letter-spacing: 0.2px; }
+body.ticket-page .navbar-title {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  /* ชื่อยาว "ระบบแจ้งปัญหา/แจ้งซ่อมอุปกรณ์ไอที" ต้องไม่ถูกตัดเป็น ... */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+}
+@media (max-width: 420px) {
+  body.ticket-page .navbar-title { font-size: 13px; }
+}
 body.ticket-page .nav-trigger { color: var(--tk-ink); border-radius: 6px; transition: background 0.15s ease; }
 body.ticket-page .nav-trigger:hover { background: var(--tk-green-soft); }
 

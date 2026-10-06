@@ -77,7 +77,7 @@ td[data-c="no"] { font-family: var(--r-mono) !important; }
   margin: 0 0 8px !important;
   padding: 8px 10px !important;
 }
-.side-title { color: #fff !important; font-size: 13px !important; font-weight: 700 !important; }
+.side-title { color: #fff !important; font-size: 18px !important; font-weight: 700 !important; }
 .side-sub { color: #cfe2ff !important; font-size: 10px !important; font-weight: 400 !important; }
 .side-logo { background: #404040 !important; border: 2px outset #fff; }
 

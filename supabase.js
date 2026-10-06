@@ -684,6 +684,117 @@ async function deleteWorkNote(id) {
   return data || [];
 }
 
+// ---------- ระบบเก็บไดร์ฟเวอร์ (Drive Notes — กลุ่มระบบโน้ต) ----------
+async function listDriveNotes(limit = 500) {
+  const { data, error } = await supabase
+    .from("drive_notes")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function getDriveNote(id) {
+  const { data, error } = await supabase
+    .from("drive_notes")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function createDriveNote({ title, stepsJson, infoExtra }) {
+  const { data, error } = await supabase
+    .from("drive_notes")
+    .insert({
+      title: title || "",
+      steps_json: stepsJson || "[]",
+      info_extra: infoExtra || ""
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function updateDriveNote(id, patch) {
+  const { data, error } = await supabase
+    .from("drive_notes")
+    .update(patch)
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteDriveNote(id) {
+  const { data, error } = await supabase
+    .from("drive_notes")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+async function listDriverCatalog(limit = 500) {
+  const { data, error } = await supabase
+    .from("driver_catalog")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function createDriverCatalog({ deviceType, brand, model, sourceUrl, notes }) {
+  const { data, error } = await supabase
+    .from("driver_catalog")
+    .insert({
+      device_type: deviceType || "printer",
+      brand: brand || "",
+      model: model || "",
+      source_url: sourceUrl || "",
+      notes: notes || ""
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function deleteDriverCatalog(id) {
+  const { data, error } = await supabase
+    .from("driver_catalog")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+async function listDriverBrandLinks() {
+  const { data, error } = await supabase
+    .from("driver_brand_links")
+    .select("*")
+    .order("brand");
+  if (error) throw error;
+  return data || [];
+}
+
+async function putDriverBrandLink(brand, supportUrl) {
+  const { data, error } = await supabase
+    .from("driver_brand_links")
+    .upsert({ brand, support_url: supportUrl, updated_at: new Date().toISOString() }, { onConflict: "brand" })
+    .select("brand, support_url")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ---------- TRAVEL EXPENSE (ระบบบันทึกเบิกค่าเดินทาง — ฝั่ง ADMIN) ----------
 const TRAVEL_DEFAULT_SETTINGS = {
   fuel_rate_motorcycle: "3",
@@ -800,6 +911,134 @@ async function updateTravelClaim(id, claim) {
 
 async function deleteTravelClaim(id) {
   const { data, error } = await supabase.from("travel_claims").delete().eq("id", id).select("id");
+  if (error) throw error;
+  return data || [];
+}
+
+// ---------- บันทึกปฏิบัติงานนอกสถานที่ (Field Work) ----------
+// ตาราง field_work_logs ต้องรัน supabase-fieldwork.sql ก่อน
+let fieldWorkReady = null;
+
+async function ensureFieldWorkTable() {
+  if (fieldWorkReady === true) return true;
+  if (!ready) return false;
+  try {
+    const { error } = await supabase.from("field_work_logs").select("id").limit(1);
+    fieldWorkReady = !error;
+    if (error) {
+      console.warn("[FieldWork] ยังไม่มีตาราง field_work_logs — ระบบบันทึกปฏิบัติงานนอกสถานที่จะใช้ไม่ได้ (รัน supabase-fieldwork.sql ใน Supabase):", error.message);
+    }
+  } catch (err) {
+    fieldWorkReady = false;
+  }
+  return fieldWorkReady;
+}
+
+const FIELD_WORK_TIME_FIELDS = ["depart_branch_time", "arrive_site_time", "depart_site_time", "arrive_branch_time"];
+
+function normalizeTime(v) {
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return null;
+  // รับทั้ง HH:MM และ HH:MM:SS
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(s);
+  if (!m) return null;
+  const hh = Math.min(23, Number(m[1]));
+  const mm = Math.min(59, Number(m[2]));
+  const ss = Math.min(59, Number(m[3] || 0));
+  return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0") + ":" + String(ss).padStart(2, "0");
+}
+
+function normalizeAttachments(v) {
+  if (Array.isArray(v)) return v.filter((f) => f && f.url).map((f) => ({ name: String(f.name || "ไฟล์แนบ"), url: String(f.url) }));
+  if (typeof v === "string" && v.trim()) {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) return normalizeAttachments(parsed);
+    } catch (e) { /* ไม่ใช่ JSON → ถือว่าไม่มีไฟล์แนบ */ }
+  }
+  return [];
+}
+
+function mapFieldWork(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    attachments: normalizeAttachments(row.attachments_json),
+    depart_branch_time: row.depart_branch_time || null,
+    arrive_site_time: row.arrive_site_time || null,
+    depart_site_time: row.depart_site_time || null,
+    arrive_branch_time: row.arrive_branch_time || null
+  };
+}
+
+function fieldWorkRow(input) {
+  const d = input || {};
+  const row = {
+    ticket_id: d.ticketId == null || d.ticketId === "" ? null : Number(d.ticketId),
+    ticket_no: String(d.ticketNo || "").trim(),
+    source_mode: d.sourceMode === "ticket" ? "ticket" : "manual",
+    work_date: String(d.workDate || "").trim() || new Date().toISOString().slice(0, 10),
+    work_time: normalizeTime(d.workTime) || new Date().toISOString().slice(11, 19),
+    location: String(d.location || "").trim(),
+    detail: String(d.detail || "").trim(),
+    attachments_json: JSON.stringify(normalizeAttachments(d.attachments)),
+    recorder_name: String(d.recorderName || "").trim(),
+    note: String(d.note || "").trim()
+  };
+  FIELD_WORK_TIME_FIELDS.forEach((f) => { row[f] = normalizeTime(d[f]); });
+  return row;
+}
+
+async function listFieldWorkLogs(limit = 500) {
+  if (!(await ensureFieldWorkTable())) return [];
+  const { data, error } = await supabase
+    .from("field_work_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).map(mapFieldWork);
+}
+
+async function getFieldWorkLog(id) {
+  if (!(await ensureFieldWorkTable())) return null;
+  const { data, error } = await supabase
+    .from("field_work_logs")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return mapFieldWork(data);
+}
+
+async function createFieldWorkLog(entry) {
+  if (!(await ensureFieldWorkTable())) throw new Error("ยังไม่ได้สร้างตาราง field_work_logs");
+  const { data, error } = await supabase
+    .from("field_work_logs")
+    .insert(fieldWorkRow(entry))
+    .select("*")
+    .single();
+  if (error) throw error;
+  return mapFieldWork(data);
+}
+
+async function updateFieldWorkLog(id, entry) {
+  if (!(await ensureFieldWorkTable())) throw new Error("ยังไม่ได้สร้างตาราง field_work_logs");
+  const row = fieldWorkRow(entry);
+  row.updated_at = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("field_work_logs")
+    .update(row)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return mapFieldWork(data);
+}
+
+async function deleteFieldWorkLog(id) {
+  if (!(await ensureFieldWorkTable())) return [];
+  const { data, error } = await supabase.from("field_work_logs").delete().eq("id", id).select("id");
   if (error) throw error;
   return data || [];
 }
@@ -1395,4 +1634,4 @@ async function bumpVisitorTicket(id) {
   }
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, getTravelSettings, saveTravelSettings, listTravelClaims, getTravelClaim, createTravelClaim, updateTravelClaim, deleteTravelClaim, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, setVisitorKeypass, findVisitorByKeypassLookup, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listDriveNotes, getDriveNote, createDriveNote, updateDriveNote, deleteDriveNote, listDriverCatalog, createDriverCatalog, deleteDriverCatalog, listDriverBrandLinks, putDriverBrandLink, getTravelSettings, saveTravelSettings, listTravelClaims, getTravelClaim, createTravelClaim, updateTravelClaim, deleteTravelClaim, listFieldWorkLogs, getFieldWorkLog, createFieldWorkLog, updateFieldWorkLog, deleteFieldWorkLog, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, setVisitorKeypass, findVisitorByKeypassLookup, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };

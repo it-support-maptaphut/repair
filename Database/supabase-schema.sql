@@ -188,6 +188,62 @@ alter table public.work_notes enable row level security;
 create index if not exists work_notes_created_idx on public.work_notes (created_at);
 
 -- ============================================================
+-- ระบบเก็บไดร์ฟเวอร์ — แท็บเมนูหลัก (อยู่นอกกลุ่ม "ระบบโน้ต" ไม่ต้องมีหมวดหมู่)
+-- โครงสร้างเดียวกับ work_notes: หัวเรื่อง + ขั้นตอน (JSON) + ข้อมูลเสริม
+-- ============================================================
+create table if not exists public.drive_notes (
+  id bigint generated always as identity primary key,
+  title text not null default '',
+  steps_json text default '[]',
+  info_extra text default '',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.drive_notes enable row level security;
+
+create index if not exists drive_notes_created_idx on public.drive_notes (created_at desc);
+
+-- ============================================================
+-- ดาวน์โหลดไดร์ฟเวอร์ — driver_catalog (บันทึกไดร์ฟเวอร์ที่เลือกผ่านปุ่มดาวน์โหลด)
+-- device_type: ประเภทอุปกรณ์ เช่น printer; brand/model: ยี่ห้อ/รุ่น
+-- source_url: ลิงก์ดาวน์โหลดอย่างเป็นทางการของผู้ผลิต
+-- ============================================================
+create table if not exists public.driver_catalog (
+  id bigint generated always as identity primary key,
+  device_type text not null default 'printer',
+  brand text not null default '',
+  model text not null default '',
+  source_url text not null default '',
+  notes text not null default '',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.driver_catalog enable row level security;
+
+create index if not exists driver_catalog_created_idx on public.driver_catalog (created_at desc);
+
+-- ============================================================
+-- ลิงก์ดาวน์โหลดต่อยี่ห้อ (driver_brand_links) — ตั้งได้/แก้ได้ในหน้า ระบบเก็บไดร์ฟเวอร์
+-- ============================================================
+create table if not exists public.driver_brand_links (
+  brand text primary key,
+  support_url text not null default '',
+  updated_at timestamptz default now()
+);
+
+alter table public.driver_brand_links enable row level security;
+
+insert into public.driver_brand_links (brand, support_url)
+values
+  ('epson',   'https://www.epson.com/Support'),
+  ('canon',   'https://www.canon.com/support'),
+  ('hp',      'https://support.hp.com'),
+  ('brother', 'https://support.brother.com')
+on conflict (brand) do update set support_url = excluded.support_url, updated_at = now();
+
+-- ============================================================
 -- PASSWORD NOTE — บันทึกรหัสผ่าน (เฉพาะ USER admin)
 -- username/password ถูกเข้ารหัส AES-256-GCM ฝั่ง server เก็บใน enc_json
 -- ============================================================

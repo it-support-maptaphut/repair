@@ -60,15 +60,24 @@ const PN_PASS = String(config.PASSWORD_NOTE_PASS || "");
 if (!PN_PIN || !PN_PASS) {
   console.warn("[security] ยังไม่ได้ตั้ง PASSWORD_NOTE_PIN / PASSWORD_NOTE_PASS ใน .env — ระบบบันทึกรหัสผ่านจะปิดใช้งาน");
 }
+const PN_FALLBACK_KEY = crypto
+  .createHash("sha256")
+  .update(String(ADMIN_SECRET) + ":password_note_master_v1")
+  .digest();
+
 const PN_KEY = (function () {
-  if (config.PASSWORD_NOTE_KEY) {
-    return Buffer.from(String(config.PASSWORD_NOTE_KEY), "base64");
-  }
-  return crypto
-    .createHash("sha256")
-    .update(String(ADMIN_SECRET) + ":password_note_master_v1")
-    .digest();
+  const raw = String(config.PASSWORD_NOTE_KEY || "");
+  if (!raw) return PN_FALLBACK_KEY;
+  let k = null;
+  try { k = Buffer.from(raw, "base64"); } catch (e) { k = null; }
+  // AES-256-GCM ต้องการ key ยาว 32 ไบต์พอดี
+  if (k && k.length === 32) return k;
+  console.warn("[security] PASSWORD_NOTE_KEY ไม่ใช่ Base64 ของ key 32 ไบต์ — จะใช้คีย์สำรองจาก ADMIN_SECRET แทน (ข้อมูลเดิมจะถอดได้)");
+  return PN_FALLBACK_KEY;
 })();
+
+// ลองถอดด้วยคีย์หลักก่อน ถ้าไม่ได้ลองคีย์สำรอง (ข้อมูลเก่าอาจถูกบันทึกด้วยคีย์อีกแบบ)
+const PN_KEYS = PN_KEY.equals(PN_FALLBACK_KEY) ? [PN_KEY] : [PN_KEY, PN_FALLBACK_KEY];
 
 function pnEncrypt(obj) {
   const iv = crypto.randomBytes(12);
@@ -79,17 +88,29 @@ function pnEncrypt(obj) {
   return [iv.toString("base64"), tag.toString("base64"), ct.toString("base64")].join(".");
 }
 
-function pnDecrypt(blob) {
+function pnDecryptWith(blob, key) {
   const parts = String(blob || "").split(".");
   if (parts.length !== 3) throw new Error("ข้อมูลเข้ารหัสไม่ถูกต้อง");
   const [ivB, tagB, ctB] = parts;
-  const decipher = crypto.createDecipheriv("aes-256-gcm", PN_KEY, Buffer.from(ivB, "base64"));
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivB, "base64"));
   decipher.setAuthTag(Buffer.from(tagB, "base64"));
   const pt = Buffer.concat([
     decipher.update(Buffer.from(ctB, "base64")),
     decipher.final()
   ]);
   return JSON.parse(pt.toString("utf8"));
+}
+
+function pnDecrypt(blob) {
+  let lastErr = null;
+  for (const key of PN_KEYS) {
+    try {
+      return pnDecryptWith(blob, key);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("ถอดรหัสไม่สำเร็จ");
 }
 
 function pnPinMatches(input) {
@@ -425,7 +446,11 @@ app.use("/api/admin", (req, res, next) => {
   if (/^\/system-users/.test(path)) return has("settings") ? next() : deny();
   if (/^\/repair-notes\b/.test(path)) return has("repairNotes") ? next() : deny();
   if (/^\/work-notes\b/.test(path)) return has("workNotes") ? next() : deny();
+  if (/^\/drive-notes\b/.test(path)) return has("driveNotes") ? next() : deny();
+  if (/^\/driver-catalog\b/.test(path)) return has("driveNotes") ? next() : deny();
+  if (/^\/driver-brand-links\b/.test(path)) return has("driveNotes") ? next() : deny();
   if (/^\/travel-/.test(path)) return has("travelExpense") ? next() : deny();
+  if (/^\/field-work/.test(path)) return has("fieldWork") ? next() : deny();
   if (/^\/maintenance/.test(path)) return has("maintenance") ? next() : deny();
   if (/^\/visitors/.test(path)) return has("visitors") ? next() : deny();
   if (/^\/users(\/|$)/.test(path)) return has("devices") ? next() : deny();
@@ -438,7 +463,8 @@ app.use("/api/admin", (req, res, next) => {
     return has("devices", "deviceNotes") ? next() : deny();
   }
   if (/^\/tickets\/.+/.test(path)) return has("tickets") ? next() : deny();
-  if (/^\/tickets$/.test(path)) return has("tickets", "analytics", "worklog") ? next() : deny();
+  // "fieldWork" ต้องอ่านรายการแจ้งซ่อมได้ (อ่านอย่างเดียว) เพื่อไปดึงข้อมูลมาใช้ในระบบบันทึกปฏิบัติงานนอกสถานที่
+  if (/^\/tickets$/.test(path)) return has("tickets", "analytics", "worklog", "fieldWork") ? next() : deny();
   if (/^\/inbox\/.+/.test(path)) return has("tickets") ? next() : deny();
   if (/^\/inbox$/.test(path)) return has("tickets", "analytics", "worklog") ? next() : deny();
 
@@ -515,6 +541,27 @@ app.get("/api/auth/user-me", async (req, res) => {
   }
 });
 
+// สถานะระบบสำหรับ sidebar: ใครล็อกอิน, จำนวนผู้ใช้งาน, ใช้วัด Ping
+app.get("/api/auth/status", async (req, res) => {
+  const isAdmin = isAdminAuthed(req);
+  const userName = isAdmin ? "admin" : isUserAuthed(req);
+  const out = { ok: true, authed: !!userName, username: userName || null, role: isAdmin ? "admin" : (userName ? "user" : null), users: null, visitors: null };
+  try {
+    const adapter = db.getAdapter();
+    if (adapter && adapter.ready) {
+      const su = await adapter.listSystemUsers();
+      out.users = Array.isArray(su) ? su.length : null;
+      if (typeof adapter.listVisitors === "function") {
+        const vs = await adapter.listVisitors({ limit: 2000 });
+        out.visitors = Array.isArray(vs) ? vs.length : null;
+      }
+    }
+  } catch (err) {
+    console.warn("[status] นับผู้ใช้ไม่สำเร็จ:", err.message);
+  }
+  res.json(out);
+});
+
 // เปิดหน้า /admin.html ได้เฉพาะผู้ที่ Authed แล้ว (admin หรือ พนักงานที่มีสิทธิ์)
 // วางก่อน express.static เพื่อไม่ให้ static serve admin.html ข้าม gate
 async function serveAdminPage(req, res, next) {
@@ -548,10 +595,14 @@ app.get("/admin-db.html", serveAdminPage, (req, res) => {
 
 app.use(express.json());
 app.use(function (req, res, next) {
-  if (["/admin", "/admin.html", "/admin-mobile.html", "/admin-db", "/admin-db.html"].includes(req.path)) {
+  // หน้า login: ห้ามแคชไว้ทุกกรณี เพื่อไม่ให้รหัสผ่าน/ฟอร์มค้างในแคชเบราว์เซอร์
+  const noStore = ["/admin", "/admin.html", "/admin-mobile.html", "/admin-db", "/admin-db.html",
+                   "/admin-login", "/admin-login.html"];
+  if (noStore.includes(req.path)) {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
+    res.set("Clear-Site-Data", '"cache", "formData", "passwords"', { onlyIfCached: true });
   }
   next();
 });
@@ -1571,6 +1622,163 @@ app.delete("/api/admin/work-notes/:id", async (req, res) => {
   }
 });
 
+// ---------- ระบบเก็บไดร์ฟเวอร์ (Drive Notes — กลุ่มระบบโน้ต) ----------
+app.get("/api/admin/drive-notes", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const notes = await adapter.listDriveNotes();
+    res.json({ ok: true, notes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/drive-notes", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const title = String((req.body || {}).title || "").trim();
+    if (!title) return res.status(400).json({ ok: false, message: "กรอกหัวเรื่องก่อน" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const steps = Array.isArray((req.body || {}).steps)
+      ? (req.body.steps || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; })
+      : [];
+    const id = await adapter.createDriveNote({
+      title,
+      stepsJson: JSON.stringify(steps),
+      infoExtra: String((req.body || {}).info_extra || "").trim()
+    });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/drive-notes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    const patch = {};
+    if (body.title != null) {
+      patch.title = String(body.title).trim();
+      if (!patch.title) return res.status(400).json({ ok: false, message: "กรอกหัวเรื่องก่อน" });
+    }
+    if (body.info_extra != null) patch.info_extra = String(body.info_extra).trim();
+    if (body.steps != null) {
+      const steps = Array.isArray(body.steps)
+        ? (body.steps || []).map(function (s) { return String(s).trim(); }).filter(function (s) { return s; })
+        : [];
+      patch.steps_json = JSON.stringify(steps);
+    }
+    patch.updated_at = new Date().toISOString();
+    if (!Object.keys(patch).length) return res.status(400).json({ ok: false, message: "ไม่มีข้อมูลให้แก้ไข" });
+    await adapter.updateDriveNote(id, patch);
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/drive-notes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteDriveNote(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการนี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- ดาวน์โหลดไดร์ฟเวอร์ (Driver Catalog) ----------
+app.get("/api/admin/driver-catalog", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const items = await adapter.listDriverCatalog();
+    res.json({ ok: true, items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/driver-catalog", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const body = req.body || {};
+    const deviceType = String(body.device_type || "printer").trim();
+    const brand = String(body.brand || "").trim();
+    const model = String(body.model || "").trim();
+    if (!brand || !model) return res.status(400).json({ ok: false, message: "กรอกยี่ห้อและรุ่นให้ครบ" });
+    const id = await adapter.createDriverCatalog({
+      deviceType,
+      brand,
+      model,
+      sourceUrl: String(body.source_url || "").trim(),
+      notes: String(body.notes || "").trim()
+    });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.delete("/api/admin/driver-catalog/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteDriverCatalog(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการนี้" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- ลิงก์ดาวน์โหลดต่อยี่ห้อ (Driver Brand Links) ----------
+app.get("/api/admin/driver-brand-links", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const items = await adapter.listDriverBrandLinks();
+    res.json({ ok: true, items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.put("/api/admin/driver-brand-links/:brand", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const brand = String(req.params.brand || "").trim();
+    if (!brand) return res.status(400).json({ ok: false, message: "ระบุยี่ห้อก่อน" });
+    const supportUrl = String((req.body || {}).support_url || "").trim();
+    const row = await adapter.putDriverBrandLink(brand, supportUrl);
+    res.json({ ok: true, brand, support_url: row.support_url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 // ---------- ระบบบันทึกเบิกค่าเดินทาง (Travel Expense) ----------
 const TRAVEL_VEHICLES = ["motorcycle", "car"];
 
@@ -1789,6 +1997,155 @@ app.delete("/api/admin/travel-claims/:id", async (req, res) => {
   }
 });
 
+// ---------- บันทึกปฏิบัติงานนอกสถานที่ (Field Work) ----------
+// ฟิลด์เวลา 4 ช่อง + ไฟล์แนบ: รับได้ทั้งแบบ JSON และ multipart (FormData)
+const FIELD_WORK_TIME_KEYS = ["depart_branch_time", "arrive_site_time", "depart_site_time", "arrive_branch_time"];
+
+function fieldWorkPayload(req) {
+  const body = req.body || {};
+  const attachments = [];
+  if (Array.isArray(body.attachments)) {
+    body.attachments.forEach((f) => {
+      if (f && f.url) attachments.push({ name: String(f.name || "ไฟล์แนบ"), url: String(f.url) });
+    });
+  } else if (typeof body.attachments === "string" && body.attachments.trim()) {
+    try {
+      const parsed = JSON.parse(body.attachments);
+      if (Array.isArray(parsed)) return fieldWorkPayloadWithAttachments(req, parsed);
+    } catch (e) { /* ไม่ใช่ JSON → ไม่มีไฟล์แนบเดิม */ }
+  }
+  return fieldWorkPayloadWithAttachments(req, attachments);
+}
+
+function fieldWorkPayloadWithAttachments(req, attachments) {
+  const body = req.body || {};
+  const out = {
+    ticketId: body.ticketId == null || body.ticketId === "" ? null : body.ticketId,
+    ticketNo: body.ticketNo || "",
+    sourceMode: body.sourceMode === "ticket" ? "ticket" : "manual",
+    workDate: body.workDate || "",
+    workTime: body.workTime || "",
+    location: body.location || "",
+    detail: body.detail || "",
+    recorderName: body.recorderName || "",
+    note: body.note || "",
+    attachments
+  };
+  FIELD_WORK_TIME_KEYS.forEach((k) => { out[k] = body[k] || null; });
+  return out;
+}
+
+// อัปโหลดไฟล์แนบหลักฐาน → คืนรายการ { name, url }
+async function uploadFieldWorkFiles(files) {
+  const out = [];
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const safeName = String(f.originalname || "ไฟล์แนบ").replace(/[\\/:*?"<>|\r\n]/g, "_").slice(0, 120);
+    const name = `fw-${Date.now()}-${i + 1}`;
+    const up = await cloud.uploadDocument(f.buffer, name, f.mimetype);
+    if (up && up.secure_url) out.push({ name: safeName, url: up.secure_url });
+  }
+  return out;
+}
+
+app.get("/api/admin/field-work", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const logs = await adapter.listFieldWorkLogs();
+    res.json({ ok: true, logs });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/field-work/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const log = await adapter.getFieldWorkLog(id);
+    if (!log) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกปฏิบัติงานนอกสถานที่" });
+    res.json({ ok: true, log });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.post("/api/admin/field-work", upload.array("files", 10), async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const payload = fieldWorkPayload(req);
+    const files = req.files || [];
+    if (files.length) {
+      const uploaded = await uploadFieldWorkFiles(files);
+      // ไฟล์เดิมที่เคยบันทึกไว้ (แก้ไข) + ไฟล์ใหม่
+      payload.attachments = payload.attachments.concat(uploaded);
+    }
+    if (!payload.location) return res.status(400).json({ ok: false, message: "กรอกสถานที่ออกปฏิบัติงาน" });
+    if (!payload.workDate) return res.status(400).json({ ok: false, message: "กรอกวันที่ทำงาน" });
+    if (payload.sourceMode === "ticket" && !payload.ticketNo) {
+      return res.status(400).json({ ok: false, message: "เลือกใบแจ้งซ่อมที่ต้องการดึงข้อมูล" });
+    }
+    const log = await adapter.createFieldWorkLog(payload);
+    res.json({ ok: true, log });
+  } catch (err) {
+    console.error(err);
+    const msg = /field_work_logs/.test(err.message || "")
+      ? "ยังไม่ได้สร้างตาราง field_work_logs (รัน supabase-fieldwork.sql)"
+      : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.put("/api/admin/field-work/:id", upload.array("files", 10), async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const payload = fieldWorkPayload(req);
+    const files = req.files || [];
+    if (files.length) {
+      const uploaded = await uploadFieldWorkFiles(files);
+      payload.attachments = payload.attachments.concat(uploaded);
+    }
+    if (!payload.location) return res.status(400).json({ ok: false, message: "กรอกสถานที่ออกปฏิบัติงาน" });
+    if (!payload.workDate) return res.status(400).json({ ok: false, message: "กรอกวันที่ทำงาน" });
+    if (payload.sourceMode === "ticket" && !payload.ticketNo) {
+      return res.status(400).json({ ok: false, message: "เลือกใบแจ้งซ่อมที่ต้องการดึงข้อมูล" });
+    }
+    const log = await adapter.updateFieldWorkLog(id, payload);
+    if (!log) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกปฏิบัติงานนอกสถานที่" });
+    res.json({ ok: true, log });
+  } catch (err) {
+    console.error(err);
+    const msg = /field_work_logs/.test(err.message || "")
+      ? "ยังไม่ได้สร้างตาราง field_work_logs (รัน supabase-fieldwork.sql)"
+      : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.delete("/api/admin/field-work/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteFieldWorkLog(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกปฏิบัติงานนอกสถานที่" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
 // ---------- โน๊ตแจ้งซ่อม (Repair Notes) ----------
 app.get("/api/admin/repair-notes", async (req, res) => {
   try {
@@ -1905,16 +2262,22 @@ app.post("/api/admin/password-notes/reveal", requireAdminAuth, async (req, res) 
   try {
     const adapter = db.getAdapter();
     if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
-    if (!pnPinMatches((req.body || {}).pin)) {
-      return res.status(401).json({ ok: false, message: "รหัส PIN ไม่ถูกต้อง" });
-    }
+    // ผู้ใช้เข้าระบบ Admin ผ่าน session แล้ว (requireAdminAuth) จึงไม่ต้องขอ PIN ซ้ำ
     const rows = await adapter.listPasswordNotes({ limit: 500, includeSecret: true });
     const out = rows.map((r) => {
       try {
         const d = pnDecrypt(r.enc_json);
         return { id: r.id, title: r.title, username: d.u, password: d.p, created_at: r.created_at };
       } catch (e) {
-        return { id: r.id, title: r.title, username: "", password: "", created_at: r.created_at };
+        console.warn("[security] ถอดรหัสไม่สำเร็จ (รายการ " + r.id + "): " + e.message);
+        return {
+          id: r.id,
+          title: r.title,
+          username: "",
+          password: "",
+          created_at: r.created_at,
+          error: "ถอดรหัสไม่สำเร็จ — อาจถูกบันทึกด้วยคีย์เดิม"
+        };
       }
     });
     res.json({ ok: true, notes: out });
@@ -1975,7 +2338,7 @@ function verifyPassword(password, stored) {
 const SYSTEM_PERMISSION_KEYS = [
   "repairNotes", "tickets", "devices", "visitors", "deviceNotes",
   "maintenance", "workNotes", "warranty", "analytics", "worklog", "settings",
-  "travelExpense"
+  "travelExpense", "driveNotes"
 ];
 
 function sanitizePermissions(raw) {
@@ -2291,7 +2654,7 @@ app.get("/api/tickets/mine", async (req, res) => {
     }
     res.json({
       ok: true,
-      visitor: { id: visitor.id, name: visitor.name, position: visitor.position, branch: visitor.branch },
+      visitor: publicVisitor(visitor),
       tickets
     });
   } catch (err) {

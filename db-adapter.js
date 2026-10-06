@@ -211,6 +211,46 @@ function createSupabaseAdapter() {
       return supabaseModule.deleteWorkNote(id);
     },
 
+    async listDriveNotes(limit = 500) {
+      return supabaseModule.listDriveNotes(limit);
+    },
+
+    async getDriveNote(id) {
+      return supabaseModule.getDriveNote(id);
+    },
+
+    async createDriveNote(data) {
+      return supabaseModule.createDriveNote(data);
+    },
+
+    async updateDriveNote(id, patch) {
+      return supabaseModule.updateDriveNote(id, patch);
+    },
+
+    async deleteDriveNote(id) {
+      return supabaseModule.deleteDriveNote(id);
+    },
+
+    async listDriverCatalog(limit = 500) {
+      return supabaseModule.listDriverCatalog(limit);
+    },
+
+    async createDriverCatalog(data) {
+      return supabaseModule.createDriverCatalog(data);
+    },
+
+    async deleteDriverCatalog(id) {
+      return supabaseModule.deleteDriverCatalog(id);
+    },
+
+    async listDriverBrandLinks() {
+      return supabaseModule.listDriverBrandLinks();
+    },
+
+    async putDriverBrandLink(brand, supportUrl) {
+      return supabaseModule.putDriverBrandLink(brand, supportUrl);
+    },
+
     async getTravelSettings() {
       return supabaseModule.getTravelSettings();
     },
@@ -237,6 +277,26 @@ function createSupabaseAdapter() {
 
     async deleteTravelClaim(id) {
       return supabaseModule.deleteTravelClaim(id);
+    },
+
+    async listFieldWorkLogs(limit) {
+      return supabaseModule.listFieldWorkLogs(limit);
+    },
+
+    async getFieldWorkLog(id) {
+      return supabaseModule.getFieldWorkLog(id);
+    },
+
+    async createFieldWorkLog(entry) {
+      return supabaseModule.createFieldWorkLog(entry);
+    },
+
+    async updateFieldWorkLog(id, entry) {
+      return supabaseModule.updateFieldWorkLog(id, entry);
+    },
+
+    async deleteFieldWorkLog(id) {
+      return supabaseModule.deleteFieldWorkLog(id);
     },
     
     async listRepairNotes(limit = 500) {
@@ -458,9 +518,166 @@ function createPostgresAdapter() {
     }
   };
 
+  // ---------- ระบบเก็บไดร์ฟเวอร์ (Drive Notes) ----------
+  let driveNotesTablesReady = false;
+  const ensureDriveNotesTable = async () => {
+    if (driveNotesTablesReady) return true;
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS drive_notes (
+          id bigserial PRIMARY KEY,
+          title text NOT NULL DEFAULT '',
+          steps_json text NOT NULL DEFAULT '[]',
+          info_extra text NOT NULL DEFAULT '',
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS drive_notes_created_idx ON drive_notes (created_at DESC);
+      `);
+      driveNotesTablesReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมตารางระบบเก็บไดร์ฟเวอร์ไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
+  // ---------- ดาวน์โหลดไดร์ฟเวอร์ (Driver Catalog + Brand Links) ----------
+  let driverTablesReady = false;
+  const ensureDriverTables = async () => {
+    if (driverTablesReady) return true;
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS driver_catalog (
+          id bigserial PRIMARY KEY,
+          device_type text NOT NULL DEFAULT 'printer',
+          brand text NOT NULL DEFAULT '',
+          model text NOT NULL DEFAULT '',
+          source_url text NOT NULL DEFAULT '',
+          notes text NOT NULL DEFAULT '',
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS driver_catalog_created_idx ON driver_catalog (created_at DESC);
+
+        CREATE TABLE IF NOT EXISTS driver_brand_links (
+          brand text PRIMARY KEY,
+          support_url text NOT NULL DEFAULT '',
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+
+        INSERT INTO driver_brand_links (brand, support_url) VALUES
+          ('epson',   'https://www.epson.com/Support'),
+          ('canon',   'https://www.canon.com/support'),
+          ('hp',      'https://support.hp.com'),
+          ('brother', 'https://support.brother.com')
+        ON CONFLICT (brand) DO UPDATE SET support_url = EXCLUDED.support_url, updated_at = now();
+      `);
+      driverTablesReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมตารางไดร์ฟเวอร์ไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
+  // ---------- บันทึกปฏิบัติงานนอกสถานที่ (Field Work) ----------
+  let fieldWorkTablesReady = false;
+  const FIELD_WORK_TIME_COLS = ["depart_branch_time", "arrive_site_time", "depart_site_time", "arrive_branch_time"];
+
+  const normalizeFieldWorkTime = (v) => {
+    const s = String(v == null ? "" : v).trim();
+    if (!s) return null;
+    const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(s);
+    if (!m) return null;
+    const hh = Math.min(23, Number(m[1]));
+    const mm = Math.min(59, Number(m[2]));
+    const ss = Math.min(59, Number(m[3] || 0));
+    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  };
+
+  const normalizeFieldWorkAttachments = (v) => {
+    let list = v;
+    if (typeof v === "string") {
+      try { list = JSON.parse(v); } catch (e) { list = []; }
+    }
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter((f) => f && f.url)
+      .map((f) => ({ name: String(f.name || "ไฟล์แนบ"), url: String(f.url) }));
+  };
+
+  const mapFieldWorkRow = (row) => {
+    if (!row) return null;
+    return {
+      ...row,
+      attachments: normalizeFieldWorkAttachments(row.attachments_json),
+      depart_branch_time: row.depart_branch_time || null,
+      arrive_site_time: row.arrive_site_time || null,
+      depart_site_time: row.depart_site_time || null,
+      arrive_branch_time: row.arrive_branch_time || null
+    };
+  };
+
+  // ค่าสำหรับ INSERT/UPDATE เรียงตามลำดับคอลัมน์ใน createFieldWorkLog / updateFieldWorkLog
+  const fieldWorkValues = (input) => {
+    const d = input || {};
+    return [
+      d.ticketId == null || d.ticketId === "" ? null : Number(d.ticketId),
+      String(d.ticketNo || "").trim(),
+      d.sourceMode === "ticket" ? "ticket" : "manual",
+      String(d.workDate || "").trim() || new Date().toISOString().slice(0, 10),
+      normalizeFieldWorkTime(d.workTime) || new Date().toISOString().slice(11, 19),
+      String(d.location || "").trim(),
+      String(d.detail || "").trim(),
+      normalizeFieldWorkTime(d.depart_branch_time),
+      normalizeFieldWorkTime(d.arrive_site_time),
+      normalizeFieldWorkTime(d.depart_site_time),
+      normalizeFieldWorkTime(d.arrive_branch_time),
+      JSON.stringify(normalizeFieldWorkAttachments(d.attachments)),
+      String(d.recorderName || "").trim(),
+      String(d.note || "").trim()
+    ];
+  };
+
+  const ensureFieldWorkTables = async () => {
+    if (fieldWorkTablesReady) return true;
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS field_work_logs (
+          id serial PRIMARY KEY,
+          ticket_id integer REFERENCES tickets(id) ON DELETE SET NULL,
+          ticket_no text NOT NULL DEFAULT '',
+          source_mode text NOT NULL DEFAULT 'manual',
+          work_date date NOT NULL DEFAULT CURRENT_DATE,
+          work_time time NOT NULL DEFAULT CURRENT_TIME,
+          location text NOT NULL DEFAULT '',
+          detail text NOT NULL DEFAULT '',
+          depart_branch_time time,
+          arrive_site_time time,
+          depart_site_time time,
+          arrive_branch_time time,
+          attachments_json jsonb NOT NULL DEFAULT '[]'::jsonb,
+          recorder_name text NOT NULL DEFAULT '',
+          recorder_id integer REFERENCES external_visitors(id) ON DELETE SET NULL,
+          note text NOT NULL DEFAULT '',
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS field_work_logs_created_at_idx ON field_work_logs (created_at DESC);
+        CREATE INDEX IF NOT EXISTS field_work_logs_work_date_idx  ON field_work_logs (work_date DESC);
+        CREATE INDEX IF NOT EXISTS field_work_logs_ticket_idx     ON field_work_logs (ticket_no);
+      `);
+      fieldWorkTablesReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมตารางบันทึกปฏิบัติงานนอกสถานที่ไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
   const TRAVEL_DOC_LOCK_KEY = 784421;
-  const TRAVEL_DOC_PREFIX = "ใบเบิก";
-  // รูปแบบเลขที่เอกสาร: "ใบเบิก-1", "ใบเบิก-2", ...
+  const TRAVEL_DOC_PREFIX = "ใบเบิก";  // รูปแบบเลขที่เอกสาร: "ใบเบิก-1", "ใบเบิก-2", ...
   // นับต่อจากเลขเดิมที่มีอยู่ โดยลอกเฉพาะตัวเลขท้าย (รองรับทั้งรูปแบบใหม่
   // และข้อมูลเก่าที่เคยเป็น "TRV-000001")
   const nextTravelNo = async (tx) => {
@@ -1205,6 +1422,89 @@ function createPostgresAdapter() {
       return result.rows;
     },
 
+    // ---------- ระบบเก็บไดร์ฟเวอร์ (Drive Notes) ----------
+    async listDriveNotes(limit = 500) {
+      await ensureDriveNotesTable();
+      const result = await query(`SELECT * FROM drive_notes ORDER BY created_at DESC LIMIT $1`, [limit]);
+      return result.rows;
+    },
+
+    async getDriveNote(id) {
+      await ensureDriveNotesTable();
+      const result = await query(`SELECT * FROM drive_notes WHERE id = $1`, [id]);
+      return result.rows[0] || null;
+    },
+
+    async createDriveNote({ title, stepsJson, infoExtra }) {
+      await ensureDriveNotesTable();
+      const result = await query(
+        `INSERT INTO drive_notes (title, steps_json, info_extra) VALUES ($1, $2, $3) RETURNING id`,
+        [title || "", stepsJson || "[]", infoExtra || ""]
+      );
+      return result.rows[0].id;
+    },
+
+    async updateDriveNote(id, patch) {
+      await ensureDriveNotesTable();
+      const keys = Object.keys(patch);
+      if (!keys.length) return;
+      const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+      const values = keys.map(k => patch[k]);
+      values.push(id);
+      await query(`UPDATE drive_notes SET ${setClause} WHERE id = $${keys.length + 1}`, values);
+      return { id };
+    },
+
+    async deleteDriveNote(id) {
+      await ensureDriveNotesTable();
+      const result = await query(`DELETE FROM drive_notes WHERE id = $1 RETURNING id`, [id]);
+      return result.rows;
+    },
+
+    // ---------- ดาวน์โหลดไดร์ฟเวอร์ (Driver Catalog + Brand Links) ----------
+    async listDriverCatalog(limit = 500) {
+      await ensureDriverTables();
+      const result = await query(
+        `SELECT id, device_type, brand, model, source_url, notes, created_at, updated_at
+           FROM driver_catalog ORDER BY created_at DESC LIMIT $1`, [limit]);
+      return result.rows.map((r) => ({ ...r, id: Number(r.id) }));
+    },
+
+    async createDriverCatalog({ deviceType, brand, model, sourceUrl, notes }) {
+      await ensureDriverTables();
+      const result = await query(
+        `INSERT INTO driver_catalog (device_type, brand, model, source_url, notes)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [deviceType || "printer", brand || "", model || "", sourceUrl || "", notes || ""]
+      );
+      return Number(result.rows[0].id);
+    },
+
+    async deleteDriverCatalog(id) {
+      await ensureDriverTables();
+      const result = await query(
+        `DELETE FROM driver_catalog WHERE id = $1 RETURNING id`, [id]);
+      return result.rows.map((r) => ({ ...r, id: Number(r.id) }));
+    },
+
+    async listDriverBrandLinks() {
+      await ensureDriverTables();
+      const result = await query(
+        `SELECT brand, support_url, updated_at FROM driver_brand_links ORDER BY brand`);
+      return result.rows;
+    },
+
+    async putDriverBrandLink(brand, supportUrl) {
+      await ensureDriverTables();
+      const result = await query(
+        `INSERT INTO driver_brand_links (brand, support_url, updated_at)
+         VALUES ($1, $2, now())
+         ON CONFLICT (brand) DO UPDATE
+           SET support_url = EXCLUDED.support_url, updated_at = now()
+         RETURNING brand, support_url`, [brand, supportUrl || ""]);
+      return result.rows[0];
+    },
+
     // ---------- TRAVEL EXPENSE (ระบบบันทึกเบิกค่าเดินทาง — ฝั่ง ADMIN) ----------
     async getTravelSettings() {
       await ensureTravelTables();
@@ -1307,6 +1607,58 @@ function createPostgresAdapter() {
     async deleteTravelClaim(id) {
       await ensureTravelTables();
       const result = await query(`DELETE FROM travel_claims WHERE id = $1 RETURNING id`, [id]);
+      return result.rows || [];
+    },
+
+    // ---------- บันทึกปฏิบัติงานนอกสถานที่ ----------
+    async listFieldWorkLogs(limit = 500) {
+      await ensureFieldWorkTables();
+      const result = await query(
+        `SELECT * FROM field_work_logs ORDER BY created_at DESC LIMIT $1`,
+        [limit]
+      );
+      return result.rows.map(mapFieldWorkRow);
+    },
+
+    async getFieldWorkLog(id) {
+      await ensureFieldWorkTables();
+      const result = await query(`SELECT * FROM field_work_logs WHERE id = $1`, [id]);
+      return result.rows[0] ? mapFieldWorkRow(result.rows[0]) : null;
+    },
+
+    async createFieldWorkLog(entry) {
+      await ensureFieldWorkTables();
+      const v = fieldWorkValues(entry);
+      const result = await query(
+        `INSERT INTO field_work_logs
+           (ticket_id, ticket_no, source_mode, work_date, work_time, location, detail,
+            depart_branch_time, arrive_site_time, depart_site_time, arrive_branch_time,
+            attachments_json, recorder_name, note)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14)
+         RETURNING *`,
+        v
+      );
+      return result.rows[0] ? mapFieldWorkRow(result.rows[0]) : null;
+    },
+
+    async updateFieldWorkLog(id, entry) {
+      await ensureFieldWorkTables();
+      const v = fieldWorkValues(entry);
+      const result = await query(
+        `UPDATE field_work_logs SET
+            ticket_id = $1, ticket_no = $2, source_mode = $3, work_date = $4, work_time = $5,
+            location = $6, detail = $7, depart_branch_time = $8, arrive_site_time = $9,
+            depart_site_time = $10, arrive_branch_time = $11, attachments_json = $12::jsonb,
+            recorder_name = $13, note = $14, updated_at = now()
+          WHERE id = $15 RETURNING *`,
+        [...v, id]
+      );
+      return result.rows[0] ? mapFieldWorkRow(result.rows[0]) : null;
+    },
+
+    async deleteFieldWorkLog(id) {
+      await ensureFieldWorkTables();
+      const result = await query(`DELETE FROM field_work_logs WHERE id = $1 RETURNING id`, [id]);
       return result.rows || [];
     },
     

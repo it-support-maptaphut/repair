@@ -77,15 +77,17 @@
   }
 
   var URGENT_PHONE = "0630050430";
+  var visitorInfo = null;
 
   function reporterOf(t) {
-    var v = t.visitor || { branch: visitorBranch || "" };
+    var v = t.visitor || visitorInfo || {};
     var loc = parseLocation(t.location);
     var name = v.name || t.reporter_name || "-";
     if (name.indexOf(" · ") > -1) name = name.slice(0, name.indexOf(" · "));
     return {
       name: name || "-",
-      position: v.position || loc.position || "-",
+      // ตำแหน่ง = ตำแหน่งงานของผู้แจ้ง (เช่น ไอทีซัพพอร์ต) ไม่ใช่สถานที่
+      position: v.position || "-",
       branch: v.branch || loc.branch || "-"
     };
   }
@@ -118,36 +120,37 @@
           '<svg class="mt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
         "</div>" +
         '<div class="mt-body">' +
-          '<div class="mt-sect">' +
-            '<div class="mt-sect-h">ข้อมูลผู้แจ้งซ่อม</div>' +
-            '<div class="mt-grid">' +
-              '<div class="mt-cell"><span class="mt-lb">ชื่อผู้แจ้ง</span><span class="mt-vl">' + esc(rep.name) + "</span></div>" +
-              '<div class="mt-cell"><span class="mt-lb">ตำแหน่งผู้แจ้ง</span><span class="mt-vl">' + esc(rep.position) + "</span></div>" +
-              '<div class="mt-cell"><span class="mt-lb">ประจำสาขา</span><span class="mt-vl">' + esc(rep.branch) + "</span></div>" +
+          '<div class="mt-panel">' +
+            '<div class="mt-pbox">' +
+              '<span class="mt-lb">ชื่อผู้แจ้ง</span>' +
+              '<span class="mt-vl">' + esc(rep.name) + "</span>" +
             "</div>" +
-          "</div>" +
-          '<div class="mt-sect">' +
-            '<div class="mt-sect-h">รายละเอียดการแจ้งซ่อม</div>' +
-            '<div class="mt-grid">' +
-              '<div class="mt-cell"><span class="mt-lb">เลขที่ใบแจ้งซ่อม</span><span class="mt-vl mt-mono">' + esc(t.ticket_no) + "</span></div>" +
-              '<div class="mt-cell"><span class="mt-lb">วันที่แจ้งซ่อม</span><span class="mt-vl">' + esc(fmtDate(t.created_at)) + "</span></div>" +
-              '<div class="mt-cell"><span class="mt-lb">สถานที่แจ้งซ่อม</span><span class="mt-vl">' + esc(loc.position) + "</span></div>" +
+            '<div class="mt-pbox">' +
+              '<span class="mt-lb">ตำแหน่งผู้แจ้ง</span>' +
+              '<span class="mt-vl">' + esc(rep.position) + "</span>" +
             "</div>" +
-            '<div class="mt-cell mt-cell-full"><span class="mt-lb">รายละเอียดปัญหา</span><span class="mt-vl mt-desc">' + esc(t.symptom || "-") + "</span></div>" +
-          "</div>" +
-          '<div class="mt-sect">' +
-            '<div class="mt-sect-h">การดำเนินการ</div>' +
-            '<div class="mt-grid">' +
-              '<div class="mt-cell"><span class="mt-lb">สถานะปัจจุบัน</span><span class="mt-vl">' + st.label + "</span></div>" +
-              '<div class="mt-cell"><span class="mt-lb">ผู้ดำเนินการ</span><span class="mt-vl">' + esc(t.handler_name || "รอเจ้าหน้าที่รับงาน") + "</span></div>" +
-              (t.status === "done"
-                ? '<div class="mt-cell"><span class="mt-lb">วันที่เสร็จสิ้น</span><span class="mt-vl">' +
+            '<div class="mt-pbox">' +
+              '<span class="mt-lb">ประจำสาขา</span>' +
+              '<span class="mt-vl">' + esc(rep.branch) + "</span>" +
+            "</div>" +
+            '<div class="mt-pbox">' +
+              '<span class="mt-lb">สถานที่แจ้งซ่อม</span>' +
+              '<span class="mt-vl">' + esc(loc.position) + "</span>" +
+            "</div>" +
+            '<div class="mt-pbox mt-pbox-wide">' +
+              '<span class="mt-lb">รายละเอียดปัญหา</span>' +
+              '<span class="mt-vl mt-desc">' + esc(t.symptom || "-") + "</span>" +
+            "</div>" +
+            (t.status === "done"
+              ? '<div class="mt-pbox">' +
+                  '<span class="mt-lb">วันที่เสร็จสิ้น</span>' +
+                  '<span class="mt-vl">' +
                   esc(fmtDateOnly(t.status_date || t.approved_at) + (t.status_time ? " " + esc(t.status_time) + " น." : "")) +
-                  "</span></div>"
-                : "") +
-            "</div>" +
+                  "</span>" +
+                "</div>"
+              : "") +
+            (photos ? '<div class="mt-pbox mt-pbox-wide"><span class="mt-lb">รูปภาพที่แนบ</span>' + photos + "</div>" : "") +
           "</div>" +
-          (photos ? '<div class="mt-sect"><div class="mt-sect-h">รูปภาพที่แนบ</div>' + photos + "</div>" : "") +
           prog +
           '<div class="mt-note ' + st.cls + '">' + st.msg + "</div>" +
           '<div class="mt-actions">' +
@@ -162,7 +165,8 @@
     );
   }
 
-  function render(tickets, visitorBranch) {
+  function render(tickets, visitor) {
+    visitorInfo = visitor && visitor.id ? visitor : null;
     listEl.innerHTML = "";
     if (!tickets || !tickets.length) {
       listEl.innerHTML =
@@ -212,10 +216,10 @@
           return;
         }
         if (!res.ok) {
-            showListError(res.d.message || "โหลดประวัติไม่สำเร็จ");
+          showListError(res.d.message || "โหลดประวัติไม่สำเร็จ");
           return;
         }
-        render(res.d.tickets, (res.d.visitor && res.d.visitor.branch) || "");
+        render(res.d.tickets, res.d.visitor || null);
       })
       .catch(function () {
         setLoading(false);

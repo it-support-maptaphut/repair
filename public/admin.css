@@ -67,32 +67,6 @@
       margin-bottom: 12px;
     }
 
-    .sidebar-toggle {
-      width: 32px;
-      height: 32px;
-      border: none;
-      border-radius: 0;
-      background: var(--green-soft);
-      color: var(--green-dark);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.15s;
-      flex-shrink: 0;
-    }
-    .sidebar-toggle:hover {
-      background: var(--green);
-      color: #fff;
-    }
-    .sidebar-toggle:active {
-      transform: scale(0.95);
-    }
-
-    .sidebar.collapsed .sidebar-toggle svg {
-      transform: rotate(180deg);
-    }
-
     .sidebar.collapsed .side-brand-text,
     .sidebar.collapsed .side-group-label,
     .sidebar.collapsed .side-group-items,
@@ -146,17 +120,97 @@
     }
 
     .side-title {
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.25;
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.3;
       color: var(--green-dark);
+      word-break: keep-all;
+      letter-spacing: -0.2px;
     }
 
     .side-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--muted);
       font-weight: 300;
+      line-height: 1.35;
+      word-break: keep-all;
     }
+
+    /* ---------- สถานะระบบใต้ชื่อระบบ ---------- */
+    .side-status {
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .side-status .ss-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .side-status .ss-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #dc2626;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      flex: 0 0 9px;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18);
+    }
+
+    .side-status.is-online .ss-dot {
+      background: #16a34a;
+      border-color: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.35);
+    }
+
+    .side-status.is-offline .ss-dot {
+      background: #dc2626;
+      border-color: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.35);
+    }
+
+    .side-status .ss-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .side-status .ss-meta {
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .side-status .ss-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 4px;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+
+    .side-status .ss-badge.is-good { color: #fff; background: rgba(22, 163, 74, 0.85); border-color: rgba(255, 255, 255, 0.7); }
+    .side-status .ss-badge.is-bad { color: #fff; background: rgba(220, 38, 38, 0.85); border-color: rgba(255, 255, 255, 0.7); }
+
+    .sidebar.collapsed .side-status {
+      margin-top: 8px;
+      padding-top: 8px;
+      align-items: center;
+    }
+
+    .sidebar.collapsed .side-status .ss-name,
+    .sidebar.collapsed .side-status .ss-meta { display: none; }
 
     .side-user-label {
       margin-top: 6px;
@@ -195,6 +249,13 @@
       cursor: pointer;
       transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
       text-align: left;
+    }
+
+    /* เมนูหลักที่อยู่นอกกลุ่ม — กดได้เลย ไม่ต้องเปิดกลุ่มก่อน */
+    .side-btn-top {
+      margin-top: 4px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
     }
 
     .side-btn svg {
@@ -507,6 +568,7 @@
       color: var(--muted);
     }
 
+
     /* ---------- MODAL ---------- */
     .modal-mask {
       position: fixed;
@@ -645,6 +707,28 @@
     .btn-drive:hover { background: #0f766e; color: #fff; }
     .btn-edit { background: var(--blue-soft); color: var(--blue); }
     .btn-edit:hover { background: var(--blue); color: #fff; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ป๊อปอัป ดาวน์โหลดไดร์ฟเวอร์ */
+    .wiz-step { padding: 4px 9px; border-radius: 20px; background: #eef1f3; color: #60747c; }
+    .wiz-step.is-active { background: var(--green); color: #fff; }
+    .wiz-step.is-done { background: var(--green-soft); color: var(--green); }
+    .wiz-device {
+      display: flex; flex-direction: column; gap: 2px; padding: 14px 12px;
+      border: 1px solid var(--line); background: #fff; cursor: pointer; text-align: left;
+      font-family: inherit; color: var(--text); transition: 0.15s;
+    }
+    .wiz-device:hover { border-color: var(--green); }
+    .wiz-device.is-active { border-color: var(--green); background: var(--green-soft); box-shadow: inset 0 0 0 1px var(--green); }
+    .wiz-device-label { font-weight: 700; font-size: 14px; }
+    .wiz-device-desc { font-size: 12px; color: var(--muted); }
+    .wiz-chip {
+      padding: 7px 14px; border: 1px solid var(--line); background: #fff; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); transition: 0.15s;
+    }
+    .wiz-chip:hover { border-color: var(--green); }
+    .wiz-chip.is-active { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+    .btn-link { color: var(--blue); text-decoration: underline; word-break: break-all; }
     .btn-approve { background: #e2f7eb; color: #15803d; border: 1px solid #c3ecd1; }
     .btn-approve:hover { background: var(--green); color: #fff; border-color: var(--green); }
     .btn-finish { background: var(--blue-soft); color: var(--blue); border: 1px solid #d3e0fa; }
@@ -930,7 +1014,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      max-height: 320px;
+      max-height: 460px;
       overflow: auto;
       padding-right: 4px;
     }
@@ -960,17 +1044,22 @@
     }
 
     .legend-name {
-      flex: 1;
-      min-width: 0;
+      flex: 1 1 auto;
+      /* กันไม่ให้ถูกบีบจนกวาดแค่ตัวอักษรละบรรทัด */
+      min-width: 72px;
       font-size: 13.5px;
       font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.35;
+      /* ชื่อยาวตัดบรรทัดต่อ ไม่ให้ถูก ellipsis ตัดจนอ่านไม่ออก */
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .legend-bar {
-      width: 110px;
+      /* ย่อได้ถ้าจอแคบ เพื่อให้ชื่อได้พื้นที่พอ */
+      flex: 0 1 84px;
+      width: 84px;
+      min-width: 34px;
       height: 8px;
       border-radius: 0;
       background: #e6efe9;
@@ -1095,8 +1184,12 @@
     }
 
     #anaBranchLegend {
-      max-width: 300px;
-      margin: 0 auto;
+      /* ใช้เต็มความกว้างการ์ด เพื่อให้ชื่อสาขาอยู่บรรทัดเดียวอ่านง่าย */
+      max-width: 100%;
+      margin: 0;
+      /* สาขามีจำนวนจำกัด จึงไม่ต้องเลื่อน */
+      max-height: none;
+      overflow: visible;
     }
 
     /* ---------- FILTERED STATS ---------- */
@@ -1845,7 +1938,7 @@
       .side-group-items, .side-chev { transition: none; }
     }
 
-    /* หมวดระบบ Private (กลุ่มย่อยซ้อนในกลุ่ม) */
+    /* หมวดระบบจัดการข้อมูลส่วนตัว (กลุ่มย่อยซ้อนในกลุ่ม) */
     .side-group[data-group="private"] { margin-top: 18px; }
     .side-group-private-inner { padding: 2px 0 4px 8px; }
     .side-group-nested { margin-left: 6px; }

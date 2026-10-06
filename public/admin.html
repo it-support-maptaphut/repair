@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <script src="no-zoom.js"></script>
+<!-- บล็อกเบราว์เซอร์สำรอง/เติมรหัสผ่านอัตโนมัติ -->
+<script src="no-save.js" defer></script>
   <title>ระบบแจ้งซ่อม IT — จัดการงาน</title>
   <link rel="icon" type="image/png" href="Favorite%20Icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +17,8 @@
   <link rel="stylesheet" href="admin-retro.css">
   <!-- ระบบบันทึกเบิกค่าเดินทาง (แยก CSS เฉพาะโมดูล ไม่กระทบหน้าจออื่น) -->
   <link rel="stylesheet" href="admin-travel.css">
+  <!-- ระบบบันทึกปฏิบัติงานนอกสถานที่ (ใช้ร่วมกับหน้า Mobile) -->
+  <link rel="stylesheet" href="admin-fieldwork.css">
   <script>
     (function () {
       if (window.location.search.indexOf("full=1") > -1) return;
@@ -29,14 +33,20 @@
       <div class="sidebar-header">
         <div class="side-brand">
           <div class="side-brand-text">
-            <div class="side-title">System Admin IT</div>
-            <div class="side-sub">Dashboard IT Support</div>
-            <div class="side-user-label" id="suUserLabel" hidden></div>
+            <div class="side-title">ระบบแดรชบอร์ดสำหรับผู้ดูแล</div>
+            <div class="side-status" id="sideStatus">
+              <div class="ss-row">
+                <span class="ss-dot" id="ssDot"></span>
+                <span class="ss-name" id="ssName">กำลังตรวจสอบ...</span>
+              </div>
+              <div class="ss-row ss-meta">
+                <span class="ss-badge" id="ssUsers">ผู้ใช้ -</span>
+                <span class="ss-badge" id="ssVisitors">ภายนอก -</span>
+                <span class="ss-badge" id="ssPing">Ping -</span>
+              </div>
+            </div>
           </div>
         </div>
-        <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="ปิด/เปิดเมนู (กด Tab เมื่อโฟกัสอยู่ที่เมนู)" title="ปิด/เปิดเมนู (กด Tab)" tabindex="0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
       </div>
 
       <nav class="side-nav" id="adminTabs" aria-label="เมนูหลัก">
@@ -100,17 +110,29 @@
           </div>
         </div>
 
+        <!-- ซ่อนจากเมนูชั่วคราว: ปุ่มระบบเก็บไดร์ฟเวอร์ (โค้ด/API/ตารางยังเก็บไว้ เพิ่มกลับได้โดยกางปุ่มนี้กลับ) -->
+        <!--
+        <button class="side-btn side-btn-top" data-tab="driveNotes" data-perm="driveNotes" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12v7c0 1.66-4 3-9 3s-9-1.34-9-3v-7"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <span>ระบบเก็บไดร์ฟเวอร์</span>
+        </button>
+        -->
+
         <div class="side-group" data-group="travel">
           <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupTravel">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v11"/><path d="M2 16h20v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 8h8M6 12h5"/></svg>
-            <span class="side-group-label">ระบบบันทึกเบิกค่าเดินทาง</span>
+            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="side-group-label">ระบบบันทึกทำงานนอกสถานที่</span>
             <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="side-group-items" id="admGroupTravel">
             <div class="side-group-inner">
               <button class="side-btn" data-tab="travelExpense" data-perm="travelExpense" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v11"/><path d="M2 16h20v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 8h8M6 12h5"/></svg>
-                <span>บันทึกเบิกค่าเดินทาง</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18l2.2-1.4L9.4 21l2.2-1.4L13.8 21l2.2-1.4L18.2 21 20 19.6V3l-1.8 1.4L16 3l-2.2 1.4L11.6 3 9.4 4.4 7.2 3z"/><line x1="8.5" y1="9" x2="15.5" y2="9"/><line x1="8.5" y1="13" x2="13" y2="13"/></svg>
+                <span>ระบบเบิกค่าเดินทาง</span>
+              </button>
+              <button class="side-btn" data-tab="fieldWork" data-perm="fieldWork" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+                <span>บันทึกปฏิบัติงานนอกสถานที่</span>
               </button>
             </div>
           </div>
@@ -151,7 +173,7 @@
         <div class="side-group" data-group="private">
           <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupPrivate">
             <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span class="side-group-label">ระบบ Private</span>
+            <span class="side-group-label">ระบบจัดการข้อมูลส่วนตัว</span>
             <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="side-group-items" id="admGroupPrivate">
@@ -159,14 +181,14 @@
               <div class="side-group side-group-nested" data-group="pwip">
                 <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupPwip">
                   <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                  <span class="side-group-label">ระบบบันทึก PASSWORD NOTE</span>
+                  <span class="side-group-label">ระบบบันทึกรหัสผ่าน (ส่วนตัว)</span>
                   <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
                 <div class="side-group-items" id="admGroupPwip">
                   <div class="side-group-inner">
                     <button class="side-btn" data-tab="pwIP" data-perm="pwIP" type="button">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                      <span>PASSWORD NOTE</span>
+                      <span>รหัสผ่านส่วนตัว</span>
                     </button>
                   </div>
                 </div>
@@ -174,14 +196,14 @@
               <div class="side-group side-group-nested" data-group="tickets">
                 <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupTickets">
                   <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  <span class="side-group-label">ระบบบันทึก IP ADDRESS</span>
+                  <span class="side-group-label">ระบบจดจำผู้ใช้</span>
                   <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
                 <div class="side-group-items" id="admGroupTickets">
                   <div class="side-group-inner">
                     <button class="side-btn" data-tab="devices" data-perm="devices" type="button">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                      <span>บันทึก IP ADDRESS</span>
+                        <span>บันทึก IP ADDRESS</span>
                     </button>
                     <button class="side-btn" data-tab="visitors" data-perm="visitors" type="button">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -725,7 +747,7 @@
     <section id="pwIPView" hidden>
       <div class="devices-toolbar" style="align-items:flex-start;gap:14px;">
         <div>
-          <h3 class="tab-title" style="margin:0 0 4px;">PASSWORD NOTE</h3>
+          <h3 class="tab-title" style="margin:0 0 4px;">รหัสผ่านส่วนตัว</h3>
           <p style="margin:0; color:var(--muted-text, #667);">บันทึก Password ต่างๆ — เฉพาะ USER admin เท่านั้น และต้องยืนยัน PIN เพื่อเข้าดู</p>
         </div>
         <button class="btn btn-primary" type="button" onclick="pnOpenCreate()">
@@ -793,6 +815,83 @@
       </main>
     </section>
 
+    <section id="driveNotesView" hidden>
+
+      <section class="stats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12v7c0 1.66-4 3-9 3s-9-1.34-9-3v-7"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+          <div><div class="stat-num" id="dnStatAll">0</div><div class="stat-label">รายการทั้งหมด</div></div>
+        </div>
+        <div class="stat-card stat-done">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div><div class="stat-num" id="dvStatAll">0</div><div class="stat-label">ไดร์ฟเวอร์ที่บันทึก</div></div>
+        </div>
+      </section>
+
+      <main>
+        <div class="mbar">
+          <input id="dnSearch" type="search" placeholder="ค้นโน้ต / ไดร์ฟเวอร์ / ยี่ห้อ / รุ่น" oninput="renderDriveNotes(); renderDriverCatalog();" />
+          <button class="btn btn-primary" onclick="openDriveWizard()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            ดาวน์โหลดไดร์ฟเวอร์
+          </button>
+          <button class="btn btn-ghost" onclick="openDriveNoteForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            เพิ่มข้อมูล
+          </button>
+          <button class="btn btn-ghost" onclick="openDriverLinks()" title="ตั้งค่า/แก้ไขลิงก์ดาวน์โหลดอย่างเป็นทางการต่อยี่ห้อ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            ลิงก์ยี่ห้อ
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="driveNoteTable">
+            <thead>
+              <tr>
+                <th>หัวเรื่อง</th>
+                <th>ขั้นตอน</th>
+                <th>ข้อมูลเสริม</th>
+                <th>วันที่</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="driveNoteBody"></tbody>
+          </table>
+        </div>
+        <div id="driveNoteEmpty" class="empty hidden">
+          <p>ยังไม่มีข้อมูล — กด "เพิ่มข้อมูล" เพื่อเริ่มบันทึกระบบเก็บไดร์ฟเวอร์</p>
+        </div>
+
+        <h3 class="sub-sec-title" style="display:flex;align-items:center;gap:8px;margin:22px 0 10px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          ไดร์ฟเวอร์ที่ดาวน์โหลด
+        </h3>
+        <div class="table-wrap">
+          <table id="driverCatalogTable">
+            <thead>
+              <tr>
+                <th>อุปกรณ์</th>
+                <th>ยี่ห้อ</th>
+                <th>รุ่น</th>
+                <th>ลิงก์ดาวน์โหลด</th>
+                <th>วันที่</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="driverCatalogBody"></tbody>
+          </table>
+        </div>
+        <div id="driverCatalogEmpty" class="empty hidden">
+          <p>ยังไม่มีไดร์ฟเวอร์ที่บันทึก — กด "ดาวน์โหลดไดร์ฟเวอร์" เพื่อเริ่มต้น</p>
+        </div>
+      </main>
+    </section>
+
     <section id="travelExpenseView" hidden>
 
       <section class="stats">
@@ -849,7 +948,150 @@
       </main>
     </section>
 
-    <div class="modal-mask hidden" id="travelClaimMask" role="dialog" aria-modal="true" aria-label="บันทึกเบิกค่าเดินทาง" onclick="if(event.target===this) closeTravelClaimForm()">
+    <section id="fieldWorkView" hidden>
+      <section class="stats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          </div>
+          <div><div class="stat-num" id="fwStatAll">0</div><div class="stat-label">รายการทั้งหมด</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div><div class="stat-num" id="fwStatSites">0</div><div class="stat-label">สถานที่ที่ไป</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div><div class="stat-num" id="fwStatMonth">0</div><div class="stat-label">รายการเดือนนี้</div></div>
+        </div>
+      </section>
+
+      <main>
+        <div class="mbar">
+          <input id="fwSearch" type="search" placeholder="ค้นสถานที่ / รายละเอียด / เลขที่แจ้งซ่อม / ผู้บันทึก" oninput="renderFieldWork()" />
+          <button class="btn btn-primary" type="button" onclick="openFieldWorkForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            เพิ่มรายละเอียดทำงานนอกสถานที่
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="fw-table">
+            <thead>
+              <tr>
+                <th>วันที่ / เวลา</th>
+                <th>สถานที่ออกปฏิบัติ</th>
+                <th>รายละเอียดงาน</th>
+                <th class="fw-times">เวลาเดินทาง</th>
+                <th>ที่มา</th>
+                <th>ผู้บันทึก</th>
+                <th>ไฟล์แนบ</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="fwBody"></tbody>
+          </table>
+        </div>
+        <div id="fwEmpty" class="empty hidden">
+          <p>ยังไม่มีรายการบันทึกปฏิบัติงานนอกสถานที่ — กด "เพิ่มรายละเอียดทำงานนอกสถานที่" เพื่อเริ่มบันทึก</p>
+        </div>
+      </main>
+    </section>
+
+    <div class="modal-mask hidden" id="fwFormMask" role="dialog" aria-modal="true" aria-label="เพิ่มรายละเอียดทำงานนอกสถานที่" onclick="if(event.target===this) closeFieldWorkForm()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeFieldWorkForm()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title" id="fwFormTitle">เพิ่มรายละเอียดทำงานนอกสถานที่</h3>
+
+          <div class="fw-modes">
+            <button type="button" class="fw-mode is-active" id="fwModeManual" onclick="setFieldWorkMode('manual')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+              พิมเอง
+            </button>
+            <button type="button" class="fw-mode" id="fwModeTicket" onclick="setFieldWorkMode('ticket')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="8"/></svg>
+              ดึงข้อมูลจากระบบ
+            </button>
+          </div>
+
+          <div id="fwTicketBox" class="hidden">
+            <div class="trv-field">
+              <label for="fwTicketPick">เลือกใบแจ้งซ่อมเพื่อดึงข้อมูล (สถานที่ · รายละเอียด · วันที่/เวลา)</label>
+              <select id="fwTicketPick" onchange="pickFieldWorkTicket()"></select>
+            </div>
+            <div class="fw-hint" id="fwTicketHint"></div>
+          </div>
+
+          <div class="trv-grid2">
+            <div class="trv-field">
+              <label for="fwDate">วันที่</label>
+              <input id="fwDate" type="date" required />
+            </div>
+            <div class="trv-field">
+              <label for="fwTime">เวลา</label>
+              <input id="fwTime" type="time" />
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label for="fwLocation">สถานที่ออกปฏิบัติงาน</label>
+            <input id="fwLocation" type="text" placeholder="เช่น ห้องประชุมชั้น 3 สาขาแสนสุข" required />
+          </div>
+
+          <div class="trv-field">
+            <label for="fwDetail">รายละเอียดงาน</label>
+            <textarea id="fwDetail" rows="3" placeholder="รายละเอียดงานที่ปฏิบัติ / ปัญหาที่พบ / ผลลัพธ์"></textarea>
+          </div>
+
+          <div class="fw-times-grid">
+            <div class="trv-field">
+              <label for="fwDepartBranch">เวลาออกจากสาขา 4</label>
+              <input id="fwDepartBranch" type="time" />
+            </div>
+            <div class="trv-field">
+              <label for="fwArriveSite">เวลาถึงจุดหมาย</label>
+              <input id="fwArriveSite" type="time" />
+            </div>
+            <div class="trv-field">
+              <label for="fwDepartSite">เวลาออกจากจุดหมาย</label>
+              <input id="fwDepartSite" type="time" />
+            </div>
+            <div class="trv-field">
+              <label for="fwArriveBranch">เวลาถึงสาขา 4</label>
+              <input id="fwArriveBranch" type="time" />
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label>ไฟล์แนบหลักฐาน (เอกสาร / รูปงานที่ไปทำ)</label>
+            <div class="fw-drop" id="fwDrop" onclick="document.getElementById('fwFiles').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>คลิกเพื่อเลือกไฟล์แนบ (สูงสุด 10 ไฟล์ · ไม่เกิน 10 MB ต่อไฟล์)</span>
+              <input id="fwFiles" type="file" multiple hidden onchange="pickFieldWorkFiles()" />
+            </div>
+            <div id="fwFileList" class="fw-file-list"></div>
+          </div>
+
+          <div class="trv-field">
+            <label for="fwRecorder">ผู้บันทึก</label>
+            <input id="fwRecorder" type="text" />
+          </div>
+
+          <div class="fw-actions">
+            <button class="btn btn-ghost" type="button" onclick="closeFieldWorkForm()">ยกเลิก</button>
+            <button class="btn btn-primary" type="button" id="fwSaveBtn" onclick="saveFieldWork()">บันทึก</button>
+          </div>
+          <div class="fw-msg" id="fwFormMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-mask hidden" id="travelClaimMask" role="dialog" aria-modal="true" aria-label="ระบบเบิกค่าเดินทาง" onclick="if(event.target===this) closeTravelClaimForm()">
       <div class="modal">
         <button class="modal-close" type="button" title="ปิด" onclick="closeTravelClaimForm()">&times;</button>
         <div class="modal-body">
@@ -939,7 +1181,7 @@
       <div class="modal">
         <button class="modal-close" type="button" title="ปิด" onclick="closeTravelSettings()">&times;</button>
         <div class="modal-body">
-          <h3 class="modal-title">ตั้งค่าระบบบันทึกเบิกค่าเดินทาง</h3>
+          <h3 class="modal-title">ตั้งค่าระบบเบิกค่าเดินทาง</h3>
 
           <div class="trv-grid2">
             <div class="trv-field">
@@ -1300,6 +1542,10 @@
                 <div class="det-item">
                   <div class="det-k">ผู้ดำเนินการ</div>
                   <div class="det-v" id="detHandler">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">เวลาที่ดำเนินการ</div>
+                  <div class="det-v" id="detDuration">-</div>
                 </div>
                 <div class="det-item full">
                   <div class="det-k">รายละเอียด</div>
@@ -1707,6 +1953,131 @@
           <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
             <button class="btn btn-danger" onclick="deleteWorkNote()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+        <!-- ฟอร์มระบบเก็บไดร์ฟเวอร์ -->
+        <div id="driveNoteFormView" hidden>
+          <h3 class="modal-title" id="driveNoteFormTitle">เพิ่มข้อมูล</h3>
+
+          <div class="form-field">
+            <label>หัวเรื่อง *</label>
+            <input id="dnTitle" type="text" />
+          </div>
+
+          <div class="form-field">
+            <label>ขั้นตอน / รายละเอียด</label>
+            <p class="hint" style="margin:0 0 8px">พิมพ์ทีละขั้นตอน พิมพ์เสร็จในช่องระบบจะสร้างช่องถัดไปให้อัตโนมัติ — กด "ยืนยัน" เมื่อครบ (กรอกแค่ขั้นตอนเดียวก็ยืนยันได้เลย)</p>
+            <div id="dnSteps"></div>
+            <div class="row-actions" style="margin-top:8px">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="addDriveStepNow()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                เพิ่มขั้นตอนด้วยตนเอง
+              </button>
+              <button class="btn btn-primary btn-sm" type="button" onclick="confirmDriveSteps()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                ยืนยัน
+              </button>
+            </div>
+          </div>
+
+          <div class="form-field hidden" id="dnInfoWrap">
+            <label>ข้อมูลเสริม <span class="hint">(กรอกหลายบรรทัดได้)</span></label>
+            <textarea id="dnInfo" style="min-height:90px"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveDriveNote()">บันทึก</button>
+          </div>
+        </div>
+
+        <!-- ยืนยันลบระบบเก็บไดร์ฟเวอร์ -->
+        <div id="driveNoteConfirmView" hidden>
+          <div class="confirm-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">ยืนยันการลบ</h3>
+          <p class="confirm-no" id="driveNoteConfirmTitle"></p>
+          <p class="confirm-text">จะลบข้อมูลนี้ทันที ไม่สามารถกู้คืนได้</p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="deleteDriveNote()">ยืนยันลบ</button>
+          </div>
+        </div>
+
+        <!-- ป๊อปอัป ดาวน์โหลดไดร์ฟเวอร์ (wizard 4 ขั้น) -->
+        <div id="driveWizardView" hidden>
+          <h3 class="modal-title">ดาวน์โหลดไดร์ฟเวอร์</h3>
+          <div id="wizSteps" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 14px;font-size:12px;font-weight:600;color:var(--muted)">
+            <span class="wiz-step" data-ws="1">1. อุปกรณ์</span><span class="wiz-sep" style="color:var(--line)">›</span>
+            <span class="wiz-step" data-ws="2">2. ยี่ห้อ</span><span class="wiz-sep" style="color:var(--line)">›</span>
+            <span class="wiz-step" data-ws="3">3. รุ่น</span><span class="wiz-sep" style="color:var(--line)">›</span>
+            <span class="wiz-step" data-ws="4">4. ลิงก์ดาวน์โหลด</span>
+          </div>
+
+          <div class="wiz-pane" id="wizPane1">
+            <label>เลือกอุปกรณ์</label>
+            <p class="hint">ตอนนี้มีเฉพาะ เครื่องปริ้นท์ — ระบบจะขยายเพิ่มอุปกรณ์อื่น ๆ ได้ภายหลัง</p>
+            <div id="wizDeviceList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
+          </div>
+
+          <div class="wiz-pane hidden" id="wizPane2">
+            <label>ยี่ห้อ <span class="hint">(กดปุ่ม หรือพิมพ์ยี่ห้อเอง เช่น epson, canon, ...)</span></label>
+            <div id="wizBrandChips" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px"></div>
+            <input id="wizBrand" type="text" placeholder="เช่น epson, canon, hp ..." oninput="wizBrandChanged()" />
+          </div>
+
+          <div class="wiz-pane hidden" id="wizPane3">
+            <label>รุ่น <span class="hint">*</span></label>
+            <input id="wizModel" type="text" placeholder="เช่น L3250, PIXMA G2010 ..." oninput="wizRender()" />
+            <p class="hint" id="wizSummary" style="margin-top:8px"></p>
+          </div>
+
+          <div class="wiz-pane hidden" id="wizPane4">
+            <label>ลิงก์ดาวน์โหลด</label>
+            <div id="wizResultBox" style="border:1px solid var(--line);background:#f2f6f4;padding:12px;margin:0 0 10px"></div>
+            <div id="wizUrlMissing" class="hidden">
+              <p class="hint" style="margin:0 0 8px">ยังไม่มีลิงก์ของยี่ห้อนี้ — วางลิงก์ดาวน์โหลดอย่างเป็นทางการจากเว็บผู้ผลิตไว้ที่ช่องด้านล่าง (จะจำไว้สำหรับครั้งถัดไปด้วย)</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <input id="wizUrlInput" type="text" placeholder="https://... จากเว็บผู้ผลิต" style="flex:1;min-width:200px" />
+                <button class="btn btn-ghost btn-sm" onclick="wizUseUrl()">ใช้ลิงก์นี้</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions" id="wizActions"></div>
+        </div>
+
+        <!-- จัดการลิงก์ดาวน์โหลดต่อยี่ห้อ -->
+        <div id="driverLinkView" hidden>
+          <h3 class="modal-title">ลิงก์ดาวน์โหลดต่อยี่ห้อ</h3>
+          <p class="hint">ลิงก์อย่างเป็นทางการของผู้ผลิต ระบบจะใช้ลิงก์นี้เมื่อกด "ดาวน์โหลดไดร์ฟเวอร์"</p>
+          <div id="driverLinkList" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div class="form-field" style="margin-top:12px">
+            <label>เพิ่ม/แก้ไขยี่ห้อ</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="dlNewBrand" placeholder="ยี่ห้อ" style="flex:1;min-width:110px" />
+              <input id="dlNewUrl" placeholder="https://..." style="flex:2;min-width:200px" />
+              <button class="btn btn-primary btn-sm" onclick="addDriverLinkRow()">เพิ่ม</button>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ปิด</button>
+          </div>
+        </div>
+
+        <!-- ยืนยันลบไดร์ฟเวอร์ที่บันทึก -->
+        <div id="driverConfirmView" hidden>
+          <div class="confirm-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>
+          </div>
+          <h3 class="modal-title" style="text-align:center">ยืนยันการลบ</h3>
+          <p class="confirm-no" id="driverConfirmTitle"></p>
+          <p class="confirm-text">จะลบระเบียนไดร์ฟเวอร์นี้ทันที ไม่สามารถกู้คืนได้</p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+            <button class="btn btn-danger" onclick="deleteDriverRecord()">ยืนยันลบ</button>
           </div>
         </div>
 
@@ -2190,6 +2561,26 @@
       return STATUS[row.status] || STATUS.new;
     }
 
+    function ticketDuration(row) {
+      if (!row || row.status !== "done" || !row.status_date || !row.status_time) return "-";
+      var start = new Date(row.created_at);
+      var t = String(row.status_time).trim();
+      if (/^\d{1,2}:\d{2}$/.test(t)) t += ":00";
+      var fin = new Date(String(row.status_date) + "T" + t);
+      if (isNaN(start) || isNaN(fin)) return "-";
+      var ms = fin.getTime() - start.getTime();
+      if (ms < 0) ms = 0;
+      var min = Math.floor(ms / 60000);
+      var parts = [];
+      var days = Math.floor(min / 1440);
+      var hrs = Math.floor((min % 1440) / 60);
+      var mins = min % 60;
+      if (days) parts.push(days + " วัน");
+      if (hrs) parts.push(hrs + " ชั่วโมง");
+      parts.push(mins + " นาที");
+      return parts.join(" ");
+    }
+
     function toast(msg) {
       var t = document.getElementById("toast");
       t.textContent = msg;
@@ -2260,34 +2651,16 @@
     // Call init after DOM is ready
     initStatCardFilters();
 
-    // ---------- SIDEBAR TOGGLE ----------
+    // ---------- SIDEBAR TOGGLE (Alt+M) ----------
     (function () {
       var sidebar = document.getElementById("sidebar");
-      var toggleBtn = document.getElementById("sidebarToggle");
-      if (sidebar && toggleBtn) {
-        function toggleSidebar() {
-          sidebar.classList.toggle("collapsed");
-        }
-        toggleBtn.addEventListener("click", toggleSidebar);
-        // Keyboard support: Enter, Space, and Tab
-        toggleBtn.addEventListener("keydown", function (e) {
-          if (e.key === "Enter" || e.key === " " || e.key === "Tab") {
-            e.preventDefault();
-            toggleSidebar();
-          }
-        });
-        // Global shortcut: Tab (เมื่อโฟกัสอยู่ใน sidebar) เปิด/ปิดเมนู
-        document.addEventListener("keydown", function (e) {
-          if (e.key === "Tab") {
-            var sb = document.getElementById("sidebar");
-            if (sb && sb.contains(document.activeElement)) {
-              e.preventDefault();
-              toggleSidebar();
-              toggleBtn.focus();
-            }
-          }
-        });
-      }
+      if (!sidebar) return;
+      document.addEventListener("keydown", function (e) {
+        if (!e.altKey || e.ctrlKey || e.metaKey) return;
+        if (String(e.key || "").toLowerCase() !== "m") return;
+        e.preventDefault();
+        sidebar.classList.toggle("collapsed");
+      });
     })();
 
     // ============================================================
@@ -2874,7 +3247,9 @@
       document.getElementById("deviceNotesView").hidden = tab !== "deviceNotes";
       document.getElementById("maintenanceView").hidden = tab !== "maintenance";
       document.getElementById("workNotesView").hidden = tab !== "workNotes";
+  document.getElementById("driveNotesView").hidden = tab !== "driveNotes";
       document.getElementById("travelExpenseView").hidden = tab !== "travelExpense";
+      document.getElementById("fieldWorkView").hidden = tab !== "fieldWork";
       document.getElementById("repairNotesView").hidden = tab !== "repairNotes";
       document.getElementById("warrantyView").hidden = tab !== "warranty";
       document.getElementById("worklogView").hidden = tab !== "worklog";
@@ -2892,12 +3267,403 @@
       if (tab === "deviceNotes" && !deviceEntries.length) loadDeviceNotes();
       if (tab === "maintenance") loadMaintenance();
       if (tab === "workNotes" && !workNotesLoaded) loadWorkNotes();
+      if (tab === "driveNotes") {
+          if (!driveNotesLoaded) loadDriveNotes();
+          if (!driverRecordsLoaded) loadDriverCatalog();
+          if (!driverBrandLinksLoaded) loadDriverBrandLinks();
+        }
       if (tab === "travelExpense" && !travelClaimsLoaded) loadTravelClaims();
+      if (tab === "fieldWork" && !fieldWorkLoaded) loadFieldWork();
       if (tab === "repairNotes") { if (typeof openTicketForm === "function") openTicketForm(); }
       if (tab === "warranty") startWarranty();
       if (tab === "worklog") renderWorklog();
       if (tab === "systemUsers") loadSystemUsers();
     });
+
+    // ---------- บันทึกปฏิบัติงานนอกสถานที่ (Field Work) ----------
+    var fieldWorkLogs = [];
+    var fieldWorkLoaded = false;
+    var fieldWorkFiles = [];      // ไฟล์ใหม่ที่เลือก (ยังไม่ได้อัปโหลด)
+    var fieldWorkAttachments = []; // ไฟล์ที่บันทึกไว้แล้ว (ตอนแก้ไข)
+    var fieldWorkEditId = null;
+    var fieldWorkMode = "manual";
+    var fwTicketList = [];
+    var fwTicketsLoading = false;
+
+    function fwTime(v) {
+      var s = String(v == null ? "" : v).trim();
+      if (!s) return "-";
+      var m = /^(\d{1,2}):(\d{2})/.exec(s);
+      return m ? String(m[1]).padStart(2, "0") + ":" + m[2] : "-";
+    }
+
+    function fmtDateOnly(iso) {
+      if (!iso) return "-";
+      var d = new Date(String(iso).length <= 10 ? String(iso) + "T00:00:00" : iso);
+      if (isNaN(d)) return "-";
+      var p = String(d.getFullYear() + 543);
+      return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + p;
+    }
+
+    function loadFieldWork() {
+      var body = document.getElementById("fwBody");
+      if (body) body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      return fetch("/api/admin/field-work")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          fieldWorkLogs = (d && d.logs) || [];
+          fieldWorkLoaded = true;
+          renderFieldWork();
+        })
+        .catch(function () {
+          var b = document.getElementById("fwBody");
+          if (b) b.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ โปรดลองใหม่</td></tr>';
+        });
+    }
+
+    function renderFieldWork() {
+      var body = document.getElementById("fwBody");
+      var empty = document.getElementById("fwEmpty");
+      if (!body) return;
+      var q = String((document.getElementById("fwSearch") || {}).value || "").toLowerCase().trim();
+      var rows = fieldWorkLogs.filter(function (r) {
+        if (!q) return true;
+        return [r.ticket_no, r.location, r.detail, r.recorder_name]
+          .join(" ").toLowerCase().indexOf(q) >= 0;
+      });
+
+      var sites = {};
+      var monthNow = new Date().toISOString().slice(0, 7);
+      var monthCount = 0;
+      fieldWorkLogs.forEach(function (r) {
+        var s = String(r.location || "").trim();
+        if (s) sites[s] = 1;
+        if (String(r.work_date || "").slice(0, 7) === monthNow) monthCount++;
+      });
+      var setNum = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+      setNum("fwStatAll", fieldWorkLogs.length);
+      setNum("fwStatSites", Object.keys(sites).length);
+      setNum("fwStatMonth", monthCount);
+
+      if (empty) empty.classList.toggle("hidden", rows.length > 0);
+      if (!rows.length) {
+        body.innerHTML = q
+          ? '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">ไม่พบรายการที่ค้นหา</td></tr>'
+          : "";
+        return;
+      }
+
+      body.innerHTML = rows.map(function (r) {
+        var att = Array.isArray(r.attachments) ? r.attachments : [];
+        var times = [
+          "ออกสาขา4 " + fwTime(r.depart_branch_time),
+          "ถึงจุดหมาย " + fwTime(r.arrive_site_time),
+          "ออกจุดหมาย " + fwTime(r.depart_site_time),
+          "ถึงสาขา4 " + fwTime(r.arrive_branch_time)
+        ].join("<br>");
+        var files = att.length
+          ? att.map(function (a) {
+              return '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.name || "ไฟล์") + "</a>";
+            }).join("<br>")
+          : "-";
+        var src = r.source_mode === "ticket"
+          ? 'ดึงจากระบบ' + (r.ticket_no ? '<br><span style="font-size:11px">' + esc(r.ticket_no) + "</span>" : "")
+          : "พิมเอง";
+        return '<tr>' +
+          '<td>' + esc(fmtDateOnly(r.work_date)) + "<br><span style=\"font-size:11px;color:var(--muted)\">" + esc(fwTime(r.work_time)) + "</span></td>" +
+          '<td style="max-width:220px">' + esc(r.location || "-") + "</td>" +
+          '<td style="max-width:260px;white-space:pre-wrap">' + esc(r.detail || "-") + "</td>" +
+          '<td style="font-size:11px;line-height:1.5">' + times + "</td>" +
+          '<td style="font-size:11px">' + src + "</td>" +
+          '<td style="font-size:12px">' + esc(r.recorder_name || "-") + "</td>" +
+          '<td style="font-size:11px;max-width:150px;word-break:break-word">' + files + "</td>" +
+          '<td style="text-align:right;white-space:nowrap">' +
+            '<button class="btn btn-ghost" type="button" onclick="openFieldWorkForm(' + r.id + ')">แก้ไข</button> ' +
+            '<button class="btn btn-danger" type="button" onclick="deleteFieldWork(' + r.id + ')">ลบ</button>' +
+          "</td>" +
+        "</tr>";
+      }).join("");
+    }
+
+    window.loadFieldWork = loadFieldWork;
+    window.renderFieldWork = renderFieldWork;
+
+    function fwSetMode(mode) {
+      fieldWorkMode = mode === "ticket" ? "ticket" : "manual";
+      var mBtn = document.getElementById("fwModeManual");
+      var tBtn = document.getElementById("fwModeTicket");
+      var box = document.getElementById("fwTicketBox");
+      if (mBtn) mBtn.classList.toggle("is-active", fieldWorkMode === "manual");
+      if (tBtn) tBtn.classList.toggle("is-active", fieldWorkMode === "ticket");
+      if (box) box.classList.toggle("hidden", fieldWorkMode !== "ticket");
+      // สลับมาโหมด "ดึงข้อมูลจากระบบ" ต้องเตรียมรายการแจ้งซ่อมให้ทันที
+      if (fieldWorkMode === "ticket") fwFillTicketOptions();
+    }
+    window.setFieldWorkMode = fwSetMode;
+
+    function fwFillTicketOptions() {
+      var sel = document.getElementById("fwTicketPick");
+      var hint = document.getElementById("fwTicketHint");
+      if (!sel) return;
+      var list = fwTicketList && fwTicketList.length ? fwTicketList : (Array.isArray(tickets) ? tickets : []);
+      if (!list.length) {
+        if (hint) hint.textContent = "กำลังโหลดรายการแจ้งซ่อม...";
+        sel.innerHTML = '<option value="">— กำลังโหลด... —</option>';
+        if (fwTicketsLoading) return;
+        fwTicketsLoading = true;
+        fetch("/api/admin/tickets")
+          .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+          .then(function (res) {
+            fwTicketsLoading = false;
+            if (res.status !== 200 || !res.data || !res.data.ok) {
+              if (hint) hint.textContent = "โหลดรายการแจ้งซ่อมไม่สำเร็จ (" + res.status + ")";
+              return;
+            }
+            fwTicketList = res.data.tickets || [];
+            fwFillTicketOptions();
+          })
+          .catch(function () {
+            fwTicketsLoading = false;
+            if (hint) hint.textContent = "โหลดรายการแจ้งซ่อมไม่สำเร็จ";
+          });
+        return;
+      }
+      fwTicketList = list;
+      sel.innerHTML = '<option value="">— เลือกใบแจ้งซ่อม —</option>' + list.map(function (t) {
+        return '<option value="' + esc(t.ticket_no) + '">' +
+          esc(t.ticket_no) + " · " + esc(t.location || "-") + " · " + esc(String(t.symptom || t.device || "").slice(0, 40)) +
+          "</option>";
+      }).join("");
+      if (hint) hint.textContent = list.length ? "เลือกแล้วระบบจะเติมสถานที่ รายละเอียด และวันที่/เวลาให้อัตโนมัติ" : "ยังไม่มีรายการแจ้งซ่อมในระบบ";
+    }
+
+    function fwPickTicket() {
+      var sel = document.getElementById("fwTicketPick");
+      if (!sel) return;
+      var no = String(sel.value || "");
+      if (!no) return;
+      var list = fwTicketList && fwTicketList.length ? fwTicketList : (Array.isArray(tickets) ? tickets : []);
+      var t = null;
+      for (var i = 0; i < list.length; i++) {
+        if (String(list[i].ticket_no) === no) { t = list[i]; break; }
+      }
+      if (!t) return;
+      var loc = document.getElementById("fwLocation");
+      var det = document.getElementById("fwDetail");
+      var dt = document.getElementById("fwDate");
+      var tm = document.getElementById("fwTime");
+      if (loc) loc.value = t.location || "";
+      if (det) {
+        var parts = [];
+        if (t.device) parts.push("อุปกรณ์: " + t.device);
+        if (t.symptom) parts.push("อาการ: " + t.symptom);
+        if (t.reporter_name) parts.push("ผู้แจ้ง: " + t.reporter_name);
+        det.value = parts.join("\n");
+      }
+      if (t.created_at) {
+        var d = new Date(t.created_at);
+        if (!isNaN(d)) {
+          if (dt) dt.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+          if (tm) tm.value = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+        }
+      }
+      var hint = document.getElementById("fwTicketHint");
+      if (hint) {
+        hint.textContent = "ดึงข้อมูลจาก " + no + " แล้ว — ตรวจสอบและแก้ไขด้านล่างตามต้องการ";
+      }
+      // เลื่อนไปยังช่องสถานที่ที่เติมให้ เพื่อให้เห็นผลลัพธ์ทันที
+      if (loc && loc.scrollIntoView) loc.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    window.pickFieldWorkTicket = fwPickTicket;
+
+    function fwRenderFiles() {
+      var box = document.getElementById("fwFileList");
+      if (!box) return;
+      var all = fieldWorkAttachments.map(function (a, i) {
+        return '<span class="fw-file"><a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.name || "ไฟล์แนบ") + "</a>" +
+          '<button type="button" title="ลบไฟล์นี้" onclick="removeFieldWorkAttachment(' + i + ')">×</button></span>';
+      }).concat(fieldWorkFiles.map(function (f, i) {
+        return '<span class="fw-file is-new">' + esc(f.name) +
+          '<button type="button" title="ลบไฟล์นี้" onclick="removeFieldWorkFile(' + i + ')">×</button></span>';
+      }));
+      box.innerHTML = all.join("");
+    }
+
+    function fwPickFiles() {
+      var input = document.getElementById("fwFiles");
+      if (!input || !input.files) return;
+      var list = Array.prototype.slice.call(input.files);
+      fieldWorkFiles = fieldWorkFiles.concat(list);
+      input.value = "";
+      fwRenderFiles();
+    }
+    window.pickFieldWorkFiles = fwPickFiles;
+
+    function fwRemoveFile(i) {
+      fieldWorkFiles.splice(i, 1);
+      fwRenderFiles();
+    }
+    window.removeFieldWorkFile = fwRemoveFile;
+
+    function fwRemoveAttachment(i) {
+      fieldWorkAttachments.splice(i, 1);
+      fwRenderFiles();
+    }
+    window.removeFieldWorkAttachment = fwRemoveAttachment;
+
+    function fwMsg(text, isErr) {
+      var el = document.getElementById("fwFormMsg");
+      if (!el) return;
+      el.textContent = text || "";
+      el.style.color = isErr ? "var(--red)" : "var(--green-dark, #14532d)";
+    }
+
+    function openFieldWorkForm(id) {
+      fieldWorkEditId = id || null;
+      fieldWorkFiles = [];
+      fieldWorkAttachments = [];
+      var title = document.getElementById("fwFormTitle");
+      if (title) title.textContent = id ? "แก้ไขรายละเอียดทำงานนอกสถานที่" : "เพิ่มรายละเอียดทำงานนอกสถานที่";
+      fwMsg("");
+
+      if (id) {
+        var found = null;
+        fieldWorkLogs.forEach(function (r) { if (String(r.id) === String(id)) found = r; });
+        if (found) {
+          fieldWorkMode = found.source_mode === "ticket" ? "ticket" : "manual";
+          fieldWorkAttachments = Array.isArray(found.attachments) ? found.attachments.slice() : [];
+          var set = function (elId, v) { var el = document.getElementById(elId); if (el) el.value = v == null ? "" : v; };
+          set("fwDate", String(found.work_date || "").slice(0, 10));
+          set("fwTime", fwTime(found.work_time));
+          set("fwLocation", found.location || "");
+          set("fwDetail", found.detail || "");
+          set("fwRecorder", found.recorder_name || "");
+          set("fwDepartBranch", fwTime(found.depart_branch_time));
+          set("fwArriveSite", fwTime(found.arrive_site_time));
+          set("fwDepartSite", fwTime(found.depart_site_time));
+          set("fwArriveBranch", fwTime(found.arrive_branch_time));
+        }
+        fwSetMode(fieldWorkMode);
+        fwFillTicketOptions();
+        var sel = document.getElementById("fwTicketPick");
+        if (sel && found && found.ticket_no) sel.value = found.ticket_no;
+      } else {
+        fwSetMode("manual");
+        ["fwDate", "fwTime", "fwLocation", "fwDetail", "fwDepartBranch", "fwArriveSite", "fwDepartSite", "fwArriveBranch"].forEach(function (elId) {
+          var el = document.getElementById(elId);
+          if (el) el.value = "";
+        });
+        var now = new Date();
+        var dEl = document.getElementById("fwDate");
+        var tEl = document.getElementById("fwTime");
+        if (dEl) dEl.value = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+        if (tEl) tEl.value = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+        var rEl = document.getElementById("fwRecorder");
+        if (rEl && !rEl.value) rEl.value = currentFieldWorkUser();
+      }
+
+      fwRenderFiles();
+      var mask = document.getElementById("fwFormMask");
+      if (mask) mask.classList.remove("hidden");
+    }
+    window.openFieldWorkForm = openFieldWorkForm;
+
+    function currentFieldWorkUser() {
+      var lab = document.getElementById("suUserLabel");
+      if (lab && lab.textContent) return String(lab.textContent).replace(/\s*●\s*$/, "").trim();
+      var name = document.getElementById("ssName");
+      if (name && name.textContent) return String(name.textContent).replace(/^ผู้(ใช้|ดูแลระบบ):\s*/, "").trim();
+      return "";
+    }
+
+    function closeFieldWorkForm() {
+      var mask = document.getElementById("fwFormMask");
+      if (mask) mask.classList.add("hidden");
+      fieldWorkFiles = [];
+    }
+    window.closeFieldWorkForm = closeFieldWorkForm;
+
+    function fwCollect() {
+      var get = function (id) { var el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; };
+      var sel = document.getElementById("fwTicketPick");
+      var ticketNo = fieldWorkMode === "ticket" && sel ? String(sel.value || "") : "";
+      var ticketId = null;
+      if (ticketNo && Array.isArray(tickets)) {
+        tickets.forEach(function (t) { if (String(t.ticket_no) === ticketNo) ticketId = t.id; });
+      }
+      return {
+        ticketId: ticketId,
+        ticketNo: ticketNo,
+        sourceMode: fieldWorkMode,
+        workDate: get("fwDate"),
+        workTime: get("fwTime"),
+        location: get("fwLocation"),
+        detail: get("fwDetail"),
+        depart_branch_time: get("fwDepartBranch") || null,
+        arrive_site_time: get("fwArriveSite") || null,
+        depart_site_time: get("fwDepartSite") || null,
+        arrive_branch_time: get("fwArriveBranch") || null,
+        recorderName: get("fwRecorder"),
+        attachments: fieldWorkAttachments
+      };
+    }
+
+    function saveFieldWork() {
+      var btn = document.getElementById("fwSaveBtn");
+      var data = fwCollect();
+      if (!data.workDate) { fwMsg("กรอกวันที่ทำงาน", true); return; }
+      if (!data.location) { fwMsg("กรอกสถานที่ออกปฏิบัติงาน", true); return; }
+      if (fieldWorkMode === "ticket" && !data.ticketNo) { fwMsg("เลือกใบแจ้งซ่อมที่ต้องการดึงข้อมูล", true); return; }
+
+      var fd = new FormData();
+      fd.append("ticketId", data.ticketId == null ? "" : String(data.ticketId));
+      fd.append("ticketNo", data.ticketNo);
+      fd.append("sourceMode", data.sourceMode);
+      fd.append("workDate", data.workDate);
+      fd.append("workTime", data.workTime);
+      fd.append("location", data.location);
+      fd.append("detail", data.detail);
+      fd.append("depart_branch_time", data.depart_branch_time || "");
+      fd.append("arrive_site_time", data.arrive_site_time || "");
+      fd.append("depart_site_time", data.depart_site_time || "");
+      fd.append("arrive_branch_time", data.arrive_branch_time || "");
+      fd.append("recorderName", data.recorderName);
+      fd.append("attachments", JSON.stringify(data.attachments));
+      fieldWorkFiles.forEach(function (f) { fd.append("files", f); });
+
+      if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก..."; }
+      fwMsg("กำลังบันทึก...");
+      var url = fieldWorkEditId ? "/api/admin/field-work/" + fieldWorkEditId : "/api/admin/field-work";
+      fetch(url, { method: fieldWorkEditId ? "PUT" : "POST", body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) {
+            fwMsg((d && d.message) || "บันทึกไม่สำเร็จ", true);
+            return;
+          }
+          closeFieldWorkForm();
+          fieldWorkLoaded = false;
+          loadFieldWork();
+        })
+        .catch(function () { fwMsg("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง", true); })
+        .then(function () {
+          if (btn) { btn.disabled = false; btn.textContent = "บันทึก"; }
+        });
+    }
+    window.saveFieldWork = saveFieldWork;
+
+    function deleteFieldWork(id) {
+      if (!confirm("ยืนยันการลบรายการบันทึกปฏิบัติงานนอกสถานที่นี้?")) return;
+      fetch("/api/admin/field-work/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) { alert((d && d.message) || "ลบไม่สำเร็จ"); return; }
+          fieldWorkLoaded = false;
+          loadFieldWork();
+        })
+        .catch(function () { alert("ลบไม่สำเร็จ ลองใหม่อีกครั้ง"); });
+    }
+    window.deleteFieldWork = deleteFieldWork;
 
     // ---------- ตั้งค่าสิทธิ์การเข้าใช้งานระบบ ----------
     window.openSystemUsersTab = function (btn) {
@@ -2915,11 +3681,13 @@
       { key: "tickets", label: "ระบบแจ้งซ่อม" },
       { key: "devices", label: "ข้อมูลผู้ใช้งาน / อุปกรณ์" },
       { key: "visitors", label: "ผู้ใช้งานภายนอก" },
-      { key: "pwIP", label: "PASSWORD NOTE" },
+      { key: "pwIP", label: "รหัสผ่านส่วนตัว" },
       { key: "deviceNotes", label: "โน้ตอุปกรณ์" },
       { key: "maintenance", label: "ตรวจเช็ค / ดูแลอุปกรณ์" },
       { key: "workNotes", label: "โน้ตขั้นตอนการทำงาน" },
-      { key: "travelExpense", label: "บันทึกเบิกค่าเดินทาง" },
+      { key: "driveNotes", label: "ระบบเก็บไดร์ฟเวอร์" },
+      { key: "travelExpense", label: "ระบบเบิกค่าเดินทาง" },
+      { key: "fieldWork", label: "บันทึกปฏิบัติงานนอกสถานที่" },
       { key: "warranty", label: "ตรวจสอบประกัน" },
       { key: "analytics", label: "วิเคราะห์การแจ้งซ่อม" },
       { key: "worklog", label: "รายการงานทั้งหมด" },
@@ -3678,17 +4446,36 @@
 
     function anaHoursDiff(a, b) { return (b - a) / 3600000; }
 
+    // ชื่อย่อสาขา -> ชื่อเต็มที่ใช้แสดงผล (อ้างอิงจากรายการสาขาที่บันทึกอยู่)
+    var ANA_BRANCH_NAME = {
+      "สาขา 1": "สาขา 1 บขสเก่า",
+      "สาขา 3": "สาขา 3 รพ.กรุงเทพระยอง",
+      "สาขา 4": "สาขา 4 มาบตาพุด",
+      "สาขา 5": "สาขา 5 บ้านฉาง"
+    };
+
+    // ดึงชื่อสาขาจากข้อมูลที่บันทึกจริง
+    // tickets.location เก็บเป็น "ชื่อสาขา · ตำแหน่ง" เช่น "ร้านวรรณสาขา 4 (มาบตาพุด ระยอง) · หน้าห้องเครื์ด"
+    // เดิม hard-code ไว้แค่สาขา 4/5 ทำให้สาขา 1 และ 3 ถูกรวมเป็น "อื่น" แล้วหายไปจากกราฟ
     function branchOf(t) {
-      var loc = String(t.location || "");
-      if (/สาขา\s*4|มาบตาพุด/.test(loc)) return "สาขา 4";
-      if (/สาขา\s*5|บ้านฉาง/.test(loc)) return "สาขา 5";
-      return "อื่น";
+      var loc = String(t.location || "").trim();
+      if (!loc) return "ไม่ระบุ";
+
+      // ตัดส่วน " · ตำแหน่ง" ออก เหลือชื่อสาขา
+      var i = loc.indexOf(" · ");
+      var name = (i > -1 ? loc.slice(0, i) : loc).trim();
+      if (!name || name === "-") return "ไม่ระบุ";
+
+      // ถ้าชื่อสาขามีเลขกำกับ ใช้เลขนั้นเป็นคีย์ เพื่อรวมชื่อรูปแบบต่าง ๆ ให้ตรงกัน
+      var m = name.match(/สาขา\s*(\d+)/);
+      if (m) return "สาขา " + m[1];
+
+      // ไม่มีเลขกำกับ = สาขานอกรายการ แสดงชื่อตามที่บันทึกจริง
+      return name;
     }
 
     function branchFull(b) {
-      if (b === "สาขา 4") return "สาขา 4 มาบตาพุด";
-      if (b === "สาขา 5") return "สาขา 5 บ้านฉาง";
-      return b;
+      return ANA_BRANCH_NAME[b] || b;
     }
 
     // ---------- RENDER: FILTERED STATS ----------
@@ -3950,12 +4737,10 @@
       noData.classList.add("hidden");
 
       var arr = Object.keys(map).map(function (k) { return { label: k, count: map[k] }; });
-      arr.sort(function (a, b) { return b.count - a.count; });
+      arr.sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label, "th"); });
 
-      var top = arr.slice(0, 8);
-      var rest = arr.slice(8);
-      var restSum = rest.reduce(function (s, o) { return s + o.count; }, 0);
-      if (restSum > 0) top.push({ label: "อื่น ๆ", count: restSum });
+      // แยกทุกชื่อออกมาตามจริง ไม่รวมส่วนที่เหลือเป็น "อื่น ๆ"
+      var top = arr;
 
       var start = -Math.PI / 2;
       var OUTER = 118, INNER = 62, DEPTH = 26;
@@ -4390,6 +5175,11 @@
       document.getElementById("workNoteFormView").hidden = true;
       document.getElementById("wnChooseView").hidden = true;
       document.getElementById("workNoteConfirmView").hidden = true;
+      document.getElementById("driveNoteFormView").hidden = true;
+      document.getElementById("driveNoteConfirmView").hidden = true;
+      document.getElementById("driveWizardView").hidden = true;
+      document.getElementById("driverLinkView").hidden = true;
+      document.getElementById("driverConfirmView").hidden = true;
       document.getElementById("repairNoteFormView").hidden = true;
       document.getElementById("repairNoteConfirmView").hidden = true;
       document.getElementById(name).hidden = false;
@@ -4460,6 +5250,7 @@
       document.getElementById("detBranch").textContent = loc.branch;
       document.getElementById("detPosition").textContent = loc.position;
       document.getElementById("detHandler").textContent = row.handler_name || "ยังไม่ระบุ";
+      document.getElementById("detDuration").textContent = ticketDuration(row);
       document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
 
       var groups = splitPhotos(row.ticket_photos);
@@ -5856,6 +6647,717 @@
 
     window.deleteWorkNote = deleteWorkNote;
 
+    // ---------- ระบบเก็บไดร์ฟเวอร์ (Drive Notes) ----------
+    var driveNotes = [];
+    var driveNotesLoaded = false;
+    var driveNoteEditId = null;
+    var driveNoteDeleteId = null;
+    var driveStepTimer = null;
+
+    function parseDriveSteps(note) {
+      try {
+        var s = JSON.parse(note.steps_json || "[]");
+        return Array.isArray(s) ? s.map(function (x) { return String(x); }) : [];
+      } catch (e) { return []; }
+    }
+
+    function loadDriveNotes() {
+      var body = document.getElementById("driveNoteBody");
+      var empty = document.getElementById("driveNoteEmpty");
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      empty.classList.add("hidden");
+      return fetch("/api/admin/drive-notes")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || "โหลดไม่สำเร็จ");
+          driveNotes = (data.notes || []).map(function (n) {
+            n.steps = parseDriveSteps(n);
+            return n;
+          });
+          driveNotesLoaded = true;
+          renderDriveNotes();
+        })
+        .catch(function () {
+          driveNotes = [];
+          driveNotesLoaded = true;
+          body.innerHTML = "";
+          empty.classList.remove("hidden");
+          empty.querySelector("p").textContent = "โหลดข้อมูลไม่สำเร็จ — ต้องรัน SQL ตาราง drive_notes ในฐานข้อมูลแล้วรีสตาร์ท server";
+        });
+    }
+
+    window.loadDriveNotes = loadDriveNotes;
+
+    function renderDriveNotes() {
+      var input = document.getElementById("dnSearch");
+      var q = input ? input.value.trim().toLowerCase() : "";
+      var rows = driveNotes;
+      if (q) {
+        rows = driveNotes.filter(function (n) {
+          var hay = (n.title + " " + (n.info_extra || "") + " " + n.steps.join(" ")).toLowerCase();
+          return hay.indexOf(q) !== -1;
+        });
+      }
+      document.getElementById("dnStatAll").textContent = driveNotes.length;
+      var body = document.getElementById("driveNoteBody");
+      var empty = document.getElementById("driveNoteEmpty");
+      if (!rows.length) {
+        body.innerHTML = "";
+        empty.classList.remove("hidden");
+        empty.querySelector("p").textContent = driveNotes.length
+          ? "ไม่มีข้อมูลที่ตรงกับตัวกรอง"
+          : 'ยังไม่มีข้อมูล — กด "เพิ่มข้อมูล" เพื่อเริ่มบันทึกระบบเก็บไดร์ฟเวอร์';
+        return;
+      }
+      empty.classList.add("hidden");
+      var wLine = "var(--line)";
+
+      body.innerHTML = rows.map(function (n) {
+        var stepsHtml = n.steps.length
+          ? '<ul style="list-style:none;margin:0;padding:0;font-size:12.5px;line-height:1.55">' +
+            n.steps.map(function (s, i) {
+              return '<li style="padding:2px 0;border-left:2px solid ' + wLine + ';padding-left:8px;margin-bottom:2px"><span style="font-weight:700;color:var(--blue)">' + (i + 1) + ".</span> " + esc(s) + "</li>";
+            }).join("") + "</ul>"
+          : '<span style="color:var(--muted)">-</span>';
+        var infoCell = n.info_extra
+          ? '<span class="cell-trunc" style="max-width:240px;white-space:normal">' + esc(n.info_extra) + "</span>"
+          : '<span style="color:var(--muted)">-</span>';
+
+        var actions = '<div class="row-actions">';
+        actions += '<button class="icon-btn edit" title="แก้ไข" onclick="openDriveNoteForm(' + n.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>';
+        actions += '<button class="icon-btn del" title="ลบ" onclick="openDriveNoteDelete(' + n.id + ')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button>';
+        actions += "</div>";
+
+        return "<tr>" +
+          '<td><div class="model-cell"><span class="model-name">' + (n.title ? esc(n.title) : '(ไม่มีหัวเรื่อง)') + "</span></div></td>" +
+          "<td>" + stepsHtml + "</td>" +
+          "<td>" + infoCell + "</td>" +
+          "<td>" + fmtWorkDate(n.created_at) + "</td>" +
+          '<td style="text-align:right">' + actions + "</td>" +
+          "</tr>";
+      }).join("");
+    }
+
+    window.renderDriveNotes = renderDriveNotes;
+
+    function makeDriveStepRow(i) {
+      var row = document.createElement("div");
+      row.className = "wn-step-row";
+      row.style.marginBottom = "8px";
+      row.style.padding = "10px 10px 10px 12px";
+      row.style.border = "1px solid var(--line)";
+      row.style.borderLeft = "3px solid var(--blue)";
+      row.style.borderRadius = "10px";
+      row.style.background = "#fbfdff";
+      row.innerHTML =
+        '<div class="wn-step-no" style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">ขั้นตอนที่ ' + (i + 1) + "</div>" +
+        '<div style="display:flex;gap:8px;align-items:flex-start">' +
+          '<textarea class="wn-step-input" data-i="' + i + '" style="flex:1;min-height:52px;width:auto" oninput="driveStepTyped(this)"></textarea>' +
+          '<button class="icon-btn del wn-step-x" type="button" title="ลบขั้นตอน" onclick="removeDriveStep(' + i + ')">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>' +
+          "</button>" +
+        "</div>";
+      return row;
+    }
+
+    function reindexDriveSteps() {
+      var rows = document.querySelectorAll("#dnSteps .wn-step-row");
+      rows.forEach(function (row, i) {
+        row.querySelector(".wn-step-no") && (row.querySelector(".wn-step-no").textContent = "ขั้นตอนที่ " + (i + 1));
+        row.querySelector(".wn-step-input").setAttribute("data-i", i);
+        row.querySelector(".wn-step-x").setAttribute("onclick", "removeDriveStep(" + i + ")");
+      });
+    }
+
+    function driveStepTyped(el) {
+      var list = document.getElementById("dnSteps");
+      var lastInput = list.lastElementChild.querySelector(".wn-step-input");
+      var isLast = el === lastInput;
+      clearTimeout(driveStepTimer);
+      if (!isLast) return;
+      if (!String(el.value).trim()) return;
+      driveStepTimer = setTimeout(function () {
+        driveStepTimer = null;
+        var box = document.getElementById("dnSteps");
+        if (!box || !box.lastElementChild) return;
+        if (box.lastElementChild.querySelector(".wn-step-input") !== el) return;
+        if (!String(el.value).trim()) return;
+        box.appendChild(makeDriveStepRow(box.children.length));
+        box.lastElementChild.querySelector(".wn-step-input").focus();
+      }, 1200);
+    }
+
+    window.driveStepTyped = driveStepTyped;
+
+    function removeDriveStep(i) {
+      var list = document.getElementById("dnSteps");
+      var rows = list.querySelectorAll(".wn-step-row");
+      if (rows.length <= 1) {
+        var inp = rows[0].querySelector(".wn-step-input");
+        inp.value = "";
+        reindexDriveSteps();
+        inp.focus();
+        return;
+      }
+      rows[i].remove();
+      reindexDriveSteps();
+    }
+
+    window.removeDriveStep = removeDriveStep;
+
+    function addDriveStepNow() {
+      var list = document.getElementById("dnSteps");
+      list.appendChild(makeDriveStepRow(list.children.length));
+      list.lastElementChild.querySelector(".wn-step-input").focus();
+    }
+
+    window.addDriveStepNow = addDriveStepNow;
+
+    function confirmDriveSteps() {
+      var inputs = document.querySelectorAll("#dnSteps .wn-step-input");
+      var hasStep = Array.prototype.some.call(inputs, function (inp) { return String(inp.value).trim(); });
+      document.getElementById("dnInfoWrap").classList.remove("hidden");
+      document.getElementById("dnInfo").focus();
+      toast(hasStep ? "ยืนยันขั้นตอนแล้ว — ระบุข้อมูลเสริม (ถ้ามี) แล้วกดบันทึก" : "ยังไม่กรอกขั้นตอน — ระบุขั้นตอนหรือข้อมูลเสริมแล้วกดบันทึกได้");
+    }
+
+    window.confirmDriveSteps = confirmDriveSteps;
+
+    function openDriveNoteForm(id) {
+      driveNoteEditId = id || null;
+      document.getElementById("driveNoteFormTitle").textContent = id ? "แก้ไขข้อมูล" : "เพิ่มข้อมูล";
+      document.getElementById("dnTitle").value = "";
+      document.getElementById("dnInfo").value = "";
+      document.getElementById("dnInfoWrap").classList.add("hidden");
+
+      var steps = [];
+      if (id) {
+        var row = driveNotes.filter(function (n) { return n.id === id; })[0];
+        if (row) {
+          document.getElementById("dnTitle").value = row.title || "";
+          steps = Array.isArray(row.steps) ? row.steps.slice() : [];
+          var hasInfo = String(row.info_extra || "").trim();
+          if (hasInfo) {
+            document.getElementById("dnInfoWrap").classList.remove("hidden");
+            document.getElementById("dnInfo").value = row.info_extra;
+          }
+        }
+      }
+      if (!steps.length) steps.push("");
+      var list = document.getElementById("dnSteps");
+      list.innerHTML = "";
+      steps.forEach(function (s, i) {
+        var r = makeDriveStepRow(i);
+        list.appendChild(r);
+        r.querySelector(".wn-step-input").value = s;
+      });
+
+      showView("driveNoteFormView");
+      openModal();
+      document.getElementById("dnTitle").focus();
+    }
+
+    window.openDriveNoteForm = openDriveNoteForm;
+
+    function saveDriveNote() {
+      var title = document.getElementById("dnTitle").value.trim();
+      if (!title) { toast("กรอกหัวเรื่องก่อน"); return; }
+      var inputs = document.querySelectorAll("#dnSteps .wn-step-input");
+      var steps = Array.prototype.map.call(inputs, function (inp) { return inp.value.trim(); }).filter(function (v) { return v; });
+      var payload = {
+        title: title,
+        steps: steps,
+        info_extra: document.getElementById("dnInfo").value.trim()
+      };
+      var isEdit = !!driveNoteEditId;
+      fetch(isEdit ? "/api/admin/drive-notes/" + driveNoteEditId : "/api/admin/drive-notes", {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "บันทึกไม่สำเร็จ"); return; }
+          closeModal();
+          toast(isEdit ? "แก้ไขข้อมูลแล้ว" : "บันทึกข้อมูลแล้ว");
+          loadDriveNotes();
+        })
+        .catch(function () { toast("บันทึกไม่สำเร็จ"); });
+    }
+
+    window.saveDriveNote = saveDriveNote;
+
+    function openDriveNoteDelete(id) {
+      driveNoteDeleteId = id;
+      var row = driveNotes.filter(function (n) { return n.id === id; })[0] || {};
+      document.getElementById("driveNoteConfirmTitle").textContent = row.title ? "“" + row.title + "”" : "รายการนี้";
+      showView("driveNoteConfirmView");
+      openModal();
+    }
+
+    window.openDriveNoteDelete = openDriveNoteDelete;
+
+    function deleteDriveNote() {
+      if (!driveNoteDeleteId) { toast("เลือกรายการที่จะลบก่อน"); return; }
+      var id = driveNoteDeleteId;
+      fetch("/api/admin/drive-notes/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "ลบไม่สำเร็จ"); return; }
+          toast("ลบข้อมูลแล้ว");
+          closeModal();
+          driveNoteDeleteId = null;
+          loadDriveNotes();
+        })
+        .catch(function () { toast("ลบไม่สำเร็จ"); });
+    }
+
+    window.deleteDriveNote = deleteDriveNote;
+
+    // ---------- ดาวน์โหลดไดร์ฟเวอร์ (Driver Catalog + Wizard) ----------
+    var driverRecords = [];
+    var driverRecordsLoaded = false;
+    var driverBrandLinks = {};
+    var driverBrandLinksLoaded = false;
+    var driverDeleteId = null;
+
+    var DRIVER_DEVICE_TYPES = [
+      { key: "printer", label: "เครื่องปริ้นท์", desc: "Printer" }
+    ];
+    var DRIVER_BRAND_SUGGEST = ["epson", "canon", "hp", "brother"];
+
+    function escDriverUrl(u) {
+      var s = String(u || "").trim();
+      if (!s) return "";
+      if (!/^(https?:)?\/\//i.test(s)) s = "https://" + s;
+      var a = document.createElement("a");
+      a.href = s;
+      return a.href;
+    }
+
+    function driverDeviceLabel(key) {
+      var d = DRIVER_DEVICE_TYPES.filter(function (x) { return x.key === key; })[0];
+      return d ? d.label : String(key || "");
+    }
+
+    function loadDriverCatalog() {
+      var body = document.getElementById("driverCatalogBody");
+      var empty = document.getElementById("driverCatalogEmpty");
+      if (body) body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      if (empty) empty.classList.add("hidden");
+      return fetch("/api/admin/driver-catalog")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || "โหลดไม่สำเร็จ");
+          driverRecords = data.items || [];
+          driverRecordsLoaded = true;
+          renderDriverCatalog();
+        })
+        .catch(function () {
+          driverRecords = [];
+          driverRecordsLoaded = true;
+          if (body) body.innerHTML = "";
+          if (empty) {
+            empty.classList.remove("hidden");
+            empty.querySelector("p").textContent = "โหลดข้อมูลไดร์ฟเวอร์ไม่สำเร็จ — ต้องรัน SQL ตาราง driver_catalog แล้วรีสตาร์ท server";
+          }
+        });
+    }
+
+    window.loadDriverCatalog = loadDriverCatalog;
+
+    function renderDriverCatalog() {
+      var input = document.getElementById("dnSearch");
+      var q = input ? input.value.trim().toLowerCase() : "";
+      var rows = driverRecords;
+      if (q) {
+        rows = driverRecords.filter(function (r) {
+          return (r.brand + " " + r.model + " " + r.device_type + " " + (r.source_url || "")).toLowerCase().indexOf(q) !== -1;
+        });
+      }
+      var stat = document.getElementById("dvStatAll");
+      if (stat) stat.textContent = driverRecords.length;
+      var body = document.getElementById("driverCatalogBody");
+      var empty = document.getElementById("driverCatalogEmpty");
+      if (!rows.length) {
+        if (body) body.innerHTML = "";
+        if (empty) {
+          empty.classList.remove("hidden");
+          empty.querySelector("p").textContent = driverRecords.length
+            ? "ไม่มีไดร์ฟเวอร์ที่ตรงกับตัวกรอง"
+            : 'ยังไม่มีไดร์ฟเวอร์ที่บันทึก — กด "ดาวน์โหลดไดร์ฟเวอร์" เพื่อเริ่มต้น';
+        }
+        return;
+      }
+      if (empty) empty.classList.add("hidden");
+      body.innerHTML = rows.map(function (r) {
+        var url = escDriverUrl(r.source_url);
+        return '<tr>' +
+          "<td><span class='cell-trunc'>" + esc(driverDeviceLabel(r.device_type)) + "</span></td>" +
+          '<td><strong>' + esc(r.brand) + "</strong></td>" +
+          '<td><span class="cell-trunc" style="max-width:220px">' + esc(r.model) + "</span></td>" +
+          '<td>' + (url
+            ? '<a class="btn-link" href="' + url + '" target="_blank" rel="noopener">' + esc(r.source_url) + "</a>"
+            : '<span style="color:var(--muted)">-</span>') +
+          "</td>" +
+          "<td>" + fmtWorkDate(r.created_at) + "</td>" +
+          '<td style="text-align:right"><button class="icon-btn del" title="ลบ" onclick="openDriverDelete(' + r.id + ')">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button></td>' +
+          "</tr>";
+      }).join("");
+    }
+
+    window.renderDriverCatalog = renderDriverCatalog;
+
+    function loadDriverBrandLinks() {
+      return fetch("/api/admin/driver-brand-links")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || "โหลดไม่สำเร็จ");
+          var map = {};
+          (data.items || []).forEach(function (it) { map[String(it.brand).toLowerCase()] = it.support_url || ""; });
+          driverBrandLinks = map;
+          driverBrandLinksLoaded = true;
+          return map;
+        })
+        .catch(function () { driverBrandLinks = {}; driverBrandLinksLoaded = false; return {}; });
+    }
+
+    window.loadDriverBrandLinks = loadDriverBrandLinks;
+
+    // ---------- Wizard ดาวน์โหลดไดร์ฟเวอร์ ----------
+    var wiz = { step: 1, device: null, brand: "", model: "", url: "" };
+
+    function openDriveWizard() {
+      wiz = { step: 1, device: null, brand: "", model: "", url: "" };
+      document.getElementById("wizBrand").value = "";
+      document.getElementById("wizModel").value = "";
+      document.getElementById("wizUrlInput").value = "";
+
+      var list = document.getElementById("wizDeviceList");
+      if (list) {
+        list.innerHTML = DRIVER_DEVICE_TYPES.map(function (d) {
+          return '<button type="button" class="wiz-device" data-key="' + d.key + '" onclick="wizSelectDevice(\'' + d.key + '\')">' +
+            '<span class="wiz-device-label">' + esc(d.label) + "</span>" +
+            '<span class="wiz-device-desc">' + esc(d.desc) + "</span></button>";
+        }).join("");
+      }
+      var chips = document.getElementById("wizBrandChips");
+      if (chips) {
+        chips.innerHTML = DRIVER_BRAND_SUGGEST.map(function (b) {
+          return '<button type="button" class="wiz-chip" onclick="wizPickBrand(\'' + b + '\')">' + esc(b) + "</button>";
+        }).join("");
+      }
+      showView("driveWizardView");
+      openModal();
+      wizRender();
+    }
+
+    window.openDriveWizard = openDriveWizard;
+
+    function wizShowActiveChip() {
+      document.querySelectorAll("#wizBrandChips .wiz-chip").forEach(function (c) {
+        c.classList.toggle("is-active", c.textContent.toLowerCase() === wiz.brand.toLowerCase());
+      });
+    }
+
+    function wizSelectDevice(key) {
+      wiz.device = key;
+      document.querySelectorAll(".wiz-device").forEach(function (b) {
+        b.classList.toggle("is-active", b.getAttribute("data-key") === key);
+      });
+      wizRender();
+    }
+
+    window.wizSelectDevice = wizSelectDevice;
+
+    function wizPickBrand(name) {
+      document.getElementById("wizBrand").value = name;
+      wiz.brand = name;
+      wizShowActiveChip();
+      wizRender();
+    }
+
+    window.wizPickBrand = wizPickBrand;
+
+    function wizBrandChanged() {
+      wiz.brand = document.getElementById("wizBrand").value.trim();
+      wizShowActiveChip();
+      wizRender();
+    }
+
+    window.wizBrandChanged = wizBrandChanged;
+
+    function wizRender() {
+      var step = wiz.step;
+      for (var i = 1; i <= 4; i++) {
+        var pane = document.getElementById("wizPane" + i);
+        if (pane) pane.classList.toggle("hidden", i !== step);
+      }
+      document.querySelectorAll("#wizSteps .wiz-step").forEach(function (s) {
+        var n = Number(s.getAttribute("data-ws"));
+        s.classList.toggle("is-done", n < step);
+        s.classList.toggle("is-active", n === step);
+      });
+
+      var model = document.getElementById("wizModel");
+      if (model) wiz.model = model.value.trim();
+      var summary = document.getElementById("wizSummary");
+      if (summary && step === 3) {
+        summary.textContent = "จะดาวน์โหลดไดร์ฟเวอร์: " + driverDeviceLabel(wiz.device) +
+          " / " + (wiz.brand || "-") + " / " + (wiz.model || "รุ่น...");
+      }
+      if (step === 4) wizRenderResult();
+
+      var canNext =
+        (step === 1 && !!wiz.device) ||
+        (step === 2 && !!wiz.brand) ||
+        (step === 3 && !!wiz.model) ||
+        step === 4;
+
+      var actions = document.getElementById("wizActions");
+      if (!actions) return;
+      if (step < 3) {
+        actions.innerHTML =
+          '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
+          (step > 1 ? '<button class="btn btn-ghost" onclick="wizBack()">ย้อนกลับ</button>' : "") +
+          '<button class="btn btn-primary" ' + (canNext ? "" : "disabled") + ' onclick="wizNext()">ถัดไป</button>';
+      } else if (step === 3) {
+        actions.innerHTML =
+          '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
+          '<button class="btn btn-ghost" onclick="wizBack()">ย้อนกลับ</button>' +
+          '<button class="btn btn-primary" ' + (canNext ? "" : "disabled") + ' onclick="wizNext()">ถัดไป → ดึงไดร์ฟเวอร์</button>';
+      } else {
+        actions.innerHTML =
+          '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>' +
+          '<button class="btn btn-ghost" onclick="wizBack()">ย้อนกลับ</button>' +
+          (wiz.url ? '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + escDriverUrl(wiz.url) + '">เปิดเว็บดาวน์โหลด</a>' : "") +
+          '<button class="btn btn-primary" onclick="wizSave()">บันทึกลงระบบ</button>';
+      }
+    }
+
+    window.wizRender = wizRender;
+
+    function wizBack() {
+      if (wiz.step > 1) { wiz.step--; wizRender(); }
+    }
+
+    window.wizBack = wizBack;
+
+    function wizNext() {
+      if (wiz.step === 1 && !wiz.device) { toast("เลือกอุปกรณ์ก่อน"); return; }
+      if (wiz.step === 2 && !wiz.brand) { toast("กรอกหรือเลือกยี่ห้อก่อน"); return; }
+      if (wiz.step === 3 && !wiz.model) { toast("พิมพ์รุ่นก่อน"); return; }
+      if (wiz.step < 4) { wiz.step++; wizRender(); return; }
+      wizRender();
+    }
+
+    window.wizNext = wizNext;
+
+    function wizRenderResult() {
+      var brand = wiz.brand.toLowerCase();
+      wiz.url = driverBrandLinks[brand] || "";
+      if (wiz.url) {
+        document.getElementById("wizUrlMissing").classList.add("hidden");
+        document.getElementById("wizResultBox").innerHTML =
+          '<div style="display:flex;flex-direction:column;gap:4px;font-size:13.5px">' +
+          "<div><strong>" + esc(driverDeviceLabel(wiz.device)) + "</strong> · " +
+          "<strong style=\"color:var(--blue)\">" + esc(wiz.brand) + "</strong> · " + esc(wiz.model) + "</div>" +
+          '<div class="hint">พบลิงก์อย่างเป็นทางการของยี่ห้อนี้:</div>' +
+          '<a href="' + escDriverUrl(wiz.url) + '" target="_blank" rel="noopener">' + esc(wiz.url) + "</a>" +
+          "</div>";
+      } else {
+        document.getElementById("wizUrlMissing").classList.remove("hidden");
+        document.getElementById("wizResultBox").innerHTML =
+          '<div style="display:flex;flex-direction:column;gap:4px;font-size:13.5px">' +
+          "<div><strong>" + esc(driverDeviceLabel(wiz.device)) + "</strong> · " +
+          "<strong style=\"color:var(--blue)\">" + esc(wiz.brand) + "</strong> · " + esc(wiz.model) + "</div>" +
+          '<div class="hint">ยังไม่มีลิงก์ — กรอกลิงก์ดาวน์โหลดจากเว็บผู้ผลิตที่ช่องด้านล่าง</div>' +
+          "</div>";
+        var u = document.getElementById("wizUrlInput").value.trim();
+        if (u) { wiz.url = u; }
+      }
+    }
+
+    function wizUseUrl() {
+      var u = document.getElementById("wizUrlInput").value.trim();
+      if (!u) { toast("วางลิงก์ก่อน"); return; }
+      wiz.url = u;
+      document.getElementById("wizUrlMissing").classList.add("hidden");
+      document.getElementById("wizResultBox").innerHTML =
+        '<div style="display:flex;flex-direction:column;gap:4px;font-size:13.5px">' +
+        "<div><strong>" + esc(driverDeviceLabel(wiz.device)) + "</strong> · " +
+        "<strong style=\"color:var(--blue)\">" + esc(wiz.brand) + "</strong> · " + esc(wiz.model) + "</div>" +
+        '<div class="hint">ลิงก์ที่เลือก:</div>' +
+        '<a href="' + escDriverUrl(wiz.url) + '" target="_blank" rel="noopener">' + esc(wiz.url) + "</a>" +
+        "</div>";
+      if (driverBrandLinks[wiz.brand.toLowerCase()] == null) {
+        fetch("/api/admin/driver-brand-links/" + encodeURIComponent(wiz.brand), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ support_url: wiz.url })
+        }).catch(function () {});
+      }
+      wizRender();
+    }
+
+    window.wizUseUrl = wizUseUrl;
+
+    function wizSave() {
+      var url = wiz.url || "";
+      if (!url) { toast("ยังไม่มีลิงก์ดาวน์โหลด — วางลิงก์จากเว็บผู้ผลิตก่อน"); return; }
+      fetch("/api/admin/driver-catalog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          device_type: wiz.device || "printer",
+          brand: wiz.brand,
+          model: wiz.model,
+          source_url: url
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "บันทึกไม่สำเร็จ"); return; }
+          toast("บันทึกไดร์ฟเวอร์แล้ว");
+          loadDriverCatalog();
+          document.getElementById("wizResultBox").innerHTML =
+            '<div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--green)">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' +
+            "<strong>บันทึกลงระบบแล้ว</strong></div>";
+          wiz.step = 4;
+          wizRender();
+        })
+        .catch(function () { toast("บันทึกไดร์ฟเวอร์ไม่สำเร็จ"); });
+    }
+
+    window.wizSave = wizSave;
+
+    // ---------- จัดการลิงก์ยี่ห้อ ----------
+    function openDriverLinks() {
+      loadDriverBrandLinks().then(function () {
+        renderDriverLinkList();
+        showView("driverLinkView");
+        openModal();
+      });
+    }
+
+    window.openDriverLinks = openDriverLinks;
+
+    function renderDriverLinkList() {
+      var box = document.getElementById("driverLinkList");
+      var brands = Object.keys(driverBrandLinks).sort();
+      if (!brands.length) {
+        box.innerHTML = '<p class="hint">ยังไม่มีลิงก์ยี่ห้อ — เพิ่มด้านล่าง</p>';
+        return;
+      }
+      box.innerHTML = brands.map(function (b) {
+        var url = driverBrandLinks[b] || "";
+        return '<div class="driver-link-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+          '<span style="font-weight:600;min-width:90px">' + esc(b) + "</span>" +
+          '<input type="text" value="' + esc(url) + '" data-brand="' + esc(b) + '" style="flex:1;min-width:200px" />' +
+          '<button class="btn btn-primary btn-sm" onclick="saveDriverLink(this)">บันทึก</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="clearDriverLink(this)">ล้าง</button>' +
+          "</div>";
+      }).join("");
+    }
+
+    function saveDriverLink(btn) {
+      var row = btn.parentNode;
+      var brand = row.querySelector("input").getAttribute("data-brand");
+      var url = row.querySelector("input").value.trim();
+      fetch("/api/admin/driver-brand-links/" + encodeURIComponent(brand), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ support_url: url })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "บันทึกไม่สำเร็จ"); return; }
+          driverBrandLinks[brand.toLowerCase()] = url;
+          toast("บันทึกลิงก์แล้ว");
+          renderDriverLinkList();
+        })
+        .catch(function () { toast("บันทึกลิงก์ไม่สำเร็จ"); });
+    }
+
+    window.saveDriverLink = saveDriverLink;
+
+    function clearDriverLink(btn) {
+      var row = btn.parentNode;
+      var brand = row.querySelector("input").getAttribute("data-brand");
+      fetch("/api/admin/driver-brand-links/" + encodeURIComponent(brand), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ support_url: "" })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            driverBrandLinks[brand.toLowerCase()] = "";
+            toast("ล้างลิงก์แล้ว");
+            renderDriverLinkList();
+          }
+        })
+        .catch(function () { toast("ล้างลิงก์ไม่สำเร็จ"); });
+    }
+
+    window.clearDriverLink = clearDriverLink;
+
+    function addDriverLinkRow() {
+      var brand = document.getElementById("dlNewBrand").value.trim();
+      var url = document.getElementById("dlNewUrl").value.trim();
+      if (!brand) { toast("กรอกยี่ห้อก่อน"); return; }
+      fetch("/api/admin/driver-brand-links/" + encodeURIComponent(brand), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ support_url: url })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "บันทึกไม่สำเร็จ"); return; }
+          driverBrandLinks[brand.toLowerCase()] = url;
+          document.getElementById("dlNewBrand").value = "";
+          document.getElementById("dlNewUrl").value = "";
+          toast("เพิ่มยี่ห้อแล้ว");
+          renderDriverLinkList();
+        })
+        .catch(function () { toast("เพิ่มยี่ห้อไม่สำเร็จ"); });
+    }
+
+    window.addDriverLinkRow = addDriverLinkRow;
+
+    // ---------- ลบไดร์ฟเวอร์ที่บันทึก ----------
+    function openDriverDelete(id) {
+      driverDeleteId = id;
+      var row = driverRecords.filter(function (r) { return r.id === id; })[0] || {};
+      document.getElementById("driverConfirmTitle").textContent =
+        (row.brand ? "“" + row.brand + " " + (row.model || "") + "”" : "รายการนี้");
+      showView("driverConfirmView");
+      openModal();
+    }
+
+    window.openDriverDelete = openDriverDelete;
+
+    function deleteDriverRecord() {
+      if (!driverDeleteId) { toast("เลือกรายการที่จะลบก่อน"); return; }
+      var id = driverDeleteId;
+      fetch("/api/admin/driver-catalog/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.message || "ลบไม่สำเร็จ"); return; }
+          toast("ลบไดร์ฟเวอร์แล้ว");
+          closeModal();
+          driverDeleteId = null;
+          loadDriverCatalog();
+        })
+        .catch(function () { toast("ลบไม่สำเร็จ"); });
+    }
+
+    window.deleteDriverRecord = deleteDriverRecord;
+
     // ---------- โน๊ตแจ้งซ่อม (Repair Notes) ----------
     function rnTicketOf(n) {
       if (!n) return null;
@@ -6895,6 +8397,58 @@ function applySuUser(username, permissions) {
   if (chosen && chosen.getAttribute("data-tab") !== "tickets") chosen.click();
 }
 
+/* ---------- สถานะระบบ: ผู้ล็อกอิน / จำนวนผู้ใช้ / Ping ---------- */
+(function () {
+  var box = document.getElementById("sideStatus");
+  if (!box) return;
+  var elName = document.getElementById("ssName");
+  var elUsers = document.getElementById("ssUsers");
+  var elVisitors = document.getElementById("ssVisitors");
+  var elPing = document.getElementById("ssPing");
+
+  function setOffline() {
+    box.classList.remove("is-online");
+    box.classList.add("is-offline");
+    if (elName) elName.textContent = "ออฟไลน์";
+    if (elPing) { elPing.textContent = "Ping -"; elPing.className = "ss-badge is-bad"; }
+  }
+
+  function tick() {
+    var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    fetch("/api/auth/status", { credentials: "same-origin", cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var t1 = (window.performance && performance.now) ? performance.now() : Date.now();
+        var ms = Math.max(0, Math.round(t1 - t0));
+        if (!d || !d.authed) { setOffline(); return; }
+        box.classList.remove("is-offline");
+        box.classList.add("is-online");
+        if (elName) elName.textContent = (d.role === "admin" ? "ผู้ดูแลระบบ: " : "ผู้ใช้: ") + (d.username || "-");
+        if (elUsers) {
+          elUsers.textContent = "ผู้ใช้ " + (d.users == null ? "-" : d.users);
+          elUsers.className = "ss-badge";
+        }
+        if (elVisitors) {
+          elVisitors.textContent = "ภายนอก " + (d.visitors == null ? "-" : d.visitors);
+          elVisitors.className = "ss-badge";
+        }
+        if (elPing) {
+          elPing.textContent = "Ping " + ms + " ms";
+          elPing.className = "ss-badge " + (ms <= 300 ? "is-good" : (ms <= 1000 ? "" : "is-bad"));
+        }
+      })
+      .catch(function () { setOffline(); });
+  }
+
+  tick();
+  setInterval(tick, 20000);
+  window.addEventListener("online", tick);
+  window.addEventListener("offline", setOffline);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) tick();
+  });
+})();
+
 fetch("/api/auth/me")
   .then(function (r) { return r.json(); })
   .then(function (d) {
@@ -7932,38 +9486,13 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     pnViewId = String(id == null ? "" : id);
     pnOverlay(
       '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
-      '<h3 class="pn-pop-title">ยืนยันตัวตน</h3>' +
-      '<p class="pn-pop-sub">กรอกรหัสลับ (PIN) เพื่อเข้าดูและคัดลอกข้อมูลที่บันทึกไว้</p>' +
-      '<p class="pn-pop-err hidden" id="pnPinErr"></p>' +
-      '<div class="pn-pop-field"><label for="pnPinInput">รหัส PIN</label>' +
-        '<input id="pnPinInput" type="password" maxlength="20" inputmode="numeric" autocomplete="off" spellcheck="false"></div>' +
-      '<div class="pn-pop-actions">' +
-        '<button class="pn-btn pn-btn-ghost" type="button" onclick="window.__pnClose&&window.__pnClose()">ยกเลิก</button>' +
-        '<button class="pn-btn pn-btn-primary" type="button" id="pnPinBtn" onclick="pnVerifyPin()">ยืนยัน</button>' +
-      "</div>"
+      '<h3 class="pn-pop-title">กำลังโหลด</h3>' +
+      '<p class="pn-pop-sub">กรุณารอสักครู่...</p>'
     );
-    var inp = pn$("pnPinInput");
-    if (inp) {
-      inp.focus();
-      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") pnVerifyPin(); });
-    }
-  };
-
-  window.pnVerifyPin = function () {
-    var err = pn$("pnPinErr");
-    var fail = function (msg) {
-      if (err) { err.textContent = msg; err.classList.remove("hidden"); }
-      var inp = pn$("pnPinInput");
-      if (inp) inp.select();
-    };
-    var pin = pn$("pnPinInput") ? pn$("pnPinInput").value : "";
-    if (!pin) return fail("กรอกรหัส PIN ก่อน");
-    var btn = pn$("pnPinBtn");
-    if (btn) { btn.disabled = true; btn.textContent = "กำลังตรวจสอบ..."; }
     fetch("/api/admin/password-notes/reveal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin: pin })
+      body: "{}"
     })
       .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
       .then(function (res) {
@@ -7973,13 +9502,21 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
           var shown = (d.notes || []).filter(function (n) { return pnViewId ? String(n.id) === pnViewId : true; });
           pnShowResult(shown);
         } else {
-          if (btn) { btn.disabled = false; btn.textContent = "ยืนยัน"; }
-          fail((d && d.message) || "PIN ไม่ถูกต้อง");
+          pnOverlay(
+            '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+            '<h3 class="pn-pop-title">เปิดไม่ได้</h3>' +
+            '<p class="pn-pop-sub">' + pnEsc((d && d.message) || "ไม่สามารถโหลดข้อมูลได้") + "</p>" +
+            '<div class="pn-pop-actions"><button class="pn-btn pn-btn-primary" type="button" onclick="window.__pnClose&&window.__pnClose()">ปิด</button></div>'
+          );
         }
       })
       .catch(function () {
-        if (btn) { btn.disabled = false; btn.textContent = "ยืนยัน"; }
-        fail("ตรวจสอบไม่สำเร็จ (server error)");
+        pnOverlay(
+          '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
+          '<h3 class="pn-pop-title">เปิดไม่ได้</h3>' +
+          '<p class="pn-pop-sub">เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ</p>' +
+          '<div class="pn-pop-actions"><button class="pn-btn pn-btn-primary" type="button" onclick="window.__pnClose&&window.__pnClose()">ปิด</button></div>'
+        );
       });
   };
 
@@ -7994,6 +9531,12 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
       return;
     }
     var items = notes.map(function (n) {
+      if (n.error) {
+        return '<div class="pn-rec">' +
+          '<div class="pn-rec-head">' + pnEsc(n.title) + "</div>" +
+          '<div class="pn-rec-row"><span class="pn-rec-label">สถานะ</span><span class="pn-rec-val" style="color:#b91c1c;">' + pnEsc(n.error) + "</span></div>" +
+        "</div>";
+      }
       return '<div class="pn-rec">' +
         '<div class="pn-rec-head">' + pnEsc(n.title) + "</div>" +
         '<div class="pn-rec-row"><span class="pn-rec-label">Username</span><span class="pn-rec-val" data-val="' + pnEsc(n.username) + '">' + pnEsc(n.username) + "</span>" +
@@ -8053,11 +9596,11 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     pnOverlay(
       '<button class="pn-pop-close" type="button" aria-label="ปิด">&times;</button>' +
       '<h3 class="pn-pop-title">ยืนยันตัวตน</h3>' +
-      '<p class="pn-pop-sub">กรอกรหัสผ่านที่ตั้งไว้สำหรับเข้า PASSWORD NOTE</p>' +
+      '<p class="pn-pop-sub">กรอกรหัสผ่านที่ตั้งไว้สำหรับเข้ารหัสผ่านส่วนตัว</p>' +
       '<p class="pn-pop-err hidden" id="pnAuthErr"></p>' +
       '<div class="pn-pop-field"><label for="pnAuthPass">รหัสผ่าน</label>' +
         '<div class="pn-pass-wrap">' +
-          '<input id="pnAuthPass" type="password" maxlength="200" autocomplete="current-password" spellcheck="false">' +
+          '<input id="pnAuthPass" type="password" maxlength="200" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">' +
           '<button class="pn-eye" type="button" onclick="pnAuthTogglePass()" aria-label="แสดง/ซ่อนรหัสผ่าน">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
           "</button>" +

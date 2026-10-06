@@ -1,0 +1,134 @@
+/* ---------- บันทึกปฏิบัติงานนอกสถานที่ (Field Work) ---------- */
+.fw-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+
+.fw-table th,
+.fw-table td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.fw-table th {
+  background: var(--green-soft, #eef5f1);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fw-table tbody tr:nth-child(even) { background: #fafcfb; }
+.fw-table .fw-times { white-space: nowrap; }
+
+.fw-modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.fw-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #f4f7f6;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+.fw-mode svg { width: 15px; height: 15px; }
+.fw-mode:hover { border-color: var(--green); color: var(--green-dark); }
+
+.fw-mode.is-active {
+  color: #fff;
+  background: var(--green, #15803d);
+  border-color: var(--green-dark, #14532d);
+}
+
+.fw-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: -4px 0 12px;
+}
+
+.fw-times-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fw-drop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+  background: #fafcfb;
+  cursor: pointer;
+}
+
+.fw-drop:hover { border-color: var(--green); color: var(--green-dark); }
+.fw-drop svg { width: 17px; height: 17px; flex: 0 0 17px; }
+
+.fw-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.fw-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: #f1f4f3;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 3px 6px 3px 8px;
+  max-width: 260px;
+}
+
+.fw-file.is-new { background: #fff7ed; border-color: #fed7aa; }
+.fw-file a { color: var(--blue); word-break: break-all; }
+.fw-file button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  padding: 0 2px;
+}
+.fw-file button:hover { color: var(--red); }
+
+.fw-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.fw-msg {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .fw-times-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
