@@ -501,6 +501,16 @@ body.app-nav { font-size: 16px; }
 .vg-line-btn:active { transform: scale(0.985); }
 .vg-line-ic { display: inline-flex; }
 .vg-line-ic svg { width: 20px; height: 20px; display: block; }
+.vg-line-off {
+  margin: 4px 0 2px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 214, 102, 0.18);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.6;
+  text-align: center;
+}
 .vg-or {
   display: flex;
   align-items: center;

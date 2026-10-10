@@ -28,18 +28,19 @@
     injected = true;
     var wrap = document.createElement("div");
     wrap.className = "vg-line-wrap";
-    wrap.innerHTML =
-      '<button type="button" class="vg-line-btn" id="vgLineBtn">' +
-        LINE_ICON + "<span>เข้าสู่ระบบด้วย LINE</span>" +
-      "</button>" +
-      '<div class="vg-or"><span>หรือกรอกข้อมูลด้านล่าง</span></div>';
+    if (enabled) {
+      wrap.innerHTML = '<button type="button" class="vg-line-btn" id="vgLineBtn">' +
+        LINE_ICON + "<span>เข้าสู่ระบบด้วย LINE</span></button>";
+      var btn = wrap.querySelector("#vgLineBtn");
+      btn.addEventListener("click", function () {
+        var next = window.location.pathname + window.location.search;
+        window.location.href = "/auth/line/login?next=" + encodeURIComponent(next);
+      });
+    } else {
+      wrap.innerHTML = '<p class="vg-line-off">ระบบเข้าสู่ระบบด้วย LINE ยังไม่เปิดใช้งาน กรุณาติดต่อฝ่าย IT</p>';
+    }
     slot.appendChild(wrap);
     if (slot.parentElement) slot.parentElement.classList.add("vg-has-line");
-    var btn = wrap.querySelector("#vgLineBtn");
-    btn.addEventListener("click", function () {
-      var next = window.location.pathname + window.location.search;
-      window.location.href = "/auth/line/login?next=" + encodeURIComponent(next);
-    });
   }
 
   function scan() {
@@ -94,7 +95,7 @@
       .then(function (r) { return r.json(); })
       .then(function (cfg) {
         enabled = !!(cfg && cfg.lineLogin && cfg.lineLogin.enabled);
-        if (enabled) watch();
+        watch();
       })
       .catch(function () {});
   }
