@@ -52,7 +52,7 @@
   function errorText(code) {
     if (code === "disabled") return "ระบบยังไม่เปิดใช้งานเข้าสู่ระบบด้วย LINE";
     if (code === "denied") return "ยกเลิกการเข้าสู่ระบบด้วย LINE";
-    return "เข้าสู่ระบบด้วย LINE ไม่สำเร็จ กรุณาลองใหม่";
+    return "เข้าสู่ระบบด้วย LINE ไม่สำเร็จ (" + code + ") กรุณาลองใหม่อีกครั้ง";
   }
 
   // แจ้งเตือนผลลัพธ์ที่แนบมากับ URL หลัง redirect กลับจาก LINE
