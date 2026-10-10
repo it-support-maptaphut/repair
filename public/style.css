@@ -3675,13 +3675,11 @@ body.app-nav .settings-section { letter-spacing: 0.6px; }
 
 /* ---- SETTINGS: แก้แถวหัวขาวทึบ -> แก้ว ลอยสม่ำเสมอ + เนื้อในเกลาให้เข้ากับธีม ---- */
 body.app-nav .settings-top {
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  position: static;
   background: transparent;
   border-radius: 26px 26px 0 0;
   margin: -24px -22px 0;
-  padding: 24px 22px 12px;
+  padding: 24px 22px 8px;
 }
 body.app-nav .settings-title {
   background: linear-gradient(120deg, #007848, #00c97d);
