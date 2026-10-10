@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const puppeteer = require("puppeteer-core");
 
 const PAGE_FILE = path.join(__dirname, "public", "repair-intake-print.html");
 
@@ -18,7 +17,13 @@ const CHROME_CANDIDATES = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ];
 
+function isServerless() {
+  return !!(process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
 function findChrome() {
+  // บน Vercel/serverless ไม่มี Chrome ให้เรียกใช้ -> ปิดการสร้าง PDF แล้วให้หน้าเว็บ fallback ไปพิมพ์เอง
+  if (isServerless()) return null;
   for (const p of CHROME_CANDIDATES) {
     if (!p) continue;
     try {
@@ -28,12 +33,33 @@ function findChrome() {
   return null;
 }
 
+// โหลด puppeteer-core แบบ lazy ผ่าน eval("require") โดยตั้งใจ
+// เหตุผล: ถ้า require("puppeteer-core") ตรง ๆ ตอน import บน Vercel
+// bundler จะพยายามแพ็กไฟล์ dynamic ของ puppeteer ไม่ครบ ทำให้ฟังก์ชันล่มทั้งระบบ
+// (500 FUNCTION_INVOCATION_FAILED) — eval ทำให้ bundler ไม่แตะ
+let puppeteerLoaded = false;
+let puppeteerModule = null;
+function loadPuppeteer() {
+  if (puppeteerLoaded) return puppeteerModule;
+  puppeteerLoaded = true;
+  try {
+    // eslint-disable-next-line no-eval
+    const localRequire = eval("require");
+    puppeteerModule = localRequire("puppeteer-core");
+  } catch (e) {
+    puppeteerModule = null;
+  }
+  return puppeteerModule;
+}
+
 let browserPromise = null;
 
 function getBrowser() {
   if (browserPromise) return browserPromise;
   const exe = findChrome();
   if (!exe) return Promise.reject(new Error("chrome-not-found"));
+  const puppeteer = loadPuppeteer();
+  if (!puppeteer) return Promise.reject(new Error("chrome-not-found"));
   browserPromise = puppeteer
     .launch({
       executablePath: exe,
@@ -59,12 +85,14 @@ async function buildRepairIntakePdf(item) {
     await page.evaluate(async () => {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
     });
-    const buffer = Buffer.from(await page.pdf({
-      format: "A4",
-      printBackground: true,
-      preferCSSPageSize: true,
-      displayHeaderFooter: false
-    }));
+    const buffer = Buffer.from(
+      await page.pdf({
+        format: "A4",
+        printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: false
+      })
+    );
     return buffer;
   } finally {
     await page.close().catch(() => {});

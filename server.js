@@ -2215,7 +2215,8 @@ app.get("/api/admin/repair-intakes/:id/pdf", async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return fail(400, "รหัสไม่ถูกต้อง");
     if (!adapter.ready) return fail(500, "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env");
-    if (!riPdf.hasChrome()) return fail(501, "ไม่พบ Chrome ในเครื่องนี้ กรุณาใช้ปุ่มพิมพ์แบบปกติ");
+    // ถ้าไม่มี Chrome (เช่น รันบน Vercel/serverless) ให้พาไปหน้าพิมพ์ของเบราว์เซอร์แทน
+    if (!riPdf.hasChrome()) return res.redirect("/repair-intake-print.html?id=" + encodeURIComponent(req.params.id));
     const item = await adapter.getRepairIntake(id);
     if (!item) return fail(404, "ไม่พบรายการบันทึกอุปกรณ์ที่นำมาซ่อม");
     const buffer = await riPdf.buildRepairIntakePdf(item);
@@ -2225,7 +2226,7 @@ app.get("/api/admin/repair-intakes/:id/pdf", async (req, res) => {
     res.send(buffer);
   } catch (err) {
     console.error(err);
-    if (/chrome-not-found/.test(err.message || "")) return fail(501, "ไม่พบ Chrome ในเครื่องนี้ กรุณาใช้ปุ่มพิมพ์แบบปกติ");
+    if (/chrome-not-found/.test(err.message || "")) return res.redirect("/repair-intake-print.html?id=" + encodeURIComponent(req.params.id));
     fail(500, "server error");
   }
 });
