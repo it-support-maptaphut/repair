@@ -298,7 +298,31 @@ function createSupabaseAdapter() {
     async deleteFieldWorkLog(id) {
       return supabaseModule.deleteFieldWorkLog(id);
     },
-    
+
+    async genRepairIntakeNo() {
+      return supabaseModule.genRepairIntakeNo();
+    },
+
+    async listRepairIntakes(limit) {
+      return supabaseModule.listRepairIntakes(limit);
+    },
+
+    async getRepairIntake(id) {
+      return supabaseModule.getRepairIntake(id);
+    },
+
+    async createRepairIntake(entry) {
+      return supabaseModule.createRepairIntake(entry);
+    },
+
+    async updateRepairIntake(id, entry) {
+      return supabaseModule.updateRepairIntake(id, entry);
+    },
+
+    async deleteRepairIntake(id) {
+      return supabaseModule.deleteRepairIntake(id);
+    },
+
     async listRepairNotes(limit = 500) {
       return supabaseModule.listRepairNotes(limit);
     },
@@ -672,6 +696,57 @@ function createPostgresAdapter() {
       return true;
     } catch (err) {
       console.error("[PostgreSQL] เตรียมตารางบันทึกปฏิบัติงานนอกสถานที่ไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
+  // ---------- ระบบบันทึกอุปกรณ์ที่นำมาซ่อม (Repair Intake) ----------
+  let repairIntakesReady = false;
+  const REPAIR_INTAKE_STATUSES = ["ดำเนินการซ่อม", "รอซื้ออะไหล่", "ไม่สามารถซ่อมได้ ต้องซื้อใหม่", "เสร็จสิ้น"];
+
+  const repairIntakeStatus = (v) => {
+    const s = String(v == null ? "" : v).trim();
+    return REPAIR_INTAKE_STATUSES.indexOf(s) >= 0 ? s : REPAIR_INTAKE_STATUSES[0];
+  };
+
+  const repairIntakeValues = (input) => {
+    const d = input || {};
+    return [
+      String(d.intakeNo || "").trim(),
+      String(d.deviceType || "").trim(),
+      String(d.model || "").trim(),
+      String(d.branch || "").trim(),
+      String(d.photoUrl || "").trim(),
+      String(d.symptomPhotoUrl || "").trim(),
+      String(d.detail || "").trim(),
+      repairIntakeStatus(d.status)
+    ];
+  };
+
+  const ensureRepairIntakes = async () => {
+    if (repairIntakesReady) return true;
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS repair_intakes (
+          id serial PRIMARY KEY,
+          intake_no text UNIQUE NOT NULL DEFAULT '',
+          device_type text NOT NULL DEFAULT '',
+          model text NOT NULL DEFAULT '',
+          branch text NOT NULL DEFAULT '',
+          photo_url text NOT NULL DEFAULT '',
+          symptom_photo_url text NOT NULL DEFAULT '',
+          detail text NOT NULL DEFAULT '',
+          status text NOT NULL DEFAULT 'ดำเนินการซ่อม',
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS repair_intakes_created_at_idx ON repair_intakes (created_at DESC);
+        CREATE INDEX IF NOT EXISTS repair_intakes_status_idx ON repair_intakes (status);
+      `);
+      repairIntakesReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมตารางบันทึกอุปกรณ์ที่นำมาซ่อมไม่สำเร็จ:", err.message);
       return false;
     }
   };
@@ -1659,6 +1734,63 @@ function createPostgresAdapter() {
     async deleteFieldWorkLog(id) {
       await ensureFieldWorkTables();
       const result = await query(`DELETE FROM field_work_logs WHERE id = $1 RETURNING id`, [id]);
+      return result.rows || [];
+    },
+
+    // ---------- ระบบบันทึกอุปกรณ์ที่นำมาซ่อม ----------
+    async genRepairIntakeNo() {
+      await ensureRepairIntakes();
+      const result = await query(`SELECT intake_no FROM repair_intakes WHERE intake_no LIKE 'RPR-%' ORDER BY id DESC LIMIT 1`);
+      const row = result.rows[0];
+      const m = /(\d+)\s*$/.exec(row ? row.intake_no : "");
+      const seq = row && m ? parseInt(m[1], 10) + 1 : 1;
+      return "RPR-" + String(seq).padStart(3, "0");
+    },
+
+    async listRepairIntakes(limit = 500) {
+      await ensureRepairIntakes();
+      const result = await query(
+        `SELECT * FROM repair_intakes ORDER BY created_at DESC LIMIT $1`,
+        [limit]
+      );
+      return result.rows;
+    },
+
+    async getRepairIntake(id) {
+      await ensureRepairIntakes();
+      const result = await query(`SELECT * FROM repair_intakes WHERE id = $1`, [id]);
+      return result.rows[0] || null;
+    },
+
+    async createRepairIntake(entry) {
+      await ensureRepairIntakes();
+      const v = repairIntakeValues(entry);
+      const result = await query(
+        `INSERT INTO repair_intakes
+           (intake_no, device_type, model, branch, photo_url, symptom_photo_url, detail, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         RETURNING *`,
+        v
+      );
+      return result.rows[0] || null;
+    },
+
+    async updateRepairIntake(id, entry) {
+      await ensureRepairIntakes();
+      const v = repairIntakeValues(entry);
+      const result = await query(
+        `UPDATE repair_intakes SET
+            intake_no = $1, device_type = $2, model = $3, branch = $4, photo_url = $5,
+            symptom_photo_url = $6, detail = $7, status = $8, updated_at = now()
+          WHERE id = $9 RETURNING *`,
+        [...v, id]
+      );
+      return result.rows[0] || null;
+    },
+
+    async deleteRepairIntake(id) {
+      await ensureRepairIntakes();
+      const result = await query(`DELETE FROM repair_intakes WHERE id = $1 RETURNING id`, [id]);
       return result.rows || [];
     },
     

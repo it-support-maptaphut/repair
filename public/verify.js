@@ -64,7 +64,7 @@
         '<div class="vg-head">' +
           '<div class="vg-logo"><img class="vg-logo-img" src="logo-ticket/logo-wan.png" alt=""></div>' +
           '<h2 class="vg-title">ขอทราบว่าคุณคือใคร</h2>' +
-          '<p class="vg-sub" id="vgSub">กรอกชื่อและตำแหน่ง แล้วเข้าใช้งานได้ทันที<br>ไม่ต้องสมัคร ไม่ต้องตั้งรหัสผ่าน</p>' +
+          '<p class="vg-sub" id="vgSub">กรอกชื่อ / ตำแหน่ง / ประจำสาขา เพื่อเข้าใช้งานระบบ</p>' +
         "</div>" +
 
         // ---- กรอกชื่อ + ตำแหน่ง ----
@@ -74,17 +74,24 @@
             '<input type="text" id="vgName" class="vg-input" maxlength="60" autocomplete="given-name">' +
             '<label for="vgPosition" class="vg-label">ตำแหน่ง <span class="vg-req">*</span></label>' +
             '<input type="text" id="vgPosition" class="vg-input" maxlength="120" autocomplete="organization-title">' +
-            '<label for="vgBranch" class="vg-label">ประจำสาขา <span class="vg-req">*</span></label>' +
-            '<div class="vg-select">' +
-              '<select id="vgBranch" class="vg-input vg-select-input is-placeholder">' +
+            '<label for="vgBranchTrigger" class="vg-label">ประจำสาขา <span class="vg-req">*</span></label>' +
+            '<div class="vg-select" id="vgBranchWrap">' +
+              '<select id="vgBranch" class="vg-hidden-select is-placeholder" tabindex="-1" aria-hidden="true">' +
                 '<option value="">เลือกสาขาที่คุณประจำอยู่</option>' +
                 '<option value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)">ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)</option>' +
                 '<option value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)">ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)</option>' +
                 '<option value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)">ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)</option>' +
                 '<option value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)">ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)</option>' +
               "</select>" +
+              '<button type="button" id="vgBranchTrigger" class="vg-trigger is-placeholder" aria-haspopup="listbox" aria-expanded="false" aria-controls="vgBranchList">เลือกสาขาที่คุณประจำอยู่</button>' +
               '<span class="vg-select-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>' +
               '<span class="vg-select-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>' +
+              '<ul class="vg-dropdown hidden" id="vgBranchList" role="listbox" aria-label="ประจำสาขา">' +
+                '<li role="option" data-val="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)"><span class="vg-opt-txt">ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)</span><svg class="vg-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></li>' +
+                '<li role="option" data-val="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)"><span class="vg-opt-txt">ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)</span><svg class="vg-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></li>' +
+                '<li role="option" data-val="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)"><span class="vg-opt-txt">ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)</span><svg class="vg-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></li>' +
+                '<li role="option" data-val="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)"><span class="vg-opt-txt">ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)</span><svg class="vg-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></li>' +
+              "</ul>" +
             "</div>" +
           "</div>" +
           '<button id="vgNext" class="vg-btn" type="button">เข้าใช้งาน</button>' +
@@ -133,15 +140,105 @@
       el.addEventListener("input", function () { el.classList.remove("invalid"); hideErr(); });
     });
     if (els.branch) {
-      var syncBranch = function () {
-        els.branch.classList.toggle("is-placeholder", !els.branch.value);
+      var wrap = document.getElementById("vgBranchWrap");
+      var trigger = document.getElementById("vgBranchTrigger");
+      var list = document.getElementById("vgBranchList");
+      var options = list ? Array.prototype.slice.call(list.querySelectorAll('[role="option"]')) : [];
+      els.branchTrigger = trigger;
+      els.branchList = list;
+      var activeIdx = -1;
+
+      var closeList = function () {
+        if (!list) return;
+        list.classList.add("hidden");
+        if (wrap) wrap.classList.remove("is-open");
+        if (trigger) trigger.setAttribute("aria-expanded", "false");
       };
-      syncBranch();
-      els.branch.addEventListener("change", function () {
+
+      var highlight = function (i) {
+        options.forEach(function (li, k) { li.classList.toggle("is-active", k === i); });
+        if (options[i] && options[i].scrollIntoView) {
+          try { options[i].scrollIntoView({ block: "nearest" }); } catch (e) { options[i].scrollIntoView(true); }
+        }
+      };
+
+      var syncBranch = function () {
+        var val = els.branch.value;
+        if (trigger) {
+          trigger.textContent = val ? val : "เลือกสาขาที่คุณประจำอยู่";
+          trigger.classList.toggle("is-placeholder", !val);
+          trigger.setAttribute("aria-expanded", list && !list.classList.contains("hidden") ? "true" : "false");
+        }
+        options.forEach(function (li) {
+          var sel = li.getAttribute("data-val") === val;
+          li.classList.toggle("is-selected", sel);
+          li.setAttribute("aria-selected", sel ? "true" : "false");
+        });
+      };
+
+      var setBranch = function (val) {
+        els.branch.value = val;
         els.branch.classList.remove("invalid");
+        if (trigger) trigger.classList.remove("invalid");
         hideErr();
         syncBranch();
+        closeList();
+      };
+
+      var openList = function () {
+        if (!list || !list.classList.contains("hidden")) return;
+        list.classList.remove("hidden");
+        if (wrap) wrap.classList.add("is-open");
+        if (trigger) trigger.setAttribute("aria-expanded", "true");
+        activeIdx = -1;
+        for (var k = 0; k < options.length; k++) {
+          if (options[k].classList.contains("is-selected")) { activeIdx = k; break; }
+        }
+        highlight(activeIdx);
+      };
+
+      if (trigger) {
+        trigger.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (list && !list.classList.contains("hidden")) closeList();
+          else openList();
+        });
+        trigger.addEventListener("keydown", function (e) {
+          if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            openList();
+          } else if (e.key === "Escape") {
+            closeList();
+          }
+        });
+      }
+
+      options.forEach(function (li) {
+        li.addEventListener("mousedown", function (e) { e.preventDefault(); });
+        li.addEventListener("click", function () {
+          setBranch(li.getAttribute("data-val"));
+          if (trigger) trigger.focus();
+        });
       });
+
+      if (list) {
+        list.addEventListener("keydown", function (e) {
+          if (e.key === "ArrowDown") { e.preventDefault(); activeIdx = Math.min(options.length - 1, activeIdx + 1); highlight(activeIdx); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); activeIdx = Math.max(0, activeIdx - 1); highlight(activeIdx); }
+          else if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (options[activeIdx]) setBranch(options[activeIdx].getAttribute("data-val"));
+            if (trigger) trigger.focus();
+          }
+          else if (e.key === "Escape") { e.preventDefault(); closeList(); if (trigger) trigger.focus(); }
+        });
+      }
+
+      document.addEventListener("click", function (e) {
+        if (wrap && !wrap.contains(e.target) && list && !list.classList.contains("hidden")) closeList();
+      });
+
+      syncBranch();
     }
     // Key Pass พิมพ์เป็นตัวใหญ่เสมอ และตัดช่องว่างออกให้อัตโนมัติ
     els.kpInput.addEventListener("input", function () {
@@ -177,7 +274,7 @@
     if (name === "login") {
       els.sub.innerHTML = "กรอก Key Pass 5 ตัวที่คุณบันทึกไว้<br>เพื่อกลับเข้าบัญชีเดิมจากเครื่องอื่น";
     } else {
-      els.sub.innerHTML = "กรอกชื่อและตำแหน่ง แล้วเข้าใช้งานได้ทันที<br>ไม่ต้องสมัคร ไม่ต้องตั้งรหัสผ่าน";
+      els.sub.innerHTML = "กรอกชื่อ / ตำแหน่ง / ประจำสาขา เพื่อเข้าใช้งานระบบ";
     }
   }
 
@@ -241,7 +338,7 @@
     var branch = els.branch ? els.branch.value.trim() : "";
     if (!name) { markInvalid(els.name); showErr("กรุณากรอกชื่อ"); return; }
     if (!position) { markInvalid(els.position); showErr("กรุณากรอกตำแหน่ง"); return; }
-    if (!branch) { markInvalid(els.branch); showErr("กรุณาเลือกสาขา"); return; }
+    if (!branch) { markInvalid(els.branchTrigger || els.branch); showErr("กรุณาเลือกสาขา"); return; }
     lock(true);
     api("/api/visitors", {
       method: "POST",

@@ -2809,6 +2809,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span>ตรวจสอบประกัน</span>
           </button>
+          <button class="side-btn" data-tab="repairIntake" data-perm="repairIntake" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/><path d="M15 5v4M13 7h4"/></svg>
+            <span>อุปกรณ์ที่นำมาซ่อม</span>
+          </button>
         </div>
         <div class="mob-cat-body" data-cat-body="private" hidden>
           <button class="side-btn" data-tab="pwIP" data-perm="pwIP" type="button">
@@ -3438,9 +3442,151 @@
       </main>
     </section>
 
+    <section id="repairIntakeView" hidden>
+      <section class="stats">
+        <div class="stat-card stat-all">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <div><div class="stat-num" id="riStatAll">0</div><div class="stat-label">รายการทั้งหมด</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div><div class="stat-num" id="riStatFixing">0</div><div class="stat-label">กำลังดำเนินการซ่อม</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div><div class="stat-num" id="riStatDone">0</div><div class="stat-label">เสร็จสิ้น</div></div>
+        </div>
+      </section>
+
+      <main>
+        <div class="mbar">
+          <select id="riStatusFilter" onchange="renderRepairIntakes()" title="กรองตามสถานะ">
+            <option value="">ทุกสถานะ</option>
+            <option value="ดำเนินการซ่อม">ดำเนินการซ่อม</option>
+            <option value="รอซื้ออะไหล่">รอซื้ออะไหล่</option>
+            <option value="ไม่สามารถซ่อมได้ ต้องซื้อใหม่">ไม่สามารถซ่อมได้ ต้องซื้อใหม่</option>
+            <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+          </select>
+          <select id="riBranchFilter" onchange="renderRepairIntakes()" title="กรองตามสาขา">
+            <option value="">ทุกสาขา</option>
+          </select>
+          <input id="riSearch" type="search" placeholder="ค้น ประเภทอุปกรณ์ / รุ่น / รายละเอียด / เลขที่" oninput="renderRepairIntakes()" />
+          <button class="btn btn-primary" type="button" onclick="openRepairIntakeForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            เพิ่มอุปกรณ์ที่นำมาซ่อม
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="fw-table">
+            <thead>
+              <tr>
+                <th>เลขที่ / วันที่</th>
+                <th>ประเภทอุปกรณ์ · รุ่น</th>
+                <th>สาขา</th>
+                <th>รูปอุปกรณ์</th>
+                <th>อาการเสีย</th>
+                <th>สถานะ</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="riBody"></tbody>
+          </table>
+        </div>
+        <div id="riEmpty" class="empty hidden">
+          <p>ยังไม่มีรายการอุปกรณ์ที่นำมาซ่อม — กด "เพิ่มอุปกรณ์ที่นำมาซ่อม" เพื่อเริ่มบันทึก</p>
+        </div>
+      </main>
+    </section>
+
+    <div class="modal-mask hidden" id="riFormMask" role="dialog" aria-modal="true" aria-label="บันทึกอุปกรณ์ที่นำมาซ่อม" onclick="if(event.target===this) closeRepairIntakeForm()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeRepairIntakeForm()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title" id="riFormTitle">เพิ่มอุปกรณ์ที่นำมาซ่อม</h3>
+
+          <div class="trv-field">
+            <label for="riType">ประเภทอุปกรณ์ *</label>
+            <select id="riType" required></select>
+          </div>
+
+          <div class="trv-field">
+            <label for="riModel">ชื่อรุ่น *</label>
+            <input id="riModel" type="text" placeholder="เช่น HP LaserJet Pro M404dn" required />
+          </div>
+
+          <div class="trv-field">
+            <label for="riBranch">สาขา</label>
+            <select id="riBranch">
+              <option value="">-- เลือกสาขา --</option>
+              <option value="1">วรรณสาขา 1 วรรณกิจเจริญ</option>
+              <option value="3">วรรณสาขา 3 วรรณกิจเจริญ</option>
+              <option value="4">วรรณสาขา 4 มาบตาพุต</option>
+              <option value="5">วรรณสาขา 5 บ้านฉาง</option>
+            </select>
+          </div>
+
+          <div class="trv-field">
+            <label>รูปภาพอุปกรณ์</label>
+            <div class="img-grid img-xs" id="riPhotoPrev"></div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                เลือกรูปอุปกรณ์
+                <input type="file" accept="image/*" style="display:none" onchange="riPickPhoto(this, 'photo')" />
+              </label>
+              <button class="btn btn-ghost btn-sm" type="button" id="riPhotoClear" style="display:none" onclick="riClearPhoto('photo')">ลบรูปนี้</button>
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label>รูปภาพอาการเสีย</label>
+            <div class="img-grid img-xs" id="riSymptomPrev"></div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                เลือกรูปอาการเสีย
+                <input type="file" accept="image/*" style="display:none" onchange="riPickPhoto(this, 'symptom')" />
+              </label>
+              <button class="btn btn-ghost btn-sm" type="button" id="riSymptomClear" style="display:none" onclick="riClearPhoto('symptom')">ลบรูปนี้</button>
+            </div>
+          </div>
+
+          <div class="trv-field">
+            <label for="riDetail">รายละเอียดอาการเสีย</label>
+            <textarea id="riDetail" rows="3" placeholder="อธิบายอาการเสีย / สิ่งที่สังเกตได้"></textarea>
+          </div>
+
+          <div class="trv-field">
+            <label for="riStatus">สถานะ</label>
+            <select id="riStatus">
+              <option value="ดำเนินการซ่อม">ดำเนินการซ่อม</option>
+              <option value="รอซื้ออะไหล่">รอซื้ออะไหล่</option>
+              <option value="ไม่สามารถซ่อมได้ ต้องซื้อใหม่">ไม่สามารถซ่อมได้ ต้องซื้อใหม่</option>
+              <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+            </select>
+          </div>
+
+          <div class="fw-actions">
+            <button class="btn btn-primary" type="button" id="riSaveBtn" onclick="saveRepairIntake()">บันทึก</button>
+          </div>
+          <div class="fw-msg" id="riFormMsg"></div>
+        </div>
+      </div>
+    </div>
+
     <section id="fieldWorkView" hidden>
       <main>
         <div class="mbar">
+          <select id="fwBranchFilter" onchange="renderFieldWork()" title="กรองตามสาขา">
+            <option value="">ทุกสาขา</option>
+          </select>
           <input id="fwSearch" type="search" placeholder="ค้นสถานที่ / รายละเอียด / ผู้บันทึก" oninput="renderFieldWork()" />
           <button class="btn btn-primary" type="button" onclick="openFieldWorkForm()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -3558,7 +3704,7 @@
       </div>
     </div>
 
-    <div class="modal-mask hidden" id="travelClaimMask" role="dialog" aria-modal="true" aria-label="ระบบเบิกค่าเดินทาง" onclick="if(event.target===this) closeTravelClaimForm()">
+    <div class="modal-mask hidden" id="travelClaimMask" role="dialog" aria-modal="true" aria-label="ระบบเบิกค่าเดินทาง">
       <div class="modal">
         <button class="modal-close" type="button" title="ปิด" onclick="closeTravelClaimForm()">&times;</button>
         <div class="modal-body">
@@ -3628,7 +3774,6 @@
           <p class="trv-msg" id="trvFormMsg"></p>
 
           <div class="modal-actions">
-            <button class="btn btn-ghost" type="button" onclick="closeTravelClaimForm()">ยกเลิก</button>
             <button class="btn btn-primary" type="button" id="trvSaveBtn" onclick="saveTravelClaim()">บันทึกใบเบิก</button>
           </div>
         </div>
@@ -5402,6 +5547,70 @@
       if (selectedId) sel.value = String(selectedId);
     }
 
+    // ---------- ฉบับร่าง (auto-save ระหว่างกรอกใบเบิกค่าเดินทาง) ----------
+    var TRV_DRAFT_KEY = "wan_travel_claim_draft";
+    var trvDraftTimer = null;
+
+    function trvDraftRead() {
+      try {
+        var raw = localStorage.getItem(TRV_DRAFT_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function trvDraftHasContent(d) {
+      if (!d) return false;
+      if (d.claimerVisitorId || String(d.position || "").trim() || String(d.accountName || "").trim() ||
+        String(d.bankName || "").trim() || String(d.bankAccount || "").trim() || String(d.note || "").trim() ||
+        (String(d.status || "") && String(d.status) !== "รอดำเนินการ")) return true;
+      return (d.trips || []).some(function (t) {
+        return trvNum(t.km) > 0 || String(t.purpose || "").trim();
+      });
+    }
+
+    function trvCollectDraft() {
+      var el = function (id) { return document.getElementById(id); };
+      var rows = Array.prototype.slice.call(document.querySelectorAll("#trvTripsBody tr"));
+      var trips = rows.map(function (tr) {
+        var g = function (f) { var e2 = tr.querySelector("[data-f='" + f + "']"); return e2 ? e2.value : ""; };
+        return { date: g("date"), purpose: g("purpose"), km: g("km"), vehicle: g("vehicle") };
+      }).filter(function (t) { return trvNum(t.km) > 0 || String(t.purpose || "").trim(); });
+      return {
+        v: 1,
+        savedAt: Date.now(),
+        claimerVisitorId: el("trvClaimer") ? el("trvClaimer").value : "",
+        claimDate: el("trvClaimDate") ? el("trvClaimDate").value : "",
+        position: el("trvPosition") ? el("trvPosition").value : "",
+        accountName: el("trvAccountName") ? el("trvAccountName").value : "",
+        bankName: el("trvBankName") ? el("trvBankName").value : "",
+        bankAccount: el("trvBankAccount") ? el("trvBankAccount").value : "",
+        note: el("trvNote") ? el("trvNote").value : "",
+        status: el("trvStatus") ? el("trvStatus").value : "",
+        trips: trips
+      };
+    }
+
+    function trvSaveDraft() {
+      var mask = document.getElementById("travelClaimMask");
+      if (!mask || mask.classList.contains("hidden")) return;
+      if (travelEditingId) return;
+      try {
+        var d = trvCollectDraft();
+        if (!trvDraftHasContent(d)) localStorage.removeItem(TRV_DRAFT_KEY);
+        else localStorage.setItem(TRV_DRAFT_KEY, JSON.stringify(d));
+      } catch (e) {}
+    }
+
+    function trvSaveDraftSoon() {
+      clearTimeout(trvDraftTimer);
+      trvDraftTimer = setTimeout(trvSaveDraft, 400);
+    }
+
+    function trvClearDraft() {
+      clearTimeout(trvDraftTimer);
+      try { localStorage.removeItem(TRV_DRAFT_KEY); } catch (e) {}
+    }
+
     function openTravelClaimForm(id) {
       loadTravelClaimers();
       travelEditingId = id ? Number(id) : null;
@@ -5418,16 +5627,27 @@
         if (!claim) { toast("ไม่พบใบเบิกค่าเดินทางที่ต้องการแก้ไข"); return; }
       }
 
-      trvFillClaimerSelect(claim ? claim.claimer_visitor_id : "");
-      var el = function (id2) { return document.getElementById(id2); };
-      if (el("trvClaimDate")) el("trvClaimDate").value = claim ? String(claim.claim_date || "").slice(0, 10) : trvToday();
-      if (el("trvPosition")) el("trvPosition").value = claim ? claim.position || "" : "";
-      if (el("trvAccountName")) el("trvAccountName").value = claim ? claim.account_name || "" : "";
-      if (el("trvBankName")) el("trvBankName").value = claim ? claim.bank_name || "" : (travelSettings.travel_bank_name || "");
-      if (el("trvBankAccount")) el("trvBankAccount").value = claim ? claim.bank_account || "" : "";
-      if (el("trvNote")) el("trvNote").value = claim ? claim.note || "" : "";
+      // ดึงข้อมูลร่างล่าสุดกลับมาทันที (เฉพาะตอนสร้างใหม่)
+      var draft = travelEditingId ? null : trvDraftRead();
+      if (!trvDraftHasContent(draft)) draft = null;
+      if (draft) toast("ดึงข้อมูลที่กรอกไว้ล่าสุดกลับมาให้แล้ว");
+      var dr = draft || {};
 
-      var trips = claim ? trvParseTrips(claim) : [];
+      trvFillClaimerSelect(claim ? claim.claimer_visitor_id : (dr.claimerVisitorId || ""));
+      var el = function (id2) { return document.getElementById(id2); };
+      var pick = function (fromClaim, fromDraft, def) {
+        if (claim) return fromClaim;
+        if (draft) return fromDraft;
+        return def;
+      };
+      if (el("trvClaimDate")) el("trvClaimDate").value = pick(claim ? String(claim.claim_date || "").slice(0, 10) : "", dr.claimDate || trvToday(), trvToday());
+      if (el("trvPosition")) el("trvPosition").value = pick(claim ? claim.position || "" : "", dr.position || "", "");
+      if (el("trvAccountName")) el("trvAccountName").value = pick(claim ? claim.account_name || "" : "", dr.accountName || "", "");
+      if (el("trvBankName")) el("trvBankName").value = pick(claim ? claim.bank_name || "" : "", dr.bankName || "", travelSettings.travel_bank_name || "");
+      if (el("trvBankAccount")) el("trvBankAccount").value = pick(claim ? claim.bank_account || "" : "", dr.bankAccount || "", "");
+      if (el("trvNote")) el("trvNote").value = pick(claim ? claim.note || "" : "", dr.note || "", "");
+
+      var trips = claim ? trvParseTrips(claim) : (draft ? (draft.trips || []) : []);
       if (!trips.length) addTravelTripRow();
       else trips.forEach(function (t) { addTravelTripRow(t); });
       trvApplyVehicleLimit();
@@ -5438,6 +5658,7 @@
     }
 
     function closeTravelClaimForm() {
+      trvSaveDraft();
       var mask = document.getElementById("travelClaimMask");
       if (mask) { mask.classList.add("hidden"); mask.style.display = ""; }
       travelEditingId = null;
@@ -5489,8 +5710,10 @@
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (res) {
           if (!res.ok) throw new Error(res.d.message || "บันทึกไม่สำเร็จ");
+          var wasEdit = !!travelEditingId;
           closeTravelClaimForm();
-          toast(travelEditingId ? "แก้ไขใบเบิกค่าเดินทางเรียบร้อย" : "บันทึกใบเบิกค่าเดินทางเรียบร้อย");
+          trvClearDraft();
+          toast(wasEdit ? "แก้ไขใบเบิกค่าเดินทางเรียบร้อย" : "บันทึกใบเบิกค่าเดินทางเรียบร้อย");
           return loadTravelClaims(true);
         })
         .catch(function (err) { trvSetMsg("trvFormMsg", err.message, "err"); })
@@ -5673,16 +5896,25 @@
         var row = del.closest("tr");
         if (row) row.remove();
         trvRenderTripTotals();
+        trvSaveDraftSoon();
       }
     });
 
     document.addEventListener("change", function (e) {
       if (e.target && e.target.id === "trvClaimer") trvApplyClaimerMeta();
+      if (e.target && e.target.closest && e.target.closest("#travelClaimMask")) trvSaveDraftSoon();
     });
 
     document.addEventListener("input", function (e) {
       var el = e.target;
       if (el && el.closest && el.closest("#trvTripsBody")) trvRenderTripTotals();
+      if (el && el.closest && el.closest("#travelClaimMask")) trvSaveDraftSoon();
+    });
+
+    // เซฟร่างทันทีถ้าผู้ใช้รีเฟรช/ปิดหน้าระหว่างกรอก
+    window.addEventListener("beforeunload", function () {
+      var mask = document.getElementById("travelClaimMask");
+      if (mask && !mask.classList.contains("hidden")) trvSaveDraft();
     });
 
     // expose ให้เรียกจาก inline handler ได้
@@ -5714,6 +5946,7 @@
       document.getElementById("analyticsView").hidden = tab !== "analytics";
       document.getElementById("deviceNotesView").hidden = tab !== "deviceNotes";
       document.getElementById("maintenanceView").hidden = tab !== "maintenance";
+      document.getElementById("repairIntakeView").hidden = tab !== "repairIntake";
       document.getElementById("travelExpenseView").hidden = tab !== "travelExpense";
       document.getElementById("fieldWorkView").hidden = tab !== "fieldWork";
       document.getElementById("workNotesView").hidden = tab !== "workNotes";
@@ -5733,6 +5966,7 @@
       if (tab === "analytics") renderAnalytics();
       if (tab === "deviceNotes" && !deviceEntries.length) loadDeviceNotes();
       if (tab === "maintenance") loadMaintenance();
+      if (tab === "repairIntake" && !repairIntakeLoaded) loadRepairIntakes();
       if (tab === "workNotes" && !workNotesLoaded) loadWorkNotes();
       if (tab === "driveNotes") {
           if (!driveNotesLoaded) loadDriveNotes();
@@ -5787,19 +6021,72 @@
         });
     }
 
+    // สาขาของรายการ = ดึงเลขสาขาจาก "location" (เช่น "ร้านวรรณสาขา 4 (...)" → "4")
+    function fwBranchOf(r) {
+      var m = /สาขา\s*(\d+)/.exec(String(r.location || ""));
+      return m ? m[1] : "";
+    }
+
+    // สร้างตัวเลือกสาขา + จำนวนครั้งที่ไป (นับจากข้อมูลทั้งหมด ไม่สนใจตัวกรอง)
+    function fwRenderBranchFilter() {
+      var sel = document.getElementById("fwBranchFilter");
+      if (!sel) return;
+      var counts = {};
+      var total = 0;
+      fieldWorkLogs.forEach(function (r) {
+        var b = fwBranchOf(r);
+        counts[b] = (counts[b] || 0) + 1;
+        total++;
+      });
+      var names = (typeof BRANCH_MAP !== "undefined" && BRANCH_MAP) ? BRANCH_MAP : {};
+      var keys = Object.keys(counts).sort(function (a, b) {
+        if (a === "") return 1;
+        if (b === "") return -1;
+        return Number(a) - Number(b);
+      });
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">ทุกสาขา (' + total + " รายการ)</option>" +
+        keys.map(function (b) {
+          var val = b === "" ? "-" : b; // "-" = ไม่ระบุสาขา (กันค่าซ้ำกับ "ทุกสาขา")
+          var label = b ? "สาขา " + b + (names[b] ? " " + names[b] : "") : "ไม่ระบุสาขา";
+          return '<option value="' + esc(val) + '">' + esc(label) + " (" + counts[b] + " ครั้ง)</option>";
+        }).join("");
+      sel.value = cur;
+      if (sel.selectedIndex < 0) sel.value = "";
+    }
+
     function renderFieldWork() {
       var body = document.getElementById("fwBody");
       var empty = document.getElementById("fwEmpty");
       if (!body) return;
+      fwRenderBranchFilter();
       var q = String((document.getElementById("fwSearch") || {}).value || "").toLowerCase().trim();
+      var branch = String((document.getElementById("fwBranchFilter") || {}).value || "");
       var rows = fieldWorkLogs.filter(function (r) {
+        if (branch) {
+          var rb = fwBranchOf(r);
+          if (branch === "-" ? rb !== "" : rb !== branch) return false;
+        }
         if (!q) return true;
         return [r.ticket_no, r.location, r.detail, r.recorder_name].join(" ").toLowerCase().indexOf(q) >= 0;
       });
 
+      // เรียงตามวันที่ทำงาน: ใหม่อยู่บน / เก่าอยู่ล่าง (วันเดียวกันค่อยเรียงเวลา)
+      rows.sort(function (a, b) {
+        var da = String(a.work_date || "");
+        var db = String(b.work_date || "");
+        if (da !== db) return da < db ? 1 : -1;
+        var ta = String(a.work_time || "");
+        var tb = String(b.work_time || "");
+        if (ta !== tb) return ta < tb ? 1 : -1;
+        return Number(b.id || 0) - Number(a.id || 0);
+      });
+
       if (empty) empty.classList.toggle("hidden", rows.length > 0);
       if (!rows.length) {
-        body.innerHTML = q ? '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">ไม่พบรายการที่ค้นหา</td></tr>' : "";
+        body.innerHTML = (q || branch)
+          ? '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">ไม่พบรายการที่ค้นหา</td></tr>'
+          : "";
         return;
       }
 
@@ -6103,6 +6390,379 @@
         .catch(function () { alert("ลบไม่สำเร็จ ลองใหม่อีกครั้ง"); });
     }
     window.deleteFieldWork = deleteFieldWork;
+
+    // ---------- ระบบบันทึกอุปกรณ์ที่นำมาซ่อม (Repair Intake) ----------
+    var repairIntakeItems = [];
+    var repairIntakeLoaded = false;
+    var repairIntakeEditId = null;
+    var riPhoto = { file: null, url: "" };     // รูปอุปกรณ์ (file = ไฟล์ใหม่, url = รูปที่บันทึกไว้แล้ว)
+    var riSymptom = { file: null, url: "" };   // รูปอาการเสีย
+
+    var RI_STATUSES = ["ดำเนินการซ่อม", "รอซื้ออะไหล่", "ไม่สามารถซ่อมได้ ต้องซื้อใหม่", "เสร็จสิ้น"];
+    var RI_BADGE = {
+      "ดำเนินการซ่อม": "b-working",
+      "รอซื้ออะไหล่": "b-due-today",
+      "ไม่สามารถซ่อมได้ ต้องซื้อใหม่": "b-broken",
+      "เสร็จสิ้น": "b-done"
+    };
+
+    var RI_BRANCH_MAP = {
+      "1": "วรรณสาขา 1 วรรณกิจเจริญ",
+      "3": "วรรณสาขา 3 วรรณกิจเจริญ",
+      "4": "วรรณสาขา 4 มาบตาพุต",
+      "5": "วรรณสาขา 5 บ้านฉาง"
+    };
+
+    function riBranchLabel(code) {
+      return RI_BRANCH_MAP[String(code || "")] || String(code || "");
+    }
+
+    function riPad2(v) { return String(v).padStart(2, "0"); }
+
+    function riDate(iso) {
+      if (!iso) return "-";
+      var d = new Date(iso);
+      if (isNaN(d)) return "-";
+      return riPad2(d.getDate()) + "/" + riPad2(d.getMonth() + 1) + "/" + (d.getFullYear() + 543);
+    }
+
+    function riMsg(text, isErr) {
+      var el = document.getElementById("riFormMsg");
+      if (!el) return;
+      el.textContent = text || "";
+      el.style.color = isErr ? "var(--red)" : "var(--green-dark, #14532d)";
+    }
+
+    function loadRepairIntakes() {
+      var body = document.getElementById("riBody");
+      if (body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+      return fetch("/api/admin/repair-intakes")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          repairIntakeItems = (d && d.items) || [];
+          repairIntakeLoaded = true;
+          renderRepairIntakes();
+        })
+        .catch(function () {
+          repairIntakeLoaded = false;
+          var b = document.getElementById("riBody");
+          if (b) b.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ โปรดลองใหม่</td></tr>';
+        });
+    }
+
+    // ตัวเลือกสาขาในตัวกรอง (นับจากข้อมูลทั้งหมด)
+    function riRenderBranchFilter() {
+      var sel = document.getElementById("riBranchFilter");
+      if (!sel) return;
+      var counts = {};
+      var total = 0;
+      repairIntakeItems.forEach(function (r) {
+        var b = String(r.branch || "").trim();
+        counts[b] = (counts[b] || 0) + 1;
+        total++;
+      });
+      var keys = Object.keys(counts).sort(function (a, b) {
+        if (a === "") return 1;
+        if (b === "") return -1;
+        return Number(a) - Number(b);
+      });
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">ทุกสาขา (' + total + " รายการ)</option>" +
+        keys.map(function (b) {
+          var val = b === "" ? "-" : b;
+          var label = b ? riBranchLabel(b) : "ไม่ระบุสาขา";
+          return '<option value="' + esc(val) + '">' + esc(label) + " (" + counts[b] + " รายการ)</option>";
+        }).join("");
+      sel.value = cur;
+      if (sel.selectedIndex < 0) sel.value = "";
+    }
+
+    function renderRepairIntakes() {
+      var body = document.getElementById("riBody");
+      var empty = document.getElementById("riEmpty");
+      if (!body) return;
+      riRenderBranchFilter();
+      var q = String((document.getElementById("riSearch") || {}).value || "").toLowerCase().trim();
+      var status = String((document.getElementById("riStatusFilter") || {}).value || "");
+      var branch = String((document.getElementById("riBranchFilter") || {}).value || "");
+
+      var rows = repairIntakeItems.filter(function (r) {
+        if (status && String(r.status || "") !== status) return false;
+        if (branch) {
+          var rb = String(r.branch || "").trim();
+          if (branch === "-" ? rb !== "" : rb !== branch) return false;
+        }
+        if (!q) return true;
+        return [r.intake_no, r.device_type, r.model, r.detail, r.status]
+          .join(" ").toLowerCase().indexOf(q) >= 0;
+      });
+
+      // ใหม่อยู่บน / เก่าอยู่ล่าง
+      rows.sort(function (a, b) {
+        var ta = String(a.created_at || "");
+        var tb = String(b.created_at || "");
+        if (ta !== tb) return ta < tb ? 1 : -1;
+        return Number(b.id || 0) - Number(a.id || 0);
+      });
+
+      var fixing = 0;
+      var done = 0;
+      repairIntakeItems.forEach(function (r) {
+        if (String(r.status || "") === "เสร็จสิ้น") done++;
+        else fixing++;
+      });
+      var setNum = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+      setNum("riStatAll", repairIntakeItems.length);
+      setNum("riStatFixing", fixing);
+      setNum("riStatDone", done);
+
+      if (empty) empty.classList.toggle("hidden", rows.length > 0);
+      if (!rows.length) {
+        body.innerHTML = (q || status || branch)
+          ? '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">ไม่พบรายการที่ค้นหา</td></tr>'
+          : "";
+        return;
+      }
+
+      body.innerHTML = rows.map(function (r) {
+        var photo = r.photo_url
+          ? '<a href="' + esc(r.photo_url) + '" target="_blank" rel="noopener"><img src="' + esc(r.photo_url) + '" alt="" style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--line,#e5e7eb)" /></a>'
+          : "-";
+        var symptom = (r.symptom_photo_url
+          ? '<a href="' + esc(r.symptom_photo_url) + '" target="_blank" rel="noopener">ดูรูปอาการเสีย</a>'
+          : "") +
+          (r.detail ? (r.symptom_photo_url ? "<br>" : "") + '<span style="white-space:pre-wrap">' + esc(String(r.detail).slice(0, 120)) + (String(r.detail).length > 120 ? "..." : "") + "</span>" : "");
+        var badge = RI_BADGE[String(r.status || "")] || "b-working";
+        return '<tr>' +
+          '<td style="white-space:nowrap">' + esc(r.intake_no || "-") + '<br><span style="font-size:11px;color:var(--muted)">' + esc(riDate(r.created_at)) + "</span></td>" +
+          '<td style="max-width:220px">' + esc(r.device_type || "-") + (r.model ? '<br><span style="font-size:11px;color:var(--muted)">' + esc(r.model) + "</span>" : "") + "</td>" +
+          '<td style="white-space:nowrap">' + esc(r.branch ? riBranchLabel(r.branch) : "-") + "</td>" +
+          '<td>' + photo + "</td>" +
+          '<td style="max-width:240px;font-size:12px">' + (symptom || "-") + "</td>" +
+          '<td style="white-space:nowrap"><span class="badge ' + badge + '">' + esc(r.status || "-") + "</span></td>" +
+          '<td style="text-align:right;white-space:nowrap">' +
+            '<button class="btn btn-ghost" type="button" onclick="openRepairIntakeForm(' + r.id + ')">แก้ไข</button> ' +
+            '<button class="btn btn-ghost" type="button" onclick="printRepairIntake(' + r.id + ')">PDF</button> ' +
+            '<button class="btn btn-danger" type="button" onclick="deleteRepairIntake(' + r.id + ')">ลบ</button>' +
+          "</td>" +
+        "</tr>";
+      }).join("");
+    }
+
+    function riFillTypes(selected) {
+      var sel = document.getElementById("riType");
+      if (!sel) return;
+      var fill = function (list) {
+        sel.innerHTML = '<option value="">— เลือกประเภทอุปกรณ์ —</option>' +
+          list.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+        if (selected) {
+          if (list.indexOf(selected) < 0) {
+            sel.insertAdjacentHTML("beforeend", '<option value="' + esc(selected) + '">' + esc(selected) + "</option>");
+          }
+          sel.value = selected;
+        }
+      };
+      if (Array.isArray(deviceCategories) && deviceCategories.length) { fill(deviceCategories); return; }
+      fetch("/api/admin/device-categories")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          deviceCategories = (d.categories || []).map(function (c) { return c.name; });
+          fill(deviceCategories);
+        })
+        .catch(function () { sel.innerHTML = '<option value="">— โหลดรายการประเภทไม่สำเร็จ —</option>'; });
+    }
+
+    function riRenderPhoto(kind) {
+      var st = kind === "symptom" ? riSymptom : riPhoto;
+      var box = document.getElementById(kind === "symptom" ? "riSymptomPrev" : "riPhotoPrev");
+      var clearBtn = document.getElementById(kind === "symptom" ? "riSymptomClear" : "riPhotoClear");
+      var src = st.file ? URL.createObjectURL(st.file) : st.url;
+      if (box) {
+        box.innerHTML = src
+          ? '<div class="img-tile" style="position:relative"><img src="' + esc(src) + '" alt="" /></div>'
+          : "";
+      }
+      if (clearBtn) clearBtn.style.display = src ? "" : "none";
+    }
+
+    function riPickPhoto(input, kind) {
+      if (!input.files || !input.files.length) return;
+      var st = kind === "symptom" ? riSymptom : riPhoto;
+      st.file = input.files[0];
+      st.url = "";
+      input.value = "";
+      riRenderPhoto(kind);
+    }
+
+    function riClearPhoto(kind) {
+      var st = kind === "symptom" ? riSymptom : riPhoto;
+      st.file = null;
+      st.url = "";
+      riRenderPhoto(kind);
+    }
+
+    function openRepairIntakeForm(id) {
+      repairIntakeEditId = id || null;
+      riPhoto = { file: null, url: "" };
+      riSymptom = { file: null, url: "" };
+      var title = document.getElementById("riFormTitle");
+      if (title) title.textContent = id ? "แก้ไขอุปกรณ์ที่นำมาซ่อม" : "เพิ่มอุปกรณ์ที่นำมาซ่อม";
+      riMsg("");
+
+      var found = null;
+      if (id) {
+        repairIntakeItems.forEach(function (r) { if (String(r.id) === String(id)) found = r; });
+        if (!found) { toast("ไม่พบรายการนี้"); return; }
+      }
+
+      riFillTypes(found ? String(found.device_type || "") : "");
+      var set = function (elId, v) { var el = document.getElementById(elId); if (el) el.value = v == null ? "" : v; };
+      set("riModel", found ? found.model || "" : "");
+      set("riBranch", found ? found.branch || "" : "");
+      set("riDetail", found ? found.detail || "" : "");
+      var stEl = document.getElementById("riStatus");
+      if (stEl) stEl.value = found && RI_STATUSES.indexOf(found.status) >= 0 ? found.status : RI_STATUSES[0];
+
+      if (found) {
+        riPhoto.url = String(found.photo_url || "");
+        riSymptom.url = String(found.symptom_photo_url || "");
+      }
+      riRenderPhoto("photo");
+      riRenderPhoto("symptom");
+
+      var mask = document.getElementById("riFormMask");
+      if (mask) mask.classList.remove("hidden");
+    }
+
+    function closeRepairIntakeForm() {
+      var mask = document.getElementById("riFormMask");
+      if (mask) mask.classList.add("hidden");
+      riPhoto = { file: null, url: "" };
+      riSymptom = { file: null, url: "" };
+    }
+
+    function riUpload(file) {
+      var fd = new FormData();
+      fd.append("photo", file);
+      return fetch("/api/admin/upload-device-photo", { method: "POST", body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) throw new Error((d && d.message) || "อัปโหลดรูปไม่สำเร็จ");
+          return d.url;
+        });
+    }
+
+    function saveRepairIntake() {
+      var btn = document.getElementById("riSaveBtn");
+      var get = function (id) { var el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; };
+      var payload = {
+        device_type: get("riType"),
+        model: get("riModel"),
+        branch: get("riBranch"),
+        detail: get("riDetail"),
+        status: get("riStatus")
+      };
+      if (!payload.device_type) { riMsg("เลือกประเภทอุปกรณ์", true); return; }
+      if (!payload.model) { riMsg("กรอกชื่อรุ่น", true); return; }
+      if (!payload.status) payload.status = RI_STATUSES[0];
+
+      if (btn) { btn.disabled = true; btn.textContent = "กำลังบันทึก..."; }
+      riMsg("กำลังบันทึก...");
+
+      var pPhoto = riPhoto.file ? riUpload(riPhoto.file) : Promise.resolve(riPhoto.url || "");
+      var pSymptom = riSymptom.file ? riUpload(riSymptom.file) : Promise.resolve(riSymptom.url || "");
+
+      Promise.all([pPhoto, pSymptom])
+        .then(function (urls) {
+          payload.photo_url = urls[0] || "";
+          payload.symptom_photo_url = urls[1] || "";
+          var url = repairIntakeEditId ? "/api/admin/repair-intakes/" + repairIntakeEditId : "/api/admin/repair-intakes";
+          return fetch(url, {
+            method: repairIntakeEditId ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }).then(function (r) { return r.json(); });
+        })
+        .then(function (d) {
+          if (!d || !d.ok) { riMsg((d && d.message) || "บันทึกไม่สำเร็จ", true); return; }
+          closeRepairIntakeForm();
+          repairIntakeLoaded = false;
+          loadRepairIntakes();
+          toast(repairIntakeEditId ? "แก้ไขรายการแล้ว" : "บันทึกรายการ " + ((d.item && d.item.intake_no) || "") + " แล้ว");
+          repairIntakeEditId = null;
+        })
+        .catch(function (err) { riMsg((err && err.message) || "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง", true); })
+        .then(function () {
+          if (btn) { btn.disabled = false; btn.textContent = "บันทึก"; }
+        });
+    }
+
+    function deleteRepairIntake(id) {
+      if (!confirm("ยืนยันการลบรายการอุปกรณ์ที่นำมาซ่อมนี้?")) return;
+      fetch("/api/admin/repair-intakes/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) { alert((d && d.message) || "ลบไม่สำเร็จ"); return; }
+          repairIntakeLoaded = false;
+          loadRepairIntakes();
+        })
+        .catch(function () { alert("ลบไม่สำเร็จ ลองใหม่อีกครั้ง"); });
+    }
+
+    function printRepairIntake(id) {
+      var url = "/api/admin/repair-intakes/" + encodeURIComponent(id) + "/pdf";
+      var w = window.open(url, "_blank");
+      if (!w) riPdfNavigate(url, id);
+    }
+
+    function riPdfNavigate(url, id) {
+      fetch(url, { credentials: "same-origin" })
+        .then(function (r) {
+          if (!r.ok) throw new Error("pdf-server");
+          return r.blob();
+        })
+        .then(function (blob) {
+          window.location.href = URL.createObjectURL(blob);
+        })
+        .catch(function () { riPrintFallback(id); });
+    }
+    window.riPdfNavigate = riPdfNavigate;
+
+    function riPrintFallback(id) {
+      var frame = document.getElementById("riPrintFrame");
+      if (!frame) {
+        frame = document.createElement("iframe");
+        frame.id = "riPrintFrame";
+        frame.setAttribute("aria-hidden", "true");
+        frame.style.cssText = "position:fixed;width:0;height:0;border:0;visibility:hidden";
+        document.body.appendChild(frame);
+      }
+      var onReady = function (ev) {
+        if (!ev.data) return;
+        if (ev.data.type === "repair-intake-print-failed") {
+          window.removeEventListener("message", onReady);
+          toast("เปิดหน้าต่างพิมพ์ไม่สำเร็จ: ไม่สามารถโหลดรายการอุปกรณ์ที่นำมาซ่อม");
+          return;
+        }
+        if (ev.data.type !== "repair-intake-print-ready") return;
+        window.removeEventListener("message", onReady);
+        try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+        catch (e) { toast("เปิดหน้าต่างพิมพ์ไม่สำเร็จ"); }
+      };
+      window.addEventListener("message", onReady);
+      frame.src = "/repair-intake-print.html?id=" + encodeURIComponent(id);
+    }
+    window.riPrintFallback = riPrintFallback;
+
+    window.loadRepairIntakes = loadRepairIntakes;
+    window.renderRepairIntakes = renderRepairIntakes;
+    window.openRepairIntakeForm = openRepairIntakeForm;
+    window.closeRepairIntakeForm = closeRepairIntakeForm;
+    window.saveRepairIntake = saveRepairIntake;
+    window.deleteRepairIntake = deleteRepairIntake;
+    window.printRepairIntake = printRepairIntake;
+    window.riPickPhoto = riPickPhoto;
+    window.riClearPhoto = riClearPhoto;
 
     // ---------- ระบบบันทึกการทำงาน : รายการงานทั้งหมด ----------
     function renderWorklog() {
@@ -10618,7 +11278,7 @@ function applyMobileSuUser(username, permissions) {
   });
   var catPerms = {
     tickets: ["tickets"],
-    care: ["deviceNotes", "maintenance", "warranty"],
+    care: ["deviceNotes", "maintenance", "warranty", "repairIntake"],
     notes: ["workNotes"],
     travel: ["travelExpense", "fieldWork"],
     private: ["devices", "visitors"],

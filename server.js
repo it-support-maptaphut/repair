@@ -11,6 +11,7 @@ const notif = require("./notify");
 const devicePdf = require("./device-pdf");
 const workNotePdf = require("./work-note-pdf");
 const ticketPdf = require("./ticket-pdf");
+const riPdf = require("./repair-intake-pdf");
 
 const app = express();
 
@@ -451,13 +452,14 @@ app.use("/api/admin", (req, res, next) => {
   if (/^\/driver-brand-links\b/.test(path)) return has("driveNotes") ? next() : deny();
   if (/^\/travel-/.test(path)) return has("travelExpense") ? next() : deny();
   if (/^\/field-work/.test(path)) return has("fieldWork") ? next() : deny();
+  if (/^\/repair-intakes/.test(path)) return has("repairIntake") ? next() : deny();
   if (/^\/maintenance/.test(path)) return has("maintenance") ? next() : deny();
   if (/^\/visitors/.test(path)) return has("visitors") ? next() : deny();
   if (/^\/users(\/|$)/.test(path)) return has("devices") ? next() : deny();
-  if (/^\/device-categories/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
+  if (/^\/device-categories/.test(path)) return has("devices", "deviceNotes", "repairIntake") ? next() : deny();
   if (/^\/device-options/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
   if (/^\/spec-search/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
-  if (/^\/upload-device-photo/.test(path)) return has("devices", "deviceNotes") ? next() : deny();
+  if (/^\/upload-device-photo/.test(path)) return has("devices", "deviceNotes", "repairIntake") ? next() : deny();
   if (/^\/device-entries/.test(path)) {
     if (req.method === "GET") return has("devices", "deviceNotes", "warranty") ? next() : deny();
     return has("devices", "deviceNotes") ? next() : deny();
@@ -2139,6 +2141,148 @@ app.delete("/api/admin/field-work/:id", async (req, res) => {
     if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     const data = await adapter.deleteFieldWorkLog(id);
     if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกปฏิบัติงานนอกสถานที่" });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// ---------- ระบบบันทึกอุปกรณ์ที่นำมาซ่อม (Repair Intake) ----------
+function repairIntakePayload(req) {
+  const body = req.body || {};
+  return {
+    deviceType: String(body.device_type != null ? body.device_type : body.deviceType || "").trim(),
+    model: String(body.model || "").trim(),
+    branch: String(body.branch || "").trim(),
+    photoUrl: String(body.photo_url != null ? body.photo_url : body.photoUrl || "").trim(),
+    symptomPhotoUrl: String(body.symptom_photo_url != null ? body.symptom_photo_url : body.symptomPhotoUrl || "").trim(),
+    detail: String(body.detail || "").trim(),
+    status: String(body.status || "").trim()
+  };
+}
+
+function repairIntakeValidate(payload) {
+  if (!payload.deviceType) return "เลือกประเภทอุปกรณ์";
+  if (!payload.model) return "กรอกชื่อรุ่น";
+  return null;
+}
+
+app.get("/api/admin/repair-intakes", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const items = await adapter.listRepairIntakes();
+    res.json({ ok: true, items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+app.get("/api/admin/repair-intakes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const item = await adapter.getRepairIntake(id);
+    if (!item) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกอุปกรณ์ที่นำมาซ่อม" });
+    res.json({ ok: true, item });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// PDF อุปกรณ์ที่นำมาซ่อม (สร้างจาก Chrome headless — ไม่มีหัว/ท้ายกระดาษของเบราว์เซอร์)
+app.get("/api/admin/repair-intakes/:id/pdf", async (req, res) => {
+  const fail = function (status, msg) {
+    if ((req.headers.accept || "").includes("text/html")) {
+      res.status(status).type("html").send(
+        '<!DOCTYPE html><html lang="th"><meta charset="utf-8"><title>PDF อุปกรณ์ที่ซ่อม</title>' +
+        '<body style="font-family:sans-serif;text-align:center;padding:40px">' +
+        "<h3>" + String(msg).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</h3>" +
+        '<p><a href="/repair-intake-print.html?id=' + encodeURIComponent(req.params.id) + '">เปิดหน้าพิมพ์แทน</a></p>' +
+        "</body></html>"
+      );
+    } else {
+      res.status(status).json({ ok: false, message: msg });
+    }
+  };
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return fail(400, "รหัสไม่ถูกต้อง");
+    if (!adapter.ready) return fail(500, "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env");
+    if (!riPdf.hasChrome()) return fail(501, "ไม่พบ Chrome ในเครื่องนี้ กรุณาใช้ปุ่มพิมพ์แบบปกติ");
+    const item = await adapter.getRepairIntake(id);
+    if (!item) return fail(404, "ไม่พบรายการบันทึกอุปกรณ์ที่นำมาซ่อม");
+    const buffer = await riPdf.buildRepairIntakePdf(item);
+    const filename = (item.intake_no || "repair-intake-" + id) + ".pdf";
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="' + filename + '"');
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    if (/chrome-not-found/.test(err.message || "")) return fail(501, "ไม่พบ Chrome ในเครื่องนี้ กรุณาใช้ปุ่มพิมพ์แบบปกติ");
+    fail(500, "server error");
+  }
+});
+
+app.post("/api/admin/repair-intakes", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const payload = repairIntakePayload(req);
+    const invalid = repairIntakeValidate(payload);
+    if (invalid) return res.status(400).json({ ok: false, message: invalid });
+    payload.intakeNo = await adapter.genRepairIntakeNo();
+    const item = await adapter.createRepairIntake(payload);
+    res.json({ ok: true, item });
+  } catch (err) {
+    console.error(err);
+    const msg = /repair_intakes/.test(err.message || "")
+      ? "ยังไม่ได้สร้างตาราง repair_intakes (รัน supabase-repair-intake.sql)"
+      : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.put("/api/admin/repair-intakes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const payload = repairIntakePayload(req);
+    const invalid = repairIntakeValidate(payload);
+    if (invalid) return res.status(400).json({ ok: false, message: invalid });
+    const body = req.body || {};
+    const sentNo = String(body.intake_no != null ? body.intake_no : body.intakeNo || "").trim();
+    const existing = await adapter.getRepairIntake(id);
+    if (!existing) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกอุปกรณ์ที่นำมาซ่อม" });
+    payload.intakeNo = sentNo || String(existing.intake_no || "");
+    const item = await adapter.updateRepairIntake(id, payload);
+    if (!item) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกอุปกรณ์ที่นำมาซ่อม" });
+    res.json({ ok: true, item });
+  } catch (err) {
+    console.error(err);
+    const msg = /repair_intakes/.test(err.message || "")
+      ? "ยังไม่ได้สร้างตาราง repair_intakes (รัน supabase-repair-intake.sql)"
+      : "server error";
+    res.status(500).json({ ok: false, message: msg });
+  }
+});
+
+app.delete("/api/admin/repair-intakes/:id", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, message: "รหัสไม่ถูกต้อง" });
+    if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    const data = await adapter.deleteRepairIntake(id);
+    if (!data || !data.length) return res.status(404).json({ ok: false, message: "ไม่พบรายการบันทึกอุปกรณ์ที่นำมาซ่อม" });
     res.json({ ok: true, id });
   } catch (err) {
     console.error(err);

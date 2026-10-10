@@ -492,20 +492,51 @@ body.app-nav { font-size: 16px; }
 .vg-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(11, 122, 69, 0.14); }
 .vg-input.invalid { border-color: var(--danger) !important; }
 
-/* --- ดรอปดาวน์เลือกสาขา (vg-select) --- */
+/* --- ฟิลด์เลือกสาขา (vg-select) : dropdown กำหนดเอง (กัน picker ดีฟอลต์ iOS) --- */
 .vg-select { position: relative; margin-bottom: 14px; }
-.vg-select .vg-input {
-  margin-bottom: 0;
-  padding-left: 41px;
-  padding-right: 40px;
-  font-weight: 600;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+
+/* select ต้นฉบับซ่อนไว้ ใช้เก็บค่า/ความหมายฟอร์ม (ห้ามแตะเอง ไม่งั้น iOS เด้ง picker) */
+.vg-select .vg-hidden-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
   appearance: none;
+  -webkit-appearance: none;
 }
-.vg-select .vg-input:hover { border-color: #b7c7bd; }
-.vg-select-input.is-placeholder { color: #9aa8a1; font-weight: 500; }
+
+/* ปุ่มที่เห็นจริง (กดเปิด/ปิดรายการ) */
+.vg-trigger {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 11px 40px 11px 41px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+  outline: none;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.vg-trigger::-moz-focus-inner { border: 0; }
+.vg-trigger:hover { border-color: #b7c7bd; }
+.vg-trigger:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px rgba(11, 122, 69, 0.14); }
+.vg-trigger.is-placeholder { color: #9aa8a1; font-weight: 500; }
+.vg-trigger.invalid { border-color: var(--danger) !important; }
+
 .vg-select-ic,
 .vg-select-arrow {
   position: absolute;
@@ -517,12 +548,70 @@ body.app-nav { font-size: 16px; }
   pointer-events: none;
 }
 .vg-select-ic { left: 13px; width: 17px; height: 17px; color: var(--green); transition: color 0.15s ease; }
-.vg-select-arrow { right: 13px; width: 16px; height: 16px; color: #93a49a; transition: color 0.15s ease; }
+.vg-select-arrow { right: 13px; width: 16px; height: 16px; color: #93a49a; transition: color 0.15s ease, transform 0.2s ease; }
 .vg-select-ic svg,
 .vg-select-arrow svg { width: 100%; height: 100%; display: block; }
-.vg-select .vg-input:focus ~ .vg-select-arrow { color: var(--green); }
-.vg-select .vg-input.invalid ~ .vg-select-ic,
-.vg-select .vg-input.invalid ~ .vg-select-arrow { color: var(--danger); }
+.vg-trigger:focus-visible ~ .vg-select-arrow { color: var(--green); }
+.vg-select.is-open .vg-select-arrow { color: var(--green); transform: translateY(-50%) rotate(180deg); }
+.vg-trigger.invalid ~ .vg-select-ic,
+.vg-trigger.invalid ~ .vg-select-arrow { color: var(--danger); }
+
+/* รายการตัวเลือกสาขา */
+.vg-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 6;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgba(16, 32, 24, 0.18);
+  max-height: 244px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: vgDrop 0.16s ease both;
+}
+.vg-dropdown.hidden { display: none; }
+@keyframes vgDrop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.vg-dropdown li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.vg-dropdown li:hover,
+.vg-dropdown li.is-active { background: rgba(11, 122, 69, 0.08); }
+.vg-dropdown li.is-selected { color: var(--green); }
+.vg-dropdown .vg-opt-txt { flex: 1 1 auto; }
+.vg-dropdown .vg-check {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--green);
+  display: none;
+}
+.vg-dropdown li.is-selected .vg-check { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vg-dropdown { animation: none; }
+  .vg-select-arrow { transition: color 0.15s ease; }
+}
 
 .vg-wrap { position: relative; margin-bottom: 14px; }
 .vg-wrap .vg-input { margin-bottom: 0; padding-right: 52px; }

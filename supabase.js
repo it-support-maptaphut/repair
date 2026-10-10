@@ -1043,6 +1043,113 @@ async function deleteFieldWorkLog(id) {
   return data || [];
 }
 
+// ---------- ระบบบันทึกอุปกรณ์ที่นำมาซ่อม (Repair Intake) ----------
+// ตาราง repair_intakes ต้องรัน supabase-repair-intake.sql ก่อน
+let repairIntakeReady = null;
+
+async function ensureRepairIntakesTable() {
+  if (repairIntakeReady === true) return true;
+  if (!ready) return false;
+  try {
+    const { error } = await supabase.from("repair_intakes").select("id").limit(1);
+    repairIntakeReady = !error;
+    if (error) {
+      console.warn("[RepairIntake] ยังไม่มีตาราง repair_intakes — ระบบบันทึกอุปกรณ์ที่นำมาซ่อมจะใช้ไม่ได้ (รัน supabase-repair-intake.sql ใน Supabase):", error.message);
+    }
+  } catch (err) {
+    repairIntakeReady = false;
+  }
+  return repairIntakeReady;
+}
+
+const REPAIR_INTAKE_STATUSES = ["ดำเนินการซ่อม", "รอซื้ออะไหล่", "ไม่สามารถซ่อมได้ ต้องซื้อใหม่", "เสร็จสิ้น"];
+
+function repairIntakeStatus(v) {
+  const s = String(v == null ? "" : v).trim();
+  return REPAIR_INTAKE_STATUSES.indexOf(s) >= 0 ? s : REPAIR_INTAKE_STATUSES[0];
+}
+
+function repairIntakeRow(input) {
+  const d = input || {};
+  return {
+    intake_no: String(d.intakeNo || "").trim(),
+    device_type: String(d.deviceType || "").trim(),
+    model: String(d.model || "").trim(),
+    branch: String(d.branch || "").trim(),
+    photo_url: String(d.photoUrl || "").trim(),
+    symptom_photo_url: String(d.symptomPhotoUrl || "").trim(),
+    detail: String(d.detail || "").trim(),
+    status: repairIntakeStatus(d.status)
+  };
+}
+
+async function genRepairIntakeNo() {
+  const { data } = await supabase
+    .from("repair_intakes")
+    .select("intake_no")
+    .like("intake_no", "RPR-%")
+    .order("id", { ascending: false })
+    .limit(1);
+  const row = data && data[0];
+  const m = /(\d+)\s*$/.exec(row ? row.intake_no : "");
+  const seq = row && m ? parseInt(m[1], 10) + 1 : 1;
+  return "RPR-" + String(seq).padStart(3, "0");
+}
+
+async function listRepairIntakes(limit = 500) {
+  if (!(await ensureRepairIntakesTable())) return [];
+  const { data, error } = await supabase
+    .from("repair_intakes")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function getRepairIntake(id) {
+  if (!(await ensureRepairIntakesTable())) return null;
+  const { data, error } = await supabase
+    .from("repair_intakes")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function createRepairIntake(entry) {
+  if (!(await ensureRepairIntakesTable())) throw new Error("ยังไม่ได้สร้างตาราง repair_intakes");
+  const { data, error } = await supabase
+    .from("repair_intakes")
+    .insert(repairIntakeRow(entry))
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateRepairIntake(id, entry) {
+  if (!(await ensureRepairIntakesTable())) throw new Error("ยังไม่ได้สร้างตาราง repair_intakes");
+  const row = repairIntakeRow(entry);
+  row.updated_at = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("repair_intakes")
+    .update(row)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteRepairIntake(id) {
+  if (!(await ensureRepairIntakesTable())) return [];
+  const { data, error } = await supabase.from("repair_intakes").delete().eq("id", id).select("id");
+  if (error) throw error;
+  return data || [];
+}
+
 // ---------- PASSWORD NOTE (บันทึกรหัสผ่านเฉพาะ USER admin) ----------
 async function listPasswordNotes({ limit = 500, includeSecret = false } = {}) {
   const { data, error } = await supabase
@@ -1634,4 +1741,4 @@ async function bumpVisitorTicket(id) {
   }
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listDriveNotes, getDriveNote, createDriveNote, updateDriveNote, deleteDriveNote, listDriverCatalog, createDriverCatalog, deleteDriverCatalog, listDriverBrandLinks, putDriverBrandLink, getTravelSettings, saveTravelSettings, listTravelClaims, getTravelClaim, createTravelClaim, updateTravelClaim, deleteTravelClaim, listFieldWorkLogs, getFieldWorkLog, createFieldWorkLog, updateFieldWorkLog, deleteFieldWorkLog, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, setVisitorKeypass, findVisitorByKeypassLookup, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listDriveNotes, getDriveNote, createDriveNote, updateDriveNote, deleteDriveNote, listDriverCatalog, createDriverCatalog, deleteDriverCatalog, listDriverBrandLinks, putDriverBrandLink, getTravelSettings, saveTravelSettings, listTravelClaims, getTravelClaim, createTravelClaim, updateTravelClaim, deleteTravelClaim, listFieldWorkLogs, getFieldWorkLog, createFieldWorkLog, updateFieldWorkLog, deleteFieldWorkLog, genRepairIntakeNo, listRepairIntakes, getRepairIntake, createRepairIntake, updateRepairIntake, deleteRepairIntake, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, setVisitorKeypass, findVisitorByKeypassLookup, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };

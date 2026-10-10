@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายละเอียดอุปกรณ์ที่ชำรุด</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "TH Sarabun New", "THSarabun", "Sarabun", "Tahoma", sans-serif;
+    color: #111827;
+    background: #eef1f5;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    padding: 14px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .toolbar button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: #1d4ed8;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 22px;
+    cursor: pointer;
+  }
+  .toolbar button:hover { background: #1e40af; }
+  .print-hint {
+    margin: 0;
+    max-width: 640px;
+    font-size: 12px;
+    color: #6b7280;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .sheet { padding: 20px; }
+  .doc {
+    width: 190mm;
+    min-height: 250mm;
+    margin: 0 auto;
+    padding: 16mm;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .doc-title {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
+  }
+  .rule {
+    border: 0;
+    border-top: 1px solid #111827;
+    margin: 6px 0 14px;
+  }
+
+  .field { margin-bottom: 6px; font-size: 16px; font-weight: 400; }
+  .field-label { font-weight: 400; }
+
+  .sec { margin-top: 14px; }
+  .sec-label { font-size: 16px; font-weight: 400; }
+
+  .photos { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  .photos img {
+    width: 62mm;
+    height: 62mm;
+    object-fit: contain;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+  }
+  .no-photo { font-size: 16px; color: #9ca3af; }
+
+  .detail {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    margin-top: 4px;
+  }
+
+  .error {
+    max-width: 190mm;
+    margin: 40px auto;
+    padding: 24px;
+    background: #fde8e4;
+    color: #c80000;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  @page { size: A4; margin: 10mm; }
+  @media print {
+    body { background: #fff; }
+    .no-print { display: none !important; }
+    .sheet { padding: 0; }
+    .doc {
+      width: 100%;
+      min-height: 277mm;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .photos img {
+      width: 74mm;
+      height: 74mm;
+    }
+    .sec { margin-top: 22px; }
+    .sec-label { margin-bottom: 4px; }
+    .detail { min-height: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <button type="button" id="btnPrint">พิมพ์ / บันทึกเป็น PDF</button>
+  <p class="print-hint no-print">
+    เบราว์เซอร์จะใส่ชื่อเว็บ/ที่อยู่/เลขหน้า/วันเวลา ใต้หัวกระดาษและท้ายกระดาษให้เอง
+    ให้เอาติ๊กออกที่ “หัวกระดาษและท้ายกระดาษ” ในหน้าต่างพิมพ์ จึงจะได้เอกสารเปล่าตามต้องการ
+  </p>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="no-print" style="max-width:190mm;margin:0 auto;padding:16px;color:#6b7280;font-size:14px">กำลังโหลดข้อมูล…</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var sheet = document.getElementById("sheet");
+  var btnPrint = document.getElementById("btnPrint");
+  var AUTO = new URLSearchParams(location.search).get("auto") === "1";
+
+  function esc(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  var BRANCHES = {
+    "1": "วรรณสาขา 1 วรรณกิจเจริญ",
+    "3": "วรรณสาขา 3 วรรณกิจเจริญ",
+    "4": "วรรณสาขา 4 มาบตาพุต",
+    "5": "วรรณสาขา 5 บ้านฉาง"
+  };
+
+  function branchLabel(code) {
+    return BRANCHES[String(code || "")] || String(code || "");
+  }
+
+  function photoBlock(url) {
+    return url
+      ? '<div class="photos"><img src="' + esc(url) + '" alt="" /></div>'
+      : '<div class="no-photo">ไม่มีรูปภาพ</div>';
+  }
+
+  function render(item) {
+    var branch = item.branch ? "(" + esc(branchLabel(item.branch)) + ")" : "";
+
+    sheet.innerHTML =
+      '<div class="doc" id="doc">' +
+        '<div class="doc-title">รายละเอียดอุปกรณ์ที่ชำรุด</div>' +
+        '<hr class="rule" />' +
+
+        '<div class="field">ประเภท ' + esc(item.device_type || "-") +
+          ' &nbsp;&nbsp; ชื่อรุ่น ' + esc(item.model || "-") + "</div>" +
+        '<div class="field">' + branch + "</div>" +
+        '<div class="field"><span class="field-label">สถานะ :</span> ' + esc(item.status || "-") + "</div>" +
+        '<div class="field"><span class="field-label">รายละเอียดที่เสีย :</span></div>' +
+        '<div class="detail">' + esc(item.detail || "-") + "</div>" +
+
+        '<div class="sec">' +
+          '<div class="sec-label">รูปภาพอุปกรณ์</div>' +
+          photoBlock(item.photo_url) +
+        "</div>" +
+
+        '<div class="sec">' +
+          '<div class="sec-label">จุดที่อุปกรณเสีย</div>' +
+          photoBlock(item.symptom_photo_url) +
+        "</div>" +
+      "</div>";
+
+    document.title = "รายละเอียดอุปกรณ์ที่ชำรุด";
+    onReady();
+  }
+
+  function fail(msg) {
+    sheet.innerHTML = '<div class="error">' + esc(msg) + "</div>";
+    try { window.parent.postMessage({ type: "repair-intake-print-failed" }, location.origin); } catch (e) {}
+  }
+
+  function onReady() {
+    if (AUTO) setTimeout(function () { window.print(); }, 300);
+    try { window.parent.postMessage({ type: "repair-intake-print-ready" }, location.origin); } catch (e) {}
+  }
+
+  btnPrint.addEventListener("click", function () { window.print(); });
+
+  var id = Number(new URLSearchParams(location.search).get("id"));
+  var preset = window.__RI_ITEM__ || null;
+  if (preset) {
+    render(preset);
+  } else if (!isFinite(id) || id <= 0) {
+    fail("ไม่พบรหัสรายการอุปกรณ์ที่นำมาซ่อม");
+  } else {
+    fetch("/api/admin/repair-intakes/" + id, { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("โหลดข้อมูลอุปกรณ์ที่นำมาซ่อมไม่สำเร็จ");
+        return r.json();
+      })
+      .then(function (d) {
+        if (!d || !d.ok || !d.item) throw new Error("ไม่พบรายการอุปกรณ์ที่นำมาซ่อม");
+        render(d.item);
+      })
+      .catch(function (e) { fail(e.message || "เกิดข้อผิดพลาด"); });
+  }
+})();
+</script>
+</body>
+</html>
