@@ -3678,11 +3678,8 @@ body.app-nav .settings-top {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: linear-gradient(180deg, rgba(214, 247, 233, 0.92), rgba(214, 247, 233, 0.55));
-  backdrop-filter: blur(14px) saturate(1.5);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  background: transparent;
   border-radius: 26px 26px 0 0;
-  border-bottom: 1px solid rgba(0, 178, 106, 0.14);
   margin: -24px -22px 0;
   padding: 24px 22px 12px;
 }
