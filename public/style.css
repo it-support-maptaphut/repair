@@ -1,37 +1,47 @@
 :root {
-  --green: #0ca35c;
-  --green-dark: #067a3e;
-  --green-soft: #e6f9ef;
-  --green-line: #c4ecd7;
+  --green: #00b26a;
+  --green-dark: #009258;
+  --green-line: #9ef0c9;
   --pink: #ff5fa2;
   --pink-dark: #e23d84;
   --pink-soft: #ffe9f2;
   --pink-line: #ffd0e3;
-  --text: #17241c;
-  --muted: #6b7a71;
-  --line: #e2e9e4;
-  --danger: #d64541;
-  --bg: #f6faf7;
-  --radius: 16px;
-  --radius-sm: 10px;
-  --radius-lg: 24px;
+  --text: #122c1f;
+  --muted: #5c7266;
+  --line: #dcebe3;
+  --danger: #e5484d;
+  --bg: #eefaf4;
+  --radius: 24px;
+  --radius-sm: 14px;
+  --radius-lg: 30px;
 }
 
-/* ---------- Formal theme : เฉพาะฝั่งผู้ใช้ (ไม่กระทบหน้า admin) ---------- */
+/* ---------- Modern glass theme : เฉพาะฝั่งผู้ใช้ (ไม่กระทบหน้า admin) ---------- */
 body.app-nav {
-  --green: #0b7a45;
-  --green-dark: #075c34;
-  --green-soft: #eef6f1;
-  --green-line: #cfe3d7;
-  --text: #1b2420;
-  --muted: #5c6a63;
-  --line: #d9e0dc;
-  --danger: #c0392b;
-  --bg: #f1f4f2;
-  --radius: 8px;
-  --radius-sm: 6px;
-  --radius-lg: 10px;
-  background: #f1f4f2;
+  --green: #00b26a;
+  --green-dark: #009258;
+  --green-soft: #d7ffec;
+  --green-line: #9ef0c9;
+  --text: #102b1f;
+  --muted: #5a7266;
+  --line: #dcebe3;
+  --danger: #e5484d;
+  --bg: #eafaf3;
+  --radius: 24px;
+  --radius-sm: 14px;
+  --radius-lg: 30px;
+  --glass: rgba(255, 255, 255, 0.60);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-line: rgba(255, 255, 255, 0.60);
+  --shadow: 0 12px 34px rgba(14, 72, 44, 0.10);
+  --shadow-pop: 0 26px 64px rgba(13, 58, 36, 0.24);
+  --font: "Prompt", "Sarabun", sans-serif;
+  font-family: var(--font);
+  background:
+    radial-gradient(1100px 520px at 92% -10%, rgba(0, 178, 106, 0.16), transparent 55%),
+    radial-gradient(900px 480px at -12% 4%, rgba(255, 95, 162, 0.13), transparent 55%),
+    radial-gradient(780px 430px at 55% 120%, rgba(64, 196, 255, 0.14), transparent 60%),
+    linear-gradient(160deg, #e9faf2 0%, #eefbf6 46%, #e6f7ee 100%);
 }
 
 * {
@@ -59,13 +69,13 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* ---------- ฟอนต์ (Sarabun เป็นหลัก = หน้าตาทางการกว่า Prompt) ---------- */
+/* ---------- ฟอนต์ (Prompt หลัก = ดูทันสมัย กลมมนกว่า Sarabun) ---------- */
 body.app-nav,
 body.app-nav input,
 body.app-nav textarea,
 body.app-nav select,
 body.app-nav button {
-  font-family: "Sarabun", "Prompt", sans-serif;
+  font-family: var(--font);
 }
 
 body.app-nav { font-size: 16px; }
@@ -3443,3 +3453,343 @@ html, body, main, form, .app-nav, .navbar-inner, .form-wrap, .support-wrap, .my-
   to { opacity: 1; }
 }
 .tk-typein { animation: tkTypeIn 0.12s ease-out; }
+
+/* ============================================================
+   MODERN GLASS LAYER — เฉพาะฝั่งผู้ใช้ (ไม่กระทบหน้า admin)
+   ธีม Glassmorphism + เขียวสด: พื้นหลัง blob ลอย, การ์ดกระจก,
+   ปุ่ม gradient เงาเรืองแสง, แอนิเมชันสนุก ๆ  (มีลูกเล่นเยอะ)
+   ============================================================ */
+
+/* ---- พื้นหลัง: blob สีลอยช้า ๆ ---- */
+body.app-nav::before,
+body.app-nav::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(72px);
+  pointer-events: none;
+  will-change: transform;
+}
+body.app-nav::before {
+  width: 46vmax;
+  height: 46vmax;
+  left: -15vmax;
+  top: -14vmax;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 178, 106, 0.30), transparent 66%);
+  animation: blobFloat 16s ease-in-out infinite alternate;
+}
+body.app-nav::after {
+  width: 42vmax;
+  height: 42vmax;
+  right: -13vmax;
+  bottom: -12vmax;
+  background: radial-gradient(circle at 55% 50%, rgba(255, 95, 162, 0.22), transparent 66%);
+  animation: blobFloat 22s ease-in-out infinite alternate-reverse;
+}
+@keyframes blobFloat {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(4vmax, 3vmax, 0) scale(1.14); }
+}
+
+/* ---- shared animations ---- */
+@keyframes glassFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes glassPopIn {
+  0% { opacity: 0; transform: translateY(24px) scale(0.93); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sheenSweep {
+  0% { transform: translateX(-170%) skewX(-18deg); }
+  55%, 100% { transform: translateX(300%) skewX(-18deg); }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 10px 26px rgba(0, 150, 91, 0.35); }
+  50% { box-shadow: 0 12px 34px rgba(0, 150, 91, 0.55); }
+}
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+
+/* ---- NAVBAR: แก้วฝ้า ---- */
+body.app-nav .navbar {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px) saturate(1.7);
+  -webkit-backdrop-filter: blur(18px) saturate(1.7);
+  border-bottom: 1px solid var(--glass-line);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 10px 34px rgba(12, 70, 44, 0.09);
+}
+body.app-nav .navbar-logo-img {
+  border-radius: 14px;
+  box-shadow:
+    0 4px 14px rgba(0, 178, 106, 0.38),
+    0 0 0 2px rgba(255, 255, 255, 0.92),
+    0 0 26px rgba(0, 178, 106, 0.28);
+}
+body.app-nav .navbar-title {
+  background: linear-gradient(120deg, #007848, #00b26a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* ---- SPLASH: gradient เรืองแสง ---- */
+.splash {
+  background:
+    radial-gradient(700px 380px at 85% -12%, rgba(255, 255, 255, 0.22), transparent 58%),
+    radial-gradient(640px 360px at -10% 110%, rgba(255, 95, 162, 0.24), transparent 60%),
+    linear-gradient(160deg, #00c97d 0%, #0a8f5a 48%, #08734a 100%);
+}
+.splash::before {
+  content: "";
+  position: absolute;
+  inset: 40% 0 0 55%;
+  width: 42vmax;
+  height: 42vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 62%);
+  animation: blobFloat 14s ease-in-out infinite alternate-reverse;
+}
+.splash-logo {
+  width: 84px;
+  height: 84px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 14px 40px rgba(0, 60, 36, 0.35), 0 0 40px rgba(255, 255, 255, 0.22);
+  animation: glowPulse 2.6s ease-in-out infinite;
+}
+.splash-title { position: relative; font-size: 20px; letter-spacing: 0.2px; }
+.splash-bar { width: 200px; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.25); }
+.splash-bar-fill { border-radius: 999px; background: linear-gradient(90deg, #fff, #c4ffe3); }
+
+/* ---- GATE (vg-*) + settings: overlay ฝ้า + การ์ดกระจก ---- */
+body.app-nav .vg-gate,
+body.app-nav .settings-gate {
+  background: rgba(8, 38, 24, 0.30);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: glassFadeIn 0.25s ease both;
+}
+body.app-nav .vg-box,
+body.app-nav .settings-box {
+  background: var(--glass-strong);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid var(--glass-line);
+  border-radius: 26px;
+  box-shadow: var(--shadow-pop), 0 0 0 6px rgba(255, 255, 255, 0.35) inset;
+  animation: glassPopIn 0.42s cubic-bezier(0.22, 1.4, 0.36, 1) both;
+}
+body.app-nav .vg-close,
+body.app-nav .settings-close {
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  box-shadow: 0 2px 8px rgba(14, 72, 44, 0.08);
+}
+body.app-nav .vg-close:hover,
+body.app-nav .settings-close:hover { background: #fff; color: var(--text); }
+body.app-nav .vg-logo {
+  width: 66px;
+  height: 66px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-line);
+  box-shadow: 0 8px 24px rgba(0, 150, 91, 0.25), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+body.app-nav .vg-title { font-size: 21px; }
+body.app-nav .vg-sub { color: var(--muted); }
+
+/* ---- inputs: โคนมน + เงาในอ่อน ---- */
+body.app-nav .vg-input,
+body.app-nav .vg-trigger,
+body.app-nav .settings-input {
+  border-radius: 16px;
+  border: 1.5px solid rgba(13, 90, 55, 0.16);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 2px 10px rgba(14, 72, 44, 0.06) inset;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+body.app-nav .vg-input:focus,
+body.app-nav .vg-trigger:focus-visible,
+body.app-nav .settings-input:focus {
+  border-color: var(--green);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 178, 106, 0.16), 0 2px 8px rgba(14, 72, 44, 0.05);
+}
+body.app-nav .vg-select-ic { color: var(--green); }
+body.app-nav .vg-dropdown {
+  border-radius: 18px;
+  border: 1px solid var(--glass-line);
+  background: var(--glass-strong);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-pop);
+}
+body.app-nav .vg-dropdown li { border-radius: 14px; }
+body.app-nav .vg-dropdown li:hover,
+body.app-nav .vg-dropdown li.is-active { background: rgba(0, 178, 106, 0.12); }
+body.app-nav .vg-dropdown li.is-selected { color: var(--green-dark); }
+
+/* ---- ปุ่มหลัก: gradient เรืองแสง + sheen สว่างวิ่ง ---- */
+body.app-nav .vg-btn,
+body.app-nav .settings-btn-save,
+body.app-nav .vg-kp-copy.is-done {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00c97d, #00965b);
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(0, 150, 91, 0.36);
+  transition: transform 0.16s ease, box-shadow 0.22s ease, filter 0.2s ease;
+}
+body.app-nav .vg-btn:hover,
+body.app-nav .settings-btn-save:hover,
+body.app-nav .vg-kp-copy.is-done:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.12);
+  box-shadow: 0 15px 32px rgba(0, 150, 91, 0.45);
+}
+body.app-nav .vg-btn:active,
+body.app-nav .settings-btn-save:active { transform: translateY(1px) scale(0.98); box-shadow: 0 6px 16px rgba(0, 150, 91, 0.3); }
+body.app-nav .vg-btn::after,
+body.app-nav .settings-btn-save::after,
+body.app-nav .vg-kp-copy.is-done::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 70%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: sheenSweep 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+body.app-nav .settings-btn-ghost,
+body.app-nav .settings-btn-danger {
+  border-radius: 14px;
+  border: 1px solid rgba(13, 90, 55, 0.16);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow);
+}
+body.app-nav .settings-btn-ghost:hover { background: #fff; }
+body.app-nav .settings-rows { border-radius: 18px; }
+body.app-nav .settings-section { letter-spacing: 0.6px; }
+
+/* ---- BOTTOM NAV: แท่งแก้วลอย ---- */
+body.app-nav .bottom-nav {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border-top: 1px solid var(--glass-line);
+  box-shadow: 0 -10px 34px rgba(14, 72, 44, 0.09);
+}
+@media (min-width: 900px) {
+  body.app-nav .bottom-nav { border-radius: 26px 26px 0 0; border-left: 1px solid var(--glass-line); border-right: 1px solid var(--glass-line); }
+}
+body.app-nav .bn-tab.is-active { color: var(--green-dark); }
+body.app-nav .bn-tab.is-active .bn-ico {
+  background: linear-gradient(135deg, #00c97d, #00965b);
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 150, 91, 0.4);
+  animation: glassPopIn 0.35s cubic-bezier(0.22, 1.4, 0.36, 1) both;
+}
+body.app-nav .bn-tab:active { transform: scale(0.9); }
+
+/* ---- CARD ฐานร่วม: กระจก (เหนือกว่าการ์ดขาวเดิมที่ฝั่งผู้ใช้) ---- */
+body.app-nav .settings-rows,
+body.app-nav .support-card {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow);
+}
+
+/* ---- CONTACT: การ์ดกระจก --- */
+body.app-nav .contact-card {
+  background: var(--glass-strong);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--glass-line);
+  border-radius: 32px;
+  box-shadow: var(--shadow-pop), 0 0 0 6px rgba(255, 255, 255, 0.30) inset;
+  animation: glassPopIn 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+body.app-nav .contact-title { color: var(--text); }
+body.app-nav .support-card { border-radius: 22px; }
+body.app-nav .support-row {
+  border-radius: 18px;
+  border: 1px solid transparent;
+  transition: transform 0.16s ease, box-shadow 0.22s ease, background 0.2s ease;
+}
+body.app-nav .support-row:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+body.app-nav .support-line { background: linear-gradient(135deg, rgba(0, 201, 125, 0.14), rgba(0, 150, 91, 0.08)); }
+body.app-nav .support-phone { background: linear-gradient(135deg, rgba(255, 95, 162, 0.12), rgba(226, 61, 132, 0.06)); }
+body.app-nav .support-ico {
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(14, 72, 44, 0.10);
+}
+
+/* ---- TOAST ---- */
+body.app-nav .toast {
+  border-radius: 999px;
+  background: rgba(14, 32, 23, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 14px 34px rgba(10, 40, 26, 0.28);
+}
+
+/* ---- OVERLAY + SPINNER ---- */
+body.app-nav .overlay {
+  background: rgba(12, 44, 28, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body.app-nav .overlay-msg { color: var(--muted); }
+
+/* ---- NOTIFY POPUP (inject ผ่าน JS) ---- */
+body.app-nav .notify-pop {
+  background: rgba(8, 38, 24, 0.30);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+body.app-nav .notify-card {
+  background: var(--glass-strong);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid var(--glass-line);
+  border-radius: 28px;
+  box-shadow: var(--shadow-pop), 0 0 0 6px rgba(255, 255, 255, 0.32) inset;
+  animation: glassPopIn 0.42s cubic-bezier(0.22, 1.3, 0.36, 1) both;
+}
+body.app-nav .notify-badge {
+  background: linear-gradient(135deg, #00c97d, #00965b);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 150, 91, 0.4);
+}
+body.app-nav .notify-btn {
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #00c97d, #00965b);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0, 150, 91, 0.35);
+}
+
+/* ---- TOP LOADER: gradient ---- */
+body.app-nav .top-loader {
+  background: linear-gradient(90deg, #00c97d, #9dffd0, #00c97d);
+  background-size: 200% 100%;
+  animation: loaderSlide 1.4s linear infinite;
+}
+@keyframes loaderSlide { from { background-position: 0% 0; } to { background-position: -200% 0; } }
+
+/* ---- เคารพ prefers-reduced-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  body.app-nav::before,
+  body.app-nav::after,
+  .splash::before,
+  body.app-nav .vg-btn::after,
+  body.app-nav .settings-btn-save::after,
+  body.app-nav .vg-kp-copy.is-done::after,
+  body.app-nav .splash-logo,
+  body.app-nav .bn-tab.is-active .bn-ico {
+    animation: none;
+  }
+}

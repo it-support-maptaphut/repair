@@ -1,22 +1,25 @@
 /* ============================================================
    ระบบแจ้งซ่อม IT — หน้า "ประวัติการแจ้งซ่อม" (ผู้ใช้ภายนอก)
-   อ่านอย่างเดียว มือถืก่อน จับขยายการ์ดได้
+   Modern Glass: การ์ดกระจก สีสถานะ gradient, แถบความคืบหน้าเรืองแสง
    ============================================================ */
 
 body.my-page .my-head {
   max-width: 680px;
-  margin: 22px auto 0;
+  margin: 26px auto 0;
   padding: 0 16px;
 }
 
 body.my-page .my-title {
   margin: 0;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--tk-ink);
-  padding-left: 11px;
-  border-left: 4px solid var(--tk-green);
-  line-height: 1.35;
+  padding-left: 14px;
+  border-left: 5px solid transparent;
+  border-image: linear-gradient(180deg, #00c97d, #00965b) 1;
+  border-image-slice: 1;
+  border-radius: 0;
+  line-height: 1.4;
 }
 
 body.my-page .my-title::after {
@@ -32,7 +35,7 @@ body.my-page .my-title::after {
 
 body.my-page .my-wrap {
   max-width: 680px;
-  margin: 14px auto 0;
+  margin: 16px auto 0;
   padding: 0 16px calc(120px + env(safe-area-inset-bottom));
 }
 
@@ -40,31 +43,48 @@ body.my-page .my-wrap {
 body.my-page .my-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 body.my-page .mt-card {
+  position: relative;
   background: var(--tk-card);
-  border: 1px solid var(--tk-line);
-  border-radius: 8px;
+  border: 1px solid var(--tk-glass-line);
+  border-radius: 22px;
   box-shadow: var(--tk-shadow);
   overflow: hidden;
-  border-left: 3px solid var(--tk-green);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  animation: mtRise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.18s ease, box-shadow 0.24s ease;
+}
+@keyframes mtRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+body.my-page .mt-card:hover { transform: translateY(-3px); box-shadow: var(--tk-shadow-pop); }
+body.my-page .mt-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, #00c97d, #00965b);
+  border-radius: 22px 0 0 22px;
 }
 
 body.my-page .mt-card-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 15px 16px;
+  padding: 16px 18px 16px 20px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.18s ease;
 }
 
-body.my-page .mt-card-head { background: #f5f8f6; }
+body.my-page .mt-card-head { background: rgba(240, 250, 245, 0.6); }
 
-body.my-page .mt-card-head:hover { background: #eef4f0; }
+body.my-page .mt-card-head:hover { background: rgba(215, 255, 236, 0.6); }
 
 body.my-page .mt-head-main {
   flex: 1;
@@ -78,7 +98,7 @@ body.my-page .mt-no {
   font-family: Consolas, monospace;
   font-size: 19px;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
   color: var(--tk-green-deep);
 }
 
@@ -92,23 +112,24 @@ body.my-page .mt-stamp {
   align-items: center;
   gap: 5px;
   flex: 0 0 auto;
-  padding: 4px 9px;
-  border-radius: 4px;
+  padding: 5px 11px;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-body.my-page .mt-stamp.st-new { background: var(--tk-amber-soft); color: var(--tk-amber); }
-body.my-page .mt-stamp.st-working { background: var(--tk-blue-soft); color: var(--tk-blue); }
-body.my-page .mt-stamp.st-done { background: var(--tk-green-soft); color: var(--tk-green-deep); }
+body.my-page .mt-stamp.st-new { background: linear-gradient(135deg, #ffe8b8, #ffd98a); color: #8a5a08; }
+body.my-page .mt-stamp.st-working { background: linear-gradient(135deg, #c9d9ff, #a9c2ff); color: #1d3d9b; }
+body.my-page .mt-stamp.st-done { background: linear-gradient(135deg, #b9f7da, #8ef0c4); color: #0a6a3e; }
 
 body.my-page .mt-chev {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
   color: var(--tk-muted);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body.my-page .mt-card.is-open .mt-chev { transform: rotate(180deg); }
@@ -116,13 +137,14 @@ body.my-page .mt-card.is-open .mt-chev { transform: rotate(180deg); }
 body.my-page .mt-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-  border-top: 1px solid var(--tk-line-soft);
-  margin: 0 16px;
+  transition: max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  border-top: 1px solid transparent;
+  margin: 0 18px;
 }
 
 body.my-page .mt-card.is-open .mt-body {
   border-top-width: 1px;
+  border-top-color: var(--tk-line-soft);
   margin-top: 14px;
   padding-bottom: 4px;
 }
@@ -135,7 +157,7 @@ body.my-page .mt-row {
   display: flex;
   gap: 12px;
   padding: 9px 0;
-  font-size: 16px;
+  font-size: 15.5px;
   line-height: 1.55;
 }
 
@@ -168,15 +190,16 @@ body.my-page .mt-photo {
   display: block;
   width: 68px;
   height: 68px;
-  border-radius: 6px;
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--tk-line);
-  background: #f2f5f3;
+  border: 1px solid var(--tk-glass-line);
+  background: rgba(240, 247, 243, 0.8);
   text-decoration: none;
-  transition: border-color 0.15s ease;
+  box-shadow: 0 4px 12px rgba(14, 72, 44, 0.08);
+  transition: transform 0.16s ease, border-color 0.18s ease, box-shadow 0.2s ease;
 }
 
-body.my-page .mt-photo:hover { border-color: var(--tk-green); }
+body.my-page .mt-photo:hover { border-color: var(--tk-green); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 18px rgba(0, 150, 91, 0.18); }
 body.my-page .mt-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 body.my-page .mt-photo-more {
@@ -185,31 +208,33 @@ body.my-page .mt-photo-more {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(12, 40, 26, 0.45);
+  background: rgba(8, 40, 26, 0.5);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
+  backdrop-filter: blur(2px);
 }
 
 /* ---------- สถานะ : แถบความคืบหน้า ---------- */
 body.my-page .mt-prog {
   margin-top: 14px;
-  padding: 12px 12px 9px;
-  border-radius: 6px;
-  border: 1px solid var(--tk-line-soft);
-  background: #fafcfb;
+  padding: 14px 14px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--tk-glass-line);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-body.my-page .mt-prog.st-new { --prog-c: #9a6208; }
-body.my-page .mt-prog.st-working { --prog-c: #1d4ed8; }
-body.my-page .mt-prog.st-done { --prog-c: #0b7a45; }
+body.my-page .mt-prog.st-new { --prog-c: #b0701a; --prog-glow: rgba(176, 112, 26, 0.35); }
+body.my-page .mt-prog.st-working { --prog-c: #1d4ed8; --prog-glow: rgba(29, 78, 216, 0.35); }
+body.my-page .mt-prog.st-done { --prog-c: #00b26a; --prog-glow: rgba(0, 150, 91, 0.4); }
 
 body.my-page .mt-prog-track {
   position: relative;
-  height: 6px;
+  height: 8px;
   border-radius: 999px;
-  background: #e6ece8;
-  overflow: hidden;
+  background: rgba(13, 90, 55, 0.10);
+  overflow: visible;
 }
 
 body.my-page .mt-prog-fill {
@@ -220,19 +245,21 @@ body.my-page .mt-prog-fill {
   width: var(--p, 0%);
   border-radius: 999px;
   background: var(--prog-c);
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--prog-c) 78%, #fff), var(--prog-c));
+  box-shadow: 0 0 12px var(--prog-glow);
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body.my-page .mt-prog-dot {
   position: absolute;
   top: 50%;
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: #fff;
-  border: 3px solid #c9d4cd;
-  box-shadow: 0 1px 3px rgba(20, 40, 25, 0.12);
+  border: 3px solid #cfded5;
+  box-shadow: 0 2px 5px rgba(20, 50, 30, 0.18);
   transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
 }
 
@@ -248,7 +275,7 @@ body.my-page .mt-prog.st-done .d2,
 body.my-page .mt-prog.st-done .d3 {
   background: var(--prog-c);
   border-color: #fff;
-  box-shadow: 0 0 0 3px var(--prog-c);
+  box-shadow: 0 0 0 3px var(--prog-glow), 0 0 14px var(--prog-glow);
 }
 
 body.my-page .mt-prog.st-working .d2 {
@@ -256,8 +283,8 @@ body.my-page .mt-prog.st-working .d2 {
 }
 
 @keyframes mtPulse {
-  0%, 100% { box-shadow: 0 0 0 3px var(--prog-c); }
-  50% { box-shadow: 0 0 0 6px rgba(29, 78, 216, 0.16); }
+  0%, 100% { box-shadow: 0 0 0 3px var(--prog-glow), 0 0 14px var(--prog-glow); }
+  50% { box-shadow: 0 0 0 7px rgba(29, 78, 216, 0.18), 0 0 22px var(--prog-glow); }
 }
 
 body.my-page .mt-prog-labels {
@@ -279,20 +306,20 @@ body.my-page .mt-prog.st-done .mt-prog-labels span:nth-child(-n+3) {
 
 body.my-page .mt-note {
   margin: 10px 0 0;
-  padding: 11px 13px;
-  border-radius: 6px;
+  padding: 11px 14px;
+  border-radius: 14px;
   font-size: 14.5px;
   line-height: 1.6;
 }
 
-body.my-page .mt-note.st-new { background: var(--tk-amber-soft); color: #7a4e06; }
-body.my-page .mt-note.st-working { background: var(--tk-blue-soft); color: #17357f; }
-body.my-page .mt-note.st-done { background: var(--tk-green-soft); color: #064a29; }
+body.my-page .mt-note.st-new { background: rgba(255, 214, 120, 0.28); color: #7a4e06; }
+body.my-page .mt-note.st-working { background: rgba(169, 194, 255, 0.28); color: #17357f; }
+body.my-page .mt-note.st-done { background: rgba(142, 240, 196, 0.30); color: #064a29; }
 
 body.my-page .mt-actions {
   display: flex;
   gap: 10px;
-  margin: 14px 0 16px;
+  margin: 14px 0 18px;
 }
 
 body.my-page .mt-action {
@@ -303,43 +330,46 @@ body.my-page .mt-action {
   justify-content: center;
   gap: 6px;
   padding: 12px 10px;
-  border-radius: 6px;
+  border-radius: 14px;
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: inherit;
   text-align: center;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: transform 0.15s ease, background 0.18s ease, box-shadow 0.2s ease;
 }
 
 body.my-page .mt-action.ghost {
-  border: 1px solid var(--tk-line);
-  background: #fff;
+  border: 1.5px solid rgba(13, 90, 55, 0.16);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--tk-ink);
 }
 
-body.my-page .mt-action.ghost:hover { background: #f4f6f5; }
+body.my-page .mt-action.ghost:hover { background: #fff; transform: translateY(-1px); box-shadow: var(--tk-shadow-sm); }
 
 body.my-page .mt-action.pdf {
-  border: 1px solid var(--tk-green);
-  background: var(--tk-green);
+  border: none;
+  background: linear-gradient(135deg, #00c97d, #00965b);
   color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 150, 91, 0.36);
 }
 
-body.my-page .mt-action.pdf:hover { background: var(--tk-green-deep); }
+body.my-page .mt-action.pdf:hover { transform: translateY(-2px); filter: saturate(1.12); box-shadow: 0 14px 30px rgba(0, 150, 91, 0.46); }
 
 body.my-page .mt-action.urgent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid #c0392b;
-  background: #c0392b;
+  border: none;
+  background: linear-gradient(135deg, #f2575b, #e5484d);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(229, 72, 77, 0.36);
 }
 
-body.my-page .mt-action.urgent:hover { background: #a93226; }
-body.my-page .mt-action.urgent:active { background: #922b21; }
+body.my-page .mt-action.urgent:hover { transform: translateY(-2px); filter: saturate(1.1); box-shadow: 0 14px 30px rgba(229, 72, 77, 0.45); }
+body.my-page .mt-action.urgent:active { transform: translateY(1px) scale(0.98); }
 
 /* ---------- ข้อมูลใบแจ้งซ่อม : ช่องสี่เหลี่ยม 2 คอลัมน์ ---------- */
 body.my-page .mt-panel {
@@ -354,10 +384,11 @@ body.my-page .mt-pbox {
   flex-direction: column;
   gap: 4px;
   min-height: 62px;
-  padding: 9px 10px;
-  border: 1px solid var(--tk-line-soft);
-  border-radius: 6px;
-  background: #fbfcfc;
+  padding: 9px 11px;
+  border: 1px solid var(--tk-glass-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 body.my-page .mt-pbox-wide { grid-column: 1 / -1; }
@@ -394,31 +425,41 @@ body.my-page .mt-pbox .mt-photo-list { margin-top: 2px; }
 /* ---------- ว่าง ---------- */
 body.my-page .mt-empty {
   background: var(--tk-card);
-  border: 1px dashed var(--tk-line);
-  border-radius: 8px;
-  padding: 30px 20px;
+  border: 1.5px dashed rgba(0, 178, 106, 0.35);
+  border-radius: 22px;
+  padding: 36px 20px;
   text-align: center;
   color: var(--tk-muted);
   font-size: 15px;
   line-height: 1.6;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: mtRise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-body.my-page .mt-empty svg { color: #c3d2c9; margin-bottom: 10px; }
+body.my-page .mt-empty svg { color: #a9d9bf; margin-bottom: 12px; animation: mtBob 2.4s ease-in-out infinite; }
+@keyframes mtBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
 
 body.my-page .mt-empty-link {
   display: inline-block;
-  margin-top: 14px;
-  padding: 12px 22px;
-  border: 1px solid var(--tk-green);
-  border-radius: 6px;
-  background: var(--tk-green);
+  margin-top: 16px;
+  padding: 13px 24px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00c97d, #00965b);
   color: #fff;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: inherit;
   text-decoration: none;
   cursor: pointer;
-  font-family: inherit;
+  box-shadow: 0 10px 24px rgba(0, 150, 91, 0.36);
+  transition: transform 0.16s ease, box-shadow 0.22s ease, filter 0.2s ease;
 }
+body.my-page .mt-empty-link:hover { transform: translateY(-2px); filter: saturate(1.12); box-shadow: 0 14px 30px rgba(0, 150, 91, 0.46); }
 
 /* ---------- Toast : อยู่บน (ไม่มี action bar ด้านล่าง) ---------- */
 body.my-page .toast {
