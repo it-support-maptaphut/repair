@@ -1189,7 +1189,11 @@ app.get("/auth/line/callback", async (req, res) => {
   const state = String(req.query.state || "");
   res.append("Set-Cookie", "line_oauth=; HttpOnly; Max-Age=0; " + cookieFlags(req));
   res.append("Set-Cookie", "line_next=; HttpOnly; Max-Age=0; " + cookieFlags(req));
-  const fail = (code) => res.redirect(withQuery(next, "line_error", code));
+  const fail = (code, detail) => {
+    let url = withQuery(next, "line_error", code);
+    if (detail) url = withQuery(url, "line_msg", String(detail).slice(0, 200));
+    return res.redirect(url);
+  };
 
   if (req.query.error) return fail("denied");
   if (!lineLoginEnabled()) return fail("disabled");
@@ -1212,14 +1216,20 @@ app.get("/auth/line/callback", async (req, res) => {
       })
     });
     const tokenData = await tokenRes.json().catch(() => ({}));
-    if (!tokenRes.ok || !tokenData.access_token) return fail("token");
-    if (!verifyLineIdToken(tokenData.id_token, state)) return fail("verify");
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error("[LINE] token error:", tokenRes.status, JSON.stringify(tokenData));
+      return fail("token", tokenData.error_description || tokenData.error || ("HTTP " + tokenRes.status));
+    }
+    if (!verifyLineIdToken(tokenData.id_token, state)) return fail("verify", "id_token check failed");
 
     const profRes = await fetch("https://api.line.me/v2/profile", {
       headers: { Authorization: "Bearer " + tokenData.access_token }
     });
     const prof = await profRes.json().catch(() => ({}));
-    if (!profRes.ok || !prof.userId) return fail("profile");
+    if (!profRes.ok || !prof.userId) {
+      console.error("[LINE] profile error:", profRes.status, JSON.stringify(prof));
+      return fail("profile", prof.error_description || prof.error || ("HTTP " + profRes.status));
+    }
 
     const ip = clientIp(req);
     const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200);

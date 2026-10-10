@@ -49,22 +49,26 @@
     if (slot && !injected) inject(slot);
   }
 
-  function errorText(code) {
+  function errorText(code, detail) {
     if (code === "disabled") return "ระบบยังไม่เปิดใช้งานเข้าสู่ระบบด้วย LINE";
     if (code === "denied") return "ยกเลิกการเข้าสู่ระบบด้วย LINE";
-    return "เข้าสู่ระบบด้วย LINE ไม่สำเร็จ (" + code + ") กรุณาลองใหม่อีกครั้ง";
+    var base = "เข้าสู่ระบบด้วย LINE ไม่สำเร็จ (" + code + ") กรุณาลองใหม่อีกครั้ง";
+    if (detail) base += " — " + detail;
+    return base;
   }
 
   // แจ้งเตือนผลลัพธ์ที่แนบมากับ URL หลัง redirect กลับจาก LINE
   function handleQuery() {
     var q = new URLSearchParams(window.location.search);
     var error = q.get("line_error");
+    var detail = q.get("line_msg");
     var done = q.get("line");
     if (!error && !done) return;
     var msg = "";
-    if (error) msg = errorText(error);
+    if (error) msg = errorText(error, detail);
     else if (done) msg = "";
     q.delete("line_error");
+    q.delete("line_msg");
     q.delete("line");
     var rest = q.toString();
     try {
