@@ -1442,14 +1442,35 @@ async function ensureVisitorBranchCol() {
   return visitorHasBranchCol;
 }
 
-function pickVisitorCols(hasCreds, hasBranch) {
-  return (hasCreds ? VISITOR_FULL_COLS : VISITOR_BASE_COLS) + (hasBranch ? ", branch" : "");
+// ---------- คอลัมน์ "เข้าสู่ระบบด้วย LINE" (ตรวจแยกเช่นกัน) ----------
+let visitorHasLineCols = null;
+
+async function ensureVisitorLineCols() {
+  if (visitorHasLineCols === true) return true;
+  if (!ready) return false;
+  try {
+    const { error } = await supabase.from("external_visitors").select("id, line_uid").limit(1);
+    visitorHasLineCols = !error;
+    if (error) {
+      console.warn("[Visitors] ยังไม่มีคอลัมน์ LINE — เข้าสู่ระบบด้วย LINE จะยังไม่ทำงาน (รัน supabase-migrate-line.sql ใน Supabase):", error.message);
+    }
+  } catch (err) {
+    visitorHasLineCols = false;
+  }
+  return visitorHasLineCols;
+}
+
+function pickVisitorCols(hasCreds, hasBranch, hasLine) {
+  return (hasCreds ? VISITOR_FULL_COLS : VISITOR_BASE_COLS) +
+    (hasBranch ? ", branch" : "") +
+    (hasLine ? ", line_uid, line_name, line_picture_url" : "");
 }
 
 async function visitorSelectCols() {
   const hasCreds = await ensureVisitorCredCols();
   const hasBranch = await ensureVisitorBranchCol();
-  return pickVisitorCols(hasCreds, hasBranch);
+  const hasLine = await ensureVisitorLineCols();
+  return pickVisitorCols(hasCreds, hasBranch, hasLine);
 }
 
 // หา visitor จาก session/cookie/เลขเครื่อง — ใช้ IP เป็นตัวสำรองเฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน
@@ -1535,6 +1556,25 @@ async function findVisitorByUsername(username) {
     return null;
   } catch (err) {
     console.warn("[Visitors] ค้นหาจากชื่อผู้ใช้ไม่สำเร็จ:", err.message);
+    return null;
+  }
+}
+
+// หาผู้ใช้จาก LINE userId (ได้จาก LINE Login) — ใช้ index จึง O(1)
+async function findVisitorByLineUid(lineUid) {
+  const want = String(lineUid || "").trim();
+  if (!ready || !want) return null;
+  if (!(await ensureVisitorLineCols())) return null;
+  try {
+    const { data, error } = await supabase
+      .from("external_visitors")
+      .select(await visitorSelectCols())
+      .eq("line_uid", want)
+      .limit(1);
+    if (error) throw error;
+    return (data && data[0]) || null;
+  } catch (err) {
+    console.warn("[Visitors] ค้นหาด้วย LINE ไม่สำเร็จ:", err.message);
     return null;
   }
 }
@@ -1662,9 +1702,10 @@ async function findVisitorByKeypassLookup(lookup) {
   }
 }
 
-async function createVisitor({ name, position, branch, ip, token, deviceId }) {
+async function createVisitor({ name, position, branch, ip, token, deviceId, lineUid, lineName, linePictureUrl }) {
   if (!ready) throw new Error("ยังไม่ได้ตั้งค่า Supabase ใน .env");
   const hasBranch = await ensureVisitorBranchCol();
+  const hasLine = await ensureVisitorLineCols();
   const cols = await visitorSelectCols();
   const row = {
     name: name || "",
@@ -1676,6 +1717,11 @@ async function createVisitor({ name, position, branch, ip, token, deviceId }) {
     last_seen_at: new Date().toISOString()
   };
   if (hasBranch) row.branch = branch || "";
+  if (hasLine) {
+    row.line_uid = lineUid || "";
+    row.line_name = lineName || "";
+    row.line_picture_url = linePictureUrl || "";
+  }
   const { data, error } = await supabase
     .from("external_visitors")
     .insert(row)
@@ -1741,4 +1787,4 @@ async function bumpVisitorTicket(id) {
   }
 }
 
-module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listDriveNotes, getDriveNote, createDriveNote, updateDriveNote, deleteDriveNote, listDriverCatalog, createDriverCatalog, deleteDriverCatalog, listDriverBrandLinks, putDriverBrandLink, getTravelSettings, saveTravelSettings, listTravelClaims, getTravelClaim, createTravelClaim, updateTravelClaim, deleteTravelClaim, listFieldWorkLogs, getFieldWorkLog, createFieldWorkLog, updateFieldWorkLog, deleteFieldWorkLog, genRepairIntakeNo, listRepairIntakes, getRepairIntake, createRepairIntake, updateRepairIntake, deleteRepairIntake, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, setVisitorKeypass, findVisitorByKeypassLookup, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };
+module.exports = { supabase, ready, genTicketNo, createTicket, addPhotos, updateArchive, listTickets, listInbox, acceptTicket, recordDevice, listDevices, setDeviceName, createDevice, removeDevice, genDeviceNo, listDeviceCategories, addDeviceCategory, listDeviceEntries, createDeviceEntry, updateDeviceEntry, deleteDeviceEntry, addEntryPhotos, listWorkNotes, getWorkNote, createWorkNote, updateWorkNote, deleteWorkNote, listDriveNotes, getDriveNote, createDriveNote, updateDriveNote, deleteDriveNote, listDriverCatalog, createDriverCatalog, deleteDriverCatalog, listDriverBrandLinks, putDriverBrandLink, getTravelSettings, saveTravelSettings, listTravelClaims, getTravelClaim, createTravelClaim, updateTravelClaim, deleteTravelClaim, listFieldWorkLogs, getFieldWorkLog, createFieldWorkLog, updateFieldWorkLog, deleteFieldWorkLog, genRepairIntakeNo, listRepairIntakes, getRepairIntake, createRepairIntake, updateRepairIntake, deleteRepairIntake, listRepairNotes, createRepairNote, updateRepairNote, deleteRepairNote, listSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser, getSystemUserAuth, listPasswordNotes, createPasswordNote, deletePasswordNote, listWarrantyCheckSites, createWarrantyCheckSite, updateWarrantyCheckSite, deleteWarrantyCheckSite, addWarrantyCheck, listWarrantyChecks, listDeviceMaintenance, createMaintenanceCheck, listMaintenanceChecks, deleteMaintenanceCheck, listDeviceOptions, addDeviceOption, updateDeviceOption, deleteDeviceOption, findVisitor, getVisitorById, findVisitorByUsername, findVisitorByLineUid, setVisitorCredentials, setVisitorPassword, renameVisitor, getVisitorCredentials, setVisitorKeypass, findVisitorByKeypassLookup, createVisitor, listVisitors, updateVisitor, removeVisitor, listVisitorIps, bumpVisitorTicket, listMyTickets, getTicketOwner };

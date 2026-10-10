@@ -12,6 +12,7 @@
   var canClose = false; // ปิดเกตติ้งได้เฉพาะตอนผู้ใช้ยืนยันตัวตนแล้ว (สลับบัญชี)
   var onAuthed = [];
   var current = { pane: "step1" };
+  var profileMode = false; // true = กำลังกรอกข้อมูลให้ครบหลังเข้าสู่ระบบด้วย LINE
 
   function toast(msg) {
     if (window.showToast) { window.showToast(msg); return; }
@@ -69,6 +70,8 @@
 
         // ---- กรอกชื่อ + ตำแหน่ง ----
         '<div class="vg-pane" data-pane="step1">' +
+          // ช่องสำหรับปุ่ม "เข้าสู่ระบบด้วย LINE" (line-login.js เป็นตัวเติม)
+          '<div class="vg-line-slot" id="vgLineSlot"></div>' +
           '<div class="vg-fields">' +
             '<label for="vgName" class="vg-label">ชื่อ <span class="vg-req">*</span></label>' +
             '<input type="text" id="vgName" class="vg-input" maxlength="60" autocomplete="given-name">' +
@@ -273,6 +276,8 @@
     });
     if (name === "login") {
       els.sub.innerHTML = "กรอก Key Pass 5 ตัวที่คุณบันทึกไว้<br>เพื่อกลับเข้าบัญชีเดิมจากเครื่องอื่น";
+    } else if (profileMode) {
+      els.sub.innerHTML = "เข้าสู่ระบบด้วย LINE เรียบร้อย<br>กรอกชื่อ / ตำแหน่ง / ประจำสาขา ให้ครบเพื่อเริ่มใช้งาน";
     } else {
       els.sub.innerHTML = "กรอกชื่อ / ตำแหน่ง / ประจำสาขา เพื่อเข้าใช้งานระบบ";
     }
@@ -302,6 +307,9 @@
   function open(opts) {
     build();
     var o = opts || {};
+    profileMode = false;
+    els.next.textContent = "เข้าใช้งาน";
+    gate.removeAttribute("data-mode");
     hideErr();
     els.kpInput.value = "";
     // ปุ่มปิดมีเฉพาะตอน "สลับบัญชีด้วย Key Pass" จากหน้าตั้งค่าเท่านั้น
@@ -320,6 +328,30 @@
     setTimeout(function () { if (focusEl) focusEl.focus(); }, 80);
   }
 
+  // ---------- กรอกข้อมูลให้ครบ (หลังเข้าสู่ระบบด้วย LINE สำเร็จ) ----------
+  function openProfileCompletion(visitor) {
+    build();
+    profileMode = true;
+    current.mode = "profile";
+    canClose = false;
+    els.close.classList.add("hidden");
+    hideErr();
+    els.name.value = (visitor && (visitor.name || visitor.lineName)) || "";
+    els.position.value = "";
+    if (els.branch) els.branch.value = "";
+    if (els.branchTrigger) {
+      els.branchTrigger.textContent = "เลือกสาขาที่คุณประจำอยู่";
+      els.branchTrigger.classList.add("is-placeholder");
+    }
+    els.next.textContent = "บันทึกและเข้าใช้งาน";
+    showPane("step1");
+    gate.setAttribute("data-mode", "profile");
+    gate.classList.remove("hidden");
+    setTimeout(function () {
+      if (els.name.value) { els.position.focus(); } else { els.name.focus(); }
+    }, 80);
+  }
+
   // ปิดเกตติ้งได้เฉพาะตอนผู้ใช้ยืนยันตัวตนแล้ว (สลับบัญชี) — ถ้ายังไม่ได้ยืนยันห้ามปิด ไม่งั้นเกตติ้งจะเด้งกลับมาเรื่อย
   function close() {
     if (!canClose) return;
@@ -333,6 +365,7 @@
   // ---------- กรอกชื่อ + ตำแหน่ง แล้วเข้าใช้งานทันที ----------
   function step1Submit() {
     if (busy) return;
+    var isProfile = profileMode; // กรอกข้อมูลให้ครบหลังเข้าสู่ระบบด้วย LINE
     var name = els.name.value.trim();
     var position = els.position.value.trim();
     var branch = els.branch ? els.branch.value.trim() : "";
@@ -340,15 +373,19 @@
     if (!position) { markInvalid(els.position); showErr("กรุณากรอกตำแหน่ง"); return; }
     if (!branch) { markInvalid(els.branchTrigger || els.branch); showErr("กรุณาเลือกสาขา"); return; }
     lock(true);
-    api("/api/visitors", {
-      method: "POST",
+    api(isProfile ? "/api/visitors/me" : "/api/visitors", {
+      method: isProfile ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name, position: position, branch: branch })
     }).then(function (r) {
       lock(false);
       if (!r.ok) { showErr(r.d.message || "บันทึกไม่สำเร็จ กรุณาลองใหม่"); return; }
       cache = { registered: true, authed: true, visitor: r.d.visitor || null };
+      profileMode = false;
+      els.next.textContent = "เข้าใช้งาน";
+      gate.removeAttribute("data-mode");
       hideGate();
+      if (isProfile) toast("ยินดีต้อนรับ " + (name || ""));
       fireAuthed(cache);
     }).catch(function () {
       lock(false);
@@ -390,8 +427,12 @@
   // ---------- เรียกใช้จากหน้าอื่น ----------
   function requireAuth(reason) {
     return check().then(function (st) {
-      if (st.authed) return st;
-      open({ state: st });
+      if (st.authed && !(st.visitor && st.visitor.needsProfile)) return st;
+      if (st.authed && st.visitor && st.visitor.needsProfile) {
+        openProfileCompletion(st.visitor);
+      } else {
+        open({ state: st });
+      }
       var e = new Error("ยังไม่ได้ยืนยันตัวตน");
       e.reason = reason || "auth";
       e.state = st;
@@ -412,6 +453,7 @@
     refresh: function () { reset(); return check(true); },
     state: function () { return cache; },
     open: open,
+    openProfileCompletion: openProfileCompletion,
     close: close,
     requireAuth: requireAuth,
     logout: logout,
@@ -421,7 +463,12 @@
   // ---------- เปิดเกตติ้งอัตโนมัติเมื่อยังไม่ได้ยืนยันตัวตน ----------
   function warm() {
     check().then(function (st) {
-      if (!st.authed) open({ state: st });
+      if (!st.authed) {
+        open({ state: st });
+      } else if (st.visitor && st.visitor.needsProfile) {
+        // มาจาก LINE แล้วยังกรอกข้อมูลไม่ครบ -> ให้เติมก่อนใช้งาน
+        openProfileCompletion(st.visitor);
+      }
     }).catch(function () {});
   }
 

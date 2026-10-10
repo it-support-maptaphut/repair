@@ -214,6 +214,11 @@ const KEYPASS_LEN = 5;
 const KEYPASS_PEPPER = String(config.VISITOR_KEYPASS_PEPPER || "");
 const KEYPASS_RE = /^[A-HJ-KM-NP-Z2-9]{5}$/;
 
+// ---------- LINE Login (OAuth 2.1 / OpenID Connect) ----------
+const LINE_CHANNEL_ID = String(config.LINE_CHANNEL_ID || "");
+const LINE_CHANNEL_SECRET = String(config.LINE_CHANNEL_SECRET || "");
+function lineLoginEnabled() { return !!LINE_CHANNEL_ID && !!LINE_CHANNEL_SECRET; }
+
 function newKeypass() {
   const bytes = crypto.randomBytes(KEYPASS_LEN * 2);
   let out = "";
@@ -407,12 +412,17 @@ function setVisitorCookie(req, res, token) {
 // เปิดดูข้อมูลบัญชี (ไม่ส่ง token/ip/Key Pass กลับไปที่เบราว์เซอร์)
 function publicVisitor(v) {
   if (!v) return null;
+  const hasLine = !!v.line_uid;
   return {
     id: v.id,
     name: v.name || "",
     position: v.position || "",
     branch: v.branch || "",
-    hasKeypass: !!v.keypass_at
+    hasKeypass: !!v.keypass_at,
+    hasLine: hasLine,
+    lineName: v.line_name || "",
+    // ผู้ใช้ที่มาจาก LINE แล้วยังกรอกข้อมูลไม่ครบ ต้องให้เติมก่อนใช้งาน
+    needsProfile: !!(hasLine && (!v.name || !v.position || !v.branch))
   };
 }
 
@@ -757,7 +767,8 @@ app.get("/api/config", (req, res) => {
   res.json({
     maxPhotos: 3,
     version: APP_VERSION,
-    versionLabel: APP_VERSION_LABEL
+    versionLabel: APP_VERSION_LABEL,
+    lineLogin: { enabled: lineLoginEnabled() }
   });
 });
 
@@ -1101,6 +1112,155 @@ app.post("/api/auth/visitor-logout", (req, res) => {
   res.json({ ok: true });
 });
 
+// ======================================================
+// เข้าสู่ระบบด้วย LINE (LINE Login v2 — OpenID Connect)
+// ผู้ใช้กดปุ่ม -> ไปหน้า LINE -> กลับมา /auth/line/callback
+// ระบบเก็บ line_uid + ชื่อ/รูป แล้วให้กรอกชื่อ/ตำแหน่ง/สาขาให้ครบก่อนใช้งาน
+// ======================================================
+
+// คืนค่า URL ปลายทางกลับมา (ต้องตรงกับที่ลงทะเบียนใน LINE Console)
+function lineCallbackUri(req) {
+  const proto = isHttps(req) ? "https" : "http";
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  return proto + "://" + host + "/auth/line/callback";
+}
+
+function randomToken() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
+// อนุญาตเฉพาะ path ภายในเว็บ (กัน open redirect)
+function safeNextPath(raw) {
+  const v = String(raw || "").trim();
+  if (!v || v[0] !== "/") return "";
+  if (v[1] === "/" || v[1] === "\\") return "";
+  if (/[\r\n]/.test(v)) return "";
+  return v.slice(0, 500);
+}
+
+function withQuery(path, key, val) {
+  return path + (path.indexOf("?") >= 0 ? "&" : "?") + key + "=" + encodeURIComponent(val);
+}
+
+// ตรวจ id_token ที่ LINE เซ็นด้วย Channel Secret (HS256) + ตรวจ claims
+function verifyLineIdToken(idToken, expectedNonce) {
+  try {
+    const parts = String(idToken || "").split(".");
+    if (parts.length !== 3) return null;
+    const header = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    if (header.alg !== "HS256") return null;
+    const sig = Buffer.from(parts[2], "base64url");
+    const expected = crypto.createHmac("sha256", LINE_CHANNEL_SECRET).update(parts[0] + "." + parts[1]).digest();
+    if (sig.length !== expected.length || !crypto.timingSafeEqual(sig, expected)) return null;
+    if (payload.iss !== "https://access.line.me") return null;
+    if (String(payload.aud) !== LINE_CHANNEL_ID) return null;
+    if (!payload.exp || payload.exp * 1000 < Date.now()) return null;
+    if (expectedNonce && payload.nonce && payload.nonce !== expectedNonce) return null;
+    return payload;
+  } catch (err) {
+    return null;
+  }
+}
+
+// GET /auth/line/login — เริ่มขั้นตอน: ตั้ง state/nonce แล้วพาไปหน้า LINE
+app.get("/auth/line/login", (req, res) => {
+  const next = safeNextPath(req.query.next) || "/";
+  if (!lineLoginEnabled()) return res.redirect(withQuery(next, "line_error", "disabled"));
+
+  const state = randomToken();
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: LINE_CHANNEL_ID,
+    redirect_uri: lineCallbackUri(req),
+    state,
+    nonce: state,
+    scope: "openid profile"
+  });
+  res.append("Set-Cookie", "line_oauth=" + encodeURIComponent(state) + "; HttpOnly; Max-Age=600; " + cookieFlags(req));
+  res.append("Set-Cookie", "line_next=" + encodeURIComponent(next) + "; HttpOnly; Max-Age=600; " + cookieFlags(req));
+  res.redirect("https://access.line.me/oauth2/v2.1/authorize?" + params.toString());
+});
+
+// GET /auth/line/callback — LINE ส่ง code กลับมา แลกโปรไฟล์ แล้วผูก/สร้างบัญชี
+app.get("/auth/line/callback", async (req, res) => {
+  const cookies = parseCookies(req);
+  const next = safeNextPath(cookies.line_next) || "/";
+  const state = String(req.query.state || "");
+  res.append("Set-Cookie", "line_oauth=; HttpOnly; Max-Age=0; " + cookieFlags(req));
+  res.append("Set-Cookie", "line_next=; HttpOnly; Max-Age=0; " + cookieFlags(req));
+  const fail = (code) => res.redirect(withQuery(next, "line_error", code));
+
+  if (req.query.error) return fail("denied");
+  if (!lineLoginEnabled()) return fail("disabled");
+  if (!state || !cookies.line_oauth || state !== cookies.line_oauth) return fail("state");
+  if (!req.query.code) return fail("nocode");
+
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) return fail("db");
+
+    const tokenRes = await fetch("https://api.line.me/oauth2/v2.1/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code: String(req.query.code),
+        redirect_uri: lineCallbackUri(req),
+        client_id: LINE_CHANNEL_ID,
+        client_secret: LINE_CHANNEL_SECRET
+      })
+    });
+    const tokenData = await tokenRes.json().catch(() => ({}));
+    if (!tokenRes.ok || !tokenData.access_token) return fail("token");
+    if (!verifyLineIdToken(tokenData.id_token, state)) return fail("verify");
+
+    const profRes = await fetch("https://api.line.me/v2/profile", {
+      headers: { Authorization: "Bearer " + tokenData.access_token }
+    });
+    const prof = await profRes.json().catch(() => ({}));
+    if (!profRes.ok || !prof.userId) return fail("profile");
+
+    const ip = clientIp(req);
+    const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200);
+    let visitor = await adapter.findVisitorByLineUid(prof.userId);
+
+    if (visitor) {
+      const patch = {
+        line_name: prof.displayName || "",
+        line_picture_url: prof.pictureUrl || "",
+        last_seen_at: new Date().toISOString()
+      };
+      if (!visitor.name && prof.displayName) patch.name = prof.displayName;
+      if (deviceId && !visitor.device_id) patch.device_id = deviceId;
+      if (!visitor.token) patch.token = crypto.randomBytes(24).toString("hex");
+      await adapter.updateVisitor(visitor.id, patch);
+      const fresh = await adapter.getVisitorById(visitor.id);
+      setVisitorTokenCookie(req, res, (fresh && fresh.token) || patch.token || visitor.token || "");
+      setVisitorSessionCookie(req, res, visitor.id);
+    } else {
+      const token = crypto.randomBytes(24).toString("hex");
+      const created = await adapter.createVisitor({
+        name: prof.displayName || "",
+        position: "",
+        branch: "",
+        ip,
+        token,
+        deviceId,
+        lineUid: prof.userId,
+        lineName: prof.displayName || "",
+        linePictureUrl: prof.pictureUrl || ""
+      });
+      setVisitorTokenCookie(req, res, token);
+      setVisitorSessionCookie(req, res, created.id);
+    }
+    return res.redirect(withQuery(next, "line", "ok"));
+  } catch (err) {
+    console.error("[LINE] เข้าสู่ระบบไม่สำเร็จ:", err && err.message);
+    return fail("server");
+  }
+});
+
 // GET /api/admin/visitors — รายการผู้ใช้ภายนอกทั้งหมด
 app.get("/api/admin/visitors", async (req, res) => {
   try {
@@ -1121,7 +1281,11 @@ app.get("/api/admin/visitors", async (req, res) => {
         last_seen_at: v.last_seen_at,
         created_at: v.created_at,
         hasKeypass: !!v.keypass_at,
-        keypass_at: v.keypass_at || null
+        keypass_at: v.keypass_at || null,
+        hasLine: !!v.line_uid,
+        lineUid: v.line_uid || "",
+        lineName: v.line_name || "",
+        linePictureUrl: v.line_picture_url || ""
       };
     });
     res.json({ ok: true, visitors });

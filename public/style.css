@@ -475,6 +475,49 @@ body.app-nav { font-size: 16px; }
 .vg-fields { padding: 16px 0 2px; border-top: 1px solid var(--line); }
 .vg-pane[data-pane="login"] .vg-fields { border-top: none; padding-top: 0; }
 
+/* --- ปุ่ม "เข้าสู่ระบบด้วย LINE" (สร้างโดย line-login.js) --- */
+.vg-line-slot { display: block; }
+.vg-line-slot:empty { display: none; }
+.vg-line-wrap { padding: 4px 0 2px; }
+.vg-line-btn {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #06c755;
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.vg-line-btn:hover { background: #05b34b; }
+.vg-line-btn:active { transform: scale(0.985); }
+.vg-line-ic { display: inline-flex; }
+.vg-line-ic svg { width: 20px; height: 20px; display: block; }
+.vg-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.vg-or::before,
+.vg-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.vg-pane.vg-has-line .vg-fields { border-top: none; }
+
 .vg-label {
   display: block;
   margin: 4px 0 6px;

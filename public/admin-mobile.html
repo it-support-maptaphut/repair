@@ -6974,7 +6974,7 @@
       visitors.forEach(function (v) {
         var tr = document.createElement("tr");
         tr.innerHTML =
-          "<td>" + esc(v.name || "-") + "</td>" +
+          "<td>" + esc(v.name || "-") + (v.hasLine ? " <span title='เข้าสู่ระบบด้วย LINE' style='color:#06c755;font-weight:700;font-size:11px'>LINE</span>" : "") + "</td>" +
           "<td>" + esc(v.position || "-") + "</td>" +
           "<td>" + esc(v.branch || "-") + "</td>" +
           "<td>" + (v.hasKeypass

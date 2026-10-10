@@ -75,6 +75,10 @@ function createSupabaseAdapter() {
       return supabaseModule.findVisitorByUsername(username);
     },
 
+    async findVisitorByLineUid(lineUid) {
+      return supabaseModule.findVisitorByLineUid(lineUid);
+    },
+
     async setVisitorCredentials(id, data) {
       return supabaseModule.setVisitorCredentials(id, data);
     },
@@ -481,10 +485,15 @@ function createPostgresAdapter() {
         ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS keypass_enc text DEFAULT '';
         ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS keypass_at timestamptz;
         ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS branch text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS line_uid text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS line_name text DEFAULT '';
+        ALTER TABLE external_visitors ADD COLUMN IF NOT EXISTS line_picture_url text DEFAULT '';
         CREATE UNIQUE INDEX IF NOT EXISTS external_visitors_username_lower_idx
           ON external_visitors (lower(username)) WHERE username IS NOT NULL AND username <> '';
         CREATE UNIQUE INDEX IF NOT EXISTS external_visitors_keypass_lookup_key
           ON external_visitors (keypass_lookup) WHERE keypass_lookup <> '';
+        CREATE UNIQUE INDEX IF NOT EXISTS external_visitors_line_uid_key
+          ON external_visitors (line_uid) WHERE line_uid <> '';
       `);
       visitorCredColsReady = true;
       return true;
@@ -1144,13 +1153,20 @@ function createPostgresAdapter() {
       );
     },
 
-    async createVisitor({ name, position, branch, ip, token, deviceId }) {
+    async findVisitorByLineUid(lineUid) {
+      const want = String(lineUid || "").trim();
+      if (!want) return null;
+      const result = await query(`SELECT * FROM external_visitors WHERE line_uid = $1 LIMIT 1`, [want]);
+      return result.rows[0] || null;
+    },
+
+    async createVisitor({ name, position, branch, ip, token, deviceId, lineUid, lineName, linePictureUrl }) {
       await ensureVisitorCredCols();
       const result = await query(
-        `INSERT INTO external_visitors (name, position, branch, ip, token, device_id, ticket_count, last_seen_at)
-         VALUES ($1, $2, $3, $4, $5, $6, 0, now())
+        `INSERT INTO external_visitors (name, position, branch, ip, token, device_id, ticket_count, last_seen_at, line_uid, line_name, line_picture_url)
+         VALUES ($1, $2, $3, $4, $5, $6, 0, now(), $7, $8, $9)
          RETURNING *`,
-        [name || "", position || "", branch || "", ip || "", token || "", deviceId || ""]
+        [name || "", position || "", branch || "", ip || "", token || "", deviceId || "", lineUid || "", lineName || "", linePictureUrl || ""]
       );
       const row = result.rows[0];
       if (ip) await this._touchVisitorIps(row.id, ip);
