@@ -123,8 +123,8 @@ body.ticket-page .step.is-active {
   border-radius: var(--tk-radius-lg);
   padding: 26px 22px 24px;
   box-shadow: var(--tk-shadow);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
   will-change: transform, opacity;
   animation: ticketFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -427,8 +427,8 @@ body.ticket-page .action-bar {
   border: 1px solid var(--tk-glass-line);
   border-radius: var(--tk-radius);
   box-shadow: var(--tk-shadow);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
 }
 body.ticket-page .action-btn { border-radius: var(--tk-radius-sm); }
 body.ticket-page .action-btn.primary {
@@ -483,8 +483,8 @@ body.ticket-page .success-box {
   background: var(--tk-card);
   border: 1px solid var(--tk-glass-line);
   box-shadow: var(--tk-shadow-pop);
-  backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
   animation: ticketPop 0.45s cubic-bezier(0.22, 1.4, 0.36, 1) both;
   overflow: hidden;
 }

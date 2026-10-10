@@ -53,8 +53,8 @@ body.my-page .mt-card {
   border-radius: 22px;
   box-shadow: var(--tk-shadow);
   overflow: hidden;
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
   animation: mtRise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   transition: transform 0.18s ease, box-shadow 0.24s ease;
 }
