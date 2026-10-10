@@ -152,7 +152,6 @@
             (photos ? '<div class="mt-pbox mt-pbox-wide"><span class="mt-lb">รูปภาพที่แนบ</span>' + photos + "</div>" : "") +
           "</div>" +
           prog +
-          '<div class="mt-note ' + st.cls + '">' + st.msg + "</div>" +
           '<div class="mt-actions">' +
             '<button class="mt-action ghost" type="button" data-copy="' + esc(t.ticket_no) + '">คัดลอกรหัสซ่อม</button>' +
             pdfBtn +

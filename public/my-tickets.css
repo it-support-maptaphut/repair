@@ -304,18 +304,6 @@ body.my-page .mt-prog.st-done .mt-prog-labels span:nth-child(-n+3) {
   font-weight: 700;
 }
 
-body.my-page .mt-note {
-  margin: 10px 0 0;
-  padding: 11px 14px;
-  border-radius: 14px;
-  font-size: 14.5px;
-  line-height: 1.6;
-}
-
-body.my-page .mt-note.st-new { background: rgba(255, 214, 120, 0.28); color: #7a4e06; }
-body.my-page .mt-note.st-working { background: rgba(169, 194, 255, 0.28); color: #17357f; }
-body.my-page .mt-note.st-done { background: rgba(142, 240, 196, 0.30); color: #064a29; }
-
 body.my-page .mt-actions {
   display: flex;
   gap: 10px;
