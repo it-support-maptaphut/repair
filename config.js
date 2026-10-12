@@ -28,5 +28,6 @@ module.exports = {
   VISITOR_KEYPASS_ENC_KEY: process.env.VISITOR_KEYPASS_ENC_KEY || "",
   LINE_CHANNEL_ID: process.env.LINE_CHANNEL_ID || "",
   LINE_CHANNEL_SECRET: process.env.LINE_CHANNEL_SECRET || "",
-  LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN || ""
+  LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN || "",
+  LINE_OA_ID: process.env.LINE_OA_ID || ""
 };

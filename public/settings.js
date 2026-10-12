@@ -118,6 +118,13 @@
             '<div class="settings-row"><span class="sr-k">ID line</span><span class="sr-v sr-line-id"><span id="srLineId">-</span><button type="button" class="sr-copy" id="srCopyId">คัดลอก</button></span></div>' +
           "</div>" +
         "</div>" +
+        '<div class="settings-oa" id="srOaSection" hidden>' +
+          '<p class="settings-section">เพิ่มเพื่อน LINE OA</p>' +
+          '<div class="settings-qr">' +
+            '<img class="settings-qr-img" id="srOaQr" alt="QR เพิ่มเพื่อน LINE OA" />' +
+            '<p class="settings-qr-cap">สแกนด้วยแอป LINE เพื่อเพิ่มเพื่อน OA และรับแจ้งเตือน</p>' +
+          "</div>" +
+        "</div>" +
         '<div class="settings-actions">' +
           '<button type="button" class="settings-btn-danger" id="settingsLogout">ออกจากระบบ</button>' +
         "</div>" +
@@ -135,6 +142,8 @@
     els.lineId = gate.querySelector("#srLineId");
     els.copyBtn = gate.querySelector("#srCopyId");
     els.logoutBtn = gate.querySelector("#settingsLogout");
+    els.oaSection = gate.querySelector("#srOaSection");
+    els.oaQr = gate.querySelector("#srOaQr");
 
     gate.querySelector(".settings-close").addEventListener("click", close);
     els.copyBtn.addEventListener("click", function () {
@@ -162,8 +171,16 @@
 
   function loadVersion() {
     api("/api/config").then(function (r) {
-      if (r.ok && r.d && r.d.versionLabel) {
-        els.ver.textContent = r.d.versionLabel;
+      if (!r.ok || !r.d) return;
+      if (r.d.versionLabel) els.ver.textContent = r.d.versionLabel;
+      var oa = r.d.lineOa || {};
+      if (els.oaSection) {
+        if (oa.enabled) {
+          els.oaSection.hidden = false;
+          els.oaQr.src = "/api/line-oa-qr.png?size=240";
+        } else {
+          els.oaSection.hidden = true;
+        }
       }
     }).catch(function () {});
   }

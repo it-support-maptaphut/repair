@@ -3,6 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const fsSync = require("fs");
 const crypto = require("crypto");
+const QRCode = require("qrcode");
 
 const config = require("./config");
 const db = require("./db-adapter");
@@ -218,6 +219,14 @@ const KEYPASS_RE = /^[A-HJ-KM-NP-Z2-9]{5}$/;
 const LINE_CHANNEL_ID = String(config.LINE_CHANNEL_ID || "");
 const LINE_CHANNEL_SECRET = String(config.LINE_CHANNEL_SECRET || "");
 function lineLoginEnabled() { return !!LINE_CHANNEL_ID && !!LINE_CHANNEL_SECRET; }
+
+// ---------- LINE OA (ลิงก์เพิ่มเพื่อน + QR) ----------
+const LINE_OA_ID = String(config.LINE_OA_ID || "").trim();
+function lineOaAddUrl() {
+  if (!LINE_OA_ID) return "";
+  const id = LINE_OA_ID.charAt(0) === "@" ? LINE_OA_ID : "@" + LINE_OA_ID;
+  return "https://line.me/R/ti/p/" + encodeURIComponent(id);
+}
 
 function newKeypass() {
   const bytes = crypto.randomBytes(KEYPASS_LEN * 2);
@@ -766,12 +775,39 @@ app.get("/api/notify/stream", async (req, res) => {
 });
 
 app.get("/api/config", (req, res) => {
+  const oaUrl = lineOaAddUrl();
   res.json({
     maxPhotos: 3,
     version: APP_VERSION,
     versionLabel: APP_VERSION_LABEL,
-    lineLogin: { enabled: lineLoginEnabled() }
+    lineLogin: { enabled: lineLoginEnabled() },
+    lineOa: { enabled: !!oaUrl, addUrl: oaUrl }
   });
+});
+
+// GET /api/line-oa-qr.png — สร้าง QR ของลิงก์เพิ่มเพื่อน LINE OA (ฝั่งเซิร์ฟเวอร์)
+app.get("/api/line-oa-qr.png", async (req, res) => {
+  const url = lineOaAddUrl();
+  if (!url) {
+    res.status(404).type("text/plain").send("not configured");
+    return;
+  }
+  try {
+    const size = Math.min(600, Math.max(120, parseInt(req.query.size, 10) || 220));
+    const png = await QRCode.toBuffer(url, {
+      type: "png",
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: size,
+      color: { dark: "#000000", light: "#ffffff" }
+    });
+    res.set("Content-Type", "image/png");
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(png);
+  } catch (err) {
+    console.error("[line-oa-qr] สร้าง QR ไม่สำเร็จ:", err.message);
+    res.status(500).type("text/plain").send("qr error");
+  }
 });
 
 app.get("/api/admin/tickets", async (req, res) => {
