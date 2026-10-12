@@ -1093,7 +1093,7 @@ function createPostgresAdapter() {
       return result.rows;
     },
 
-    async findVisitor({ ip, token, deviceId, allowIpFallback = true, ipFallbackHours = 12 }) {
+    async findVisitor({ ip, token, allowIpFallback = true, ipFallbackHours = 12 }) {
       if (!(await ensureVisitorCredCols())) {
         // ยังไม่มีคอลัมน์บัญชีผู้ใช้: ห้ามใช้ IP fallback เด็ดขาด
         allowIpFallback = false;
@@ -1104,12 +1104,6 @@ function createPostgresAdapter() {
         const r = await query(`SELECT * FROM external_visitors WHERE token = $1 LIMIT 1`, [token]);
         row = r.rows[0] || null;
         if (row) matchedBy = "token";
-      }
-      // เลขเครื่อง: ถ้าไม่มี cookie ให้ยืนยันด้วยอุปกรณ์เดิมแทน (กันเปลี่ยนเน็ตแล้วคิดว่าเป็นคนใหม่)
-      if (!row && deviceId) {
-        const r = await query(`SELECT * FROM external_visitors WHERE device_id = $1 ORDER BY last_seen_at DESC LIMIT 1`, [deviceId]);
-        row = r.rows[0] || null;
-        if (row) matchedBy = "device";
       }
       // IP: ใช้ได้เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้ง user/password และเพิ่งใช้งานภายในชั่วโมงที่กำหนด
       if (!row && ip && allowIpFallback) {
@@ -1126,11 +1120,6 @@ function createPostgresAdapter() {
       }
       if (!row) return null;
 
-      // เลขเครื่อง: เติมให้ครั้งแรกเท่านั้น ไม่เขียนทับของเดิม
-      if (matchedBy !== "session" && deviceId && !row.device_id) {
-        await query(`UPDATE external_visitors SET device_id = $1 WHERE id = $2`, [deviceId, row.id]);
-        row.device_id = deviceId;
-      }
       // IP: เก็บไว้แสดงในหลังบ้านเท่านั้น — ห้ามเขียนทับตอนเข้าสู่ระบบผ่าน session
       if (matchedBy !== "session" && ip && row.ip !== ip) {
         await query(`UPDATE external_visitors SET ip = $1, last_seen_at = now() WHERE id = $2`, [ip, row.id]);
@@ -1160,13 +1149,13 @@ function createPostgresAdapter() {
       return result.rows[0] || null;
     },
 
-    async createVisitor({ name, position, branch, ip, token, deviceId, lineUid, lineName, linePictureUrl }) {
+    async createVisitor({ name, position, branch, ip, token, lineUid, lineName, linePictureUrl }) {
       await ensureVisitorCredCols();
       const result = await query(
-        `INSERT INTO external_visitors (name, position, branch, ip, token, device_id, ticket_count, last_seen_at, line_uid, line_name, line_picture_url)
-         VALUES ($1, $2, $3, $4, $5, $6, 0, now(), $7, $8, $9)
+        `INSERT INTO external_visitors (name, position, branch, ip, token, ticket_count, last_seen_at, line_uid, line_name, line_picture_url)
+         VALUES ($1, $2, $3, $4, $5, 0, now(), $6, $7, $8)
          RETURNING *`,
-        [name || "", position || "", branch || "", ip || "", token || "", deviceId || "", lineUid || "", lineName || "", linePictureUrl || ""]
+        [name || "", position || "", branch || "", ip || "", token || "", lineUid || "", lineName || "", linePictureUrl || ""]
       );
       const row = result.rows[0];
       if (ip) await this._touchVisitorIps(row.id, ip);

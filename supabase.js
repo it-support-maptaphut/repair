@@ -1474,8 +1474,8 @@ async function visitorSelectCols() {
 }
 
 // หา visitor จาก session/cookie/เลขเครื่อง — ใช้ IP เป็นตัวสำรองเฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน
-// matchedBy: "session" = เข้าสู่ระบบแล้ว (ไม่แตะ ip/device_id), "token"/"device", "ip" = ตัวสำรอง
-async function findVisitor({ ip, token, deviceId, allowIpFallback = true, ipFallbackHours = 12 }) {
+// matchedBy: "session" = เข้าสู่ระบบแล้ว (ไม่แตะ ip), "token", "ip" = ตัวสำรอง
+async function findVisitor({ ip, token, allowIpFallback = true, ipFallbackHours = 12 }) {
   if (!ready) return null;
   let row = null;
   let matchedBy = "";
@@ -1486,12 +1486,6 @@ async function findVisitor({ ip, token, deviceId, allowIpFallback = true, ipFall
       const { data } = await supabase.from("external_visitors").select(cols).eq("token", token).limit(1);
       row = (data && data[0]) || null;
       if (row) matchedBy = "token";
-    }
-    // เลขเครื่อง: ถ้าไม่มี cookie ให้ยืนยันด้วยอุปกรณ์เดิมแทน (กันเปลี่ยนเน็ตแล้วคิดว่าเป็นคนใหม่)
-    if (!row && deviceId) {
-      const { data } = await supabase.from("external_visitors").select(cols).eq("device_id", deviceId).order("last_seen_at", { ascending: false }).limit(1);
-      row = (data && data[0]) || null;
-      if (row) matchedBy = "device";
     }
     // IP: ใช้ได้เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้ง user/password และเพิ่งใช้งานภายในชั่วโมงที่กำหนด
     if (!row && ip && allowIpFallback) {
@@ -1516,8 +1510,6 @@ async function findVisitor({ ip, token, deviceId, allowIpFallback = true, ipFall
 
     const now = new Date().toISOString();
     const patch = { last_seen_at: now };
-    // เลขเครื่อง: เติมให้ครั้งแรกเท่านั้น ไม่เขียนทับของเดิม (กันเครื่องอื่นมาแย่ง device_id)
-    if (matchedBy !== "session" && deviceId && !row.device_id) patch.device_id = deviceId;
     // IP: เก็บไว้แสดงในหลังบ้านเท่านั้น (ไม่ใช่ตัวระบุตัวตน) — ห้ามเขียนทับตอนเข้าสู่ระบบผ่าน session
     if (matchedBy !== "session" && ip && row.ip !== ip) patch.ip = ip;
     await supabase.from("external_visitors").update(patch).eq("id", row.id);
@@ -1702,7 +1694,7 @@ async function findVisitorByKeypassLookup(lookup) {
   }
 }
 
-async function createVisitor({ name, position, branch, ip, token, deviceId, lineUid, lineName, linePictureUrl }) {
+async function createVisitor({ name, position, branch, ip, token, lineUid, lineName, linePictureUrl }) {
   if (!ready) throw new Error("ยังไม่ได้ตั้งค่า Supabase ใน .env");
   const hasBranch = await ensureVisitorBranchCol();
   const hasLine = await ensureVisitorLineCols();
@@ -1712,7 +1704,6 @@ async function createVisitor({ name, position, branch, ip, token, deviceId, line
     position: position || "",
     ip: ip || "",
     token: token || "",
-    device_id: deviceId || "",
     ticket_count: 0,
     last_seen_at: new Date().toISOString()
   };

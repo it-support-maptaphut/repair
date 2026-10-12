@@ -939,8 +939,8 @@ app.delete("/api/admin/users/:ip", async (req, res) => {
 
 
 // ---------- ระบบบัญชีผู้ใช้งานภายนอก ----------
-// ลำดับการระบุตัวตน: session (vst_token) → cookie เครื่อง → เลขเครื่อง → IP (เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน)
-// IP ไม่มีอำนาจผูกตัวตนอีกต่อไป เปลี่ยนเครือข่ายหรือเปลี่ยนเครื่องแล้วใช้ user/password เข้าได้
+// ลำดับการระบุตัวตน: session (vst_token) → cookie เครื่อง (visitor_token) → IP (เฉพาะผู้ใช้เก่าที่ยังไม่ได้ตั้งรหัสผ่าน)
+// ไม่มีระบบผูกอุปกรณ์แล้ว (เอา device_id ออก) — IP ไม่มีอำนาจผูกตัวตน
 async function resolveVisitor(req, opts) {
   const options = opts || {};
   const adapter = db.getAdapter();
@@ -949,9 +949,8 @@ async function resolveVisitor(req, opts) {
   const allowIp = options.allowIpFallback !== false;
   const token = parseCookies(req).visitor_token || "";
   const ip = clientIp(req);
-  const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200) || null;
 
-  // 1) session ที่ล็อกอินไว้ — เป็นแหล่งความจริงเดียว (ไม่แตะ ip/device_id เด็ดขาด)
+  // 1) session ที่ล็อกอินไว้ — เป็นแหล่งความจริงเดียว (ไม่แตะ ip)
   const session = verifyVisitorToken(parseCookies(req).vst_token);
   if (session) {
     const row = await adapter.getVisitorById(session.v);
@@ -961,15 +960,9 @@ async function resolveVisitor(req, opts) {
     }
   }
 
-  // 2-4) cookie / เลขเครื่อง / IP
-  const row = await adapter.findVisitor({
-    ip,
-    token,
-    deviceId,
-    allowIpFallback: allowIp,
-    ipFallbackHours: VISITOR_IP_FALLBACK_HOURS
-  });
-  if (row) row.matchedBy = token && String(row.token) === token ? "token" : (deviceId && row.device_id === deviceId ? "device" : "ip");
+  // 2-3) cookie เครื่องเดิม / IP
+  const row = await adapter.findVisitor({ ip, token, allowIpFallback: allowIp, ipFallbackHours: VISITOR_IP_FALLBACK_HOURS });
+  if (row) row.matchedBy = token && String(row.token) === token ? "token" : "ip";
   return row;
 }
 
@@ -989,15 +982,15 @@ async function requireVisitorSession(req) {
 app.get("/api/visitors/me", async (req, res) => {
   try {
     const visitor = await resolveVisitor(req);
-    // "เข้าสู่ระบบแล้ว" นับเฉพาะ session / cookie เครื่องเดิม / เลขเครื่องเดิม เท่านั้น
+    // "เข้าสู่ระบบแล้ว" นับเฉพาะ session / cookie เครื่องเดิม เท่านั้น
     // รู้จักด้วย IP อย่างเดียว "ไม่นับ" (IP ใช้แค่ช่วยระบุตัวตนตอนส่งใบแจ้งซ่อม) — กันเคส authed:true แต่ API จริงตอบ 401
-    const authed = !!visitor && (visitor.matchedBy === "session" || visitor.matchedBy === "token" || visitor.matchedBy === "device");
+    const authed = !!visitor && (visitor.matchedBy === "session" || visitor.matchedBy === "token");
     if (!authed) {
       clearVisitorSessionCookie(req, res);
       return res.json({ ok: true, registered: false, authed: false, visitor: null });
     }
-    // รู้จักด้วย cookie/เลขเครื่อง (token เก่า 1 ปี) แต่ session สั้นหมดอายุแล้ว → ต่ออายุ session ให้ตรงกับ token ยาว
-    if (visitor.matchedBy === "token" || visitor.matchedBy === "device") {
+    // รู้จักด้วย cookie (token เก่า 1 ปี) แต่ session สั้นหมดอายุแล้ว → ต่ออายุ session ให้ตรงกับ token ยาว
+    if (visitor.matchedBy === "token") {
       setVisitorSessionCookie(req, res, visitor.id);
     }
     res.json({
@@ -1089,9 +1082,8 @@ app.post("/api/visitors", rateLimit("visitor", 10, 60 * 60 * 1000), async (req, 
     if (position.length > 120) return res.status(400).json({ ok: false, message: "ตำแหน่งยาวเกินไป (สูงสุด 120 ตัวอักษร)" });
     if (branch.length > 120) return res.status(400).json({ ok: false, message: "ชื่อสาขายาวเกินไป (สูงสุด 120 ตัวอักษร)" });
     const ip = clientIp(req);
-    const deviceId = String(body.device_id || req.headers["x-device-id"] || "").trim().slice(0, 200);
     const token = crypto.randomBytes(24).toString("hex");
-    const visitor = await adapter.createVisitor({ name, position, branch, ip, token, deviceId });
+    const visitor = await adapter.createVisitor({ name, position, branch, ip, token });
     setVisitorCookie(req, res, token);
     setVisitorSessionCookie(req, res, visitor.id);
     // เก็บ hash + รุ่นเข้ารหัส (keypass_enc) ไว้ให้ผู้ใช้ดูเองในหน้า Settings
@@ -1124,11 +1116,9 @@ app.post("/api/visitors/keypass-login", rateLimit("kp", 5, 15 * 60 * 1000), asyn
       return res.status(401).json({ ok: false, message: "ไม่พบ Key Pass นี้ หรือกรอกไม่ถูกต้อง" });
     }
 
-    // ผูกเบราว์เซอร์นี้เข้ากับบัญชี Key Pass นี้ทันที (สลับ cookie/session มาเป็นของบัญชีใหม่)
+    // สลับ cookie/session มาเป็นของบัญชี Key Pass นี้ทันที
     // => ถ้าเครื่องนี้จำบัญชีอื่นอยู่ด้วยคุกกี้เดิม คุกกี้จะถูกเขียนแทนด้วยของบัญชีนี้ จึง "สลับบัญชี" ได้จริง
-    const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200);
     const patch = { last_seen_at: new Date().toISOString() };
-    if (deviceId && !row.device_id) patch.device_id = deviceId;
     let token = row.token || "";
     if (!token) {
       token = crypto.randomBytes(24).toString("hex");
@@ -1147,27 +1137,25 @@ app.post("/api/visitors/keypass-login", rateLimit("kp", 5, 15 * 60 * 1000), asyn
 });
 
 // POST /api/auth/visitor-logout — ออกจากระบบ (ล้างทุกคุกกี้ผู้ใช้)
-// สำคัญ: ต้อง "เลิกจำเครื่องนี้" ด้วย (ล้าง token + device_id ของบัญชีที่ตรวจพบ)
-// ถ้าไม่ล้าง เลขเครื่อง (x-device-id) จะยังทำให้ระบบจำผู้ใช้กลับมา -> กดออกจากระบบแล้วไม่ออกจริง
+// ล้าง token ของบัญชีที่ตรวจพบ เพื่อไม่ให้คุกกี้เดิมจำผู้ใช้กลับมา
 app.post("/api/auth/visitor-logout", async (req, res) => {
   try {
     const adapter = db.getAdapter();
     if (adapter && adapter.ready) {
       const token = parseCookies(req).visitor_token || "";
-      const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200) || null;
       const session = verifyVisitorToken(parseCookies(req).vst_token);
       let row = null;
       if (session) row = await adapter.getVisitorById(session.v);
-      // ยืนยันด้วย cookie/เลขเครื่องเท่านั้น (ไม่นับ IP) แล้วค่อยเลิกจำ
-      if (!row && (token || deviceId)) {
-        row = await adapter.findVisitor({ ip: clientIp(req), token, deviceId, allowIpFallback: false });
+      // ยืนยันด้วย cookie เท่านั้น (ไม่นับ IP) แล้วค่อยล้าง token
+      if (!row && token) {
+        row = await adapter.findVisitor({ ip: clientIp(req), token, allowIpFallback: false });
       }
       if (row && row.matchedBy !== "ip") {
-        await adapter.updateVisitor(row.id, { token: "", device_id: "" });
+        await adapter.updateVisitor(row.id, { token: "" });
       }
     }
   } catch (err) {
-    console.error("[logout] เลิกจำเครื่องไม่สำเร็จ:", err && err.message);
+    console.error("[logout] ล้างการจำผู้ใช้ไม่สำเร็จ:", err && err.message);
   }
   clearVisitorSessionCookie(req, res);
   clearVisitorTokenCookie(req, res);
@@ -1294,7 +1282,6 @@ app.get("/auth/line/callback", async (req, res) => {
     }
 
     const ip = clientIp(req);
-    const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200);
     let visitor = await adapter.findVisitorByLineUid(prof.userId);
 
     if (visitor) {
@@ -1304,7 +1291,6 @@ app.get("/auth/line/callback", async (req, res) => {
         last_seen_at: new Date().toISOString()
       };
       if (!visitor.name && prof.displayName) patch.name = prof.displayName;
-      if (deviceId && !visitor.device_id) patch.device_id = deviceId;
       if (!visitor.token) patch.token = crypto.randomBytes(24).toString("hex");
       await adapter.updateVisitor(visitor.id, patch);
       const fresh = await adapter.getVisitorById(visitor.id);
@@ -1318,7 +1304,6 @@ app.get("/auth/line/callback", async (req, res) => {
         branch: "",
         ip,
         token,
-        deviceId,
         lineUid: prof.userId,
         lineName: prof.displayName || "",
         linePictureUrl: prof.pictureUrl || ""
