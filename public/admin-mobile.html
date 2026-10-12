@@ -2972,58 +2972,6 @@
       </div>
     </section>
 
-    <div class="modal-mask hidden" id="visitorEditMask" role="dialog" aria-modal="true" aria-label="แก้ข้อมูลผู้ใช้ภายนอก" onclick="if(event.target===this) closeVisitorEdit()">
-      <div class="modal">
-        <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorEdit()">&times;</button>
-        <div class="modal-body">
-          <h3 class="modal-title">แก้ข้อมูลผู้ใช้ภายนอก</h3>
-          <div class="form-field">
-            <label>ชื่อ</label>
-            <input id="visitorEditName" type="text" />
-          </div>
-          <div class="form-field">
-            <label>ตำแหน่ง</label>
-            <input id="visitorEditPosition" type="text" />
-          </div>
-          <div class="form-field">
-            <label>ประจำสาขา</label>
-            <input id="visitorEditBranch" type="text" list="visitorBranchList" placeholder="เลือกหรือพิมพ์ชื่อสาขา" />
-            <datalist id="visitorBranchList">
-              <option value="ร้านวรรณสาขา 1 (ขนส่งเก่าระยอง)"></option>
-              <option value="ร้านวรรณสาขา 3 (ไกล้ รพ. กรุงเทพระยอง)"></option>
-              <option value="ร้านวรรณสาขา 4 (มาบตาพุด ระยอง)"></option>
-              <option value="ร้านวรรณสาขา 5 (บ้านฉาง ระยอง)"></option>
-            </datalist>
-          </div>
-          <p class="tf-field-hint" id="visitorEditIpInfo"></p>
-          <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeVisitorEdit()">ยกเลิก</button>
-            <button class="btn btn-primary" type="button" onclick="saveVisitorEdit()">บันทึก</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-mask hidden" id="visitorResetMask" role="dialog" aria-modal="true" aria-label="ออก Key Pass ใหม่" onclick="if(event.target===this) closeVisitorReset()">
-      <div class="modal">
-        <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorReset()">&times;</button>
-        <div class="modal-body">
-          <h3 class="modal-title">ออก Key Pass ใหม่</h3>
-          <p class="tf-field-hint" id="visitorResetInfo"></p>
-          <p class="tf-field-hint" style="color:var(--danger);font-weight:600">Key Pass เก่าของผู้ใช้รายนี้จะใช้ไม่ได้ทันทีหลังกดออกใหม่</p>
-          <div class="form-field" id="visitorResetResult" style="display:none">
-            <label>Key Pass ใหม่ (แสดงครั้งเดียว)</label>
-            <p style="font-family:monospace;font-size:24px;font-weight:700;letter-spacing:.22em;text-align:center;padding:12px 8px;border:2px dashed var(--green);border-radius:12px;background:var(--green-soft,#eaf5ef)" id="visitorResetKp"></p>
-            <p class="tf-field-hint">บันทึกไว้ตอนนี้แล้วส่งให้ผู้ใช้ ระบบจะไม่แสดง Key Pass นี้ให้อีก</p>
-          </div>
-          <div class="modal-actions" style="flex-wrap:wrap">
-            <button class="btn btn-ghost" onclick="closeVisitorReset()">ปิด</button>
-            <button class="btn btn-primary" type="button" id="visitorResetIssueBtn" onclick="saveVisitorReset()">ออก Key Pass ใหม่</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="modal-mask hidden" id="visitorIpsMask" role="dialog" aria-modal="true" aria-label="ประวัติ IP" onclick="if(event.target===this) closeVisitorIps()">
       <div class="modal">
         <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorIps()">&times;</button>
@@ -6945,7 +6893,6 @@
 
     // ---------- ระบบจดจำผู้ใช้งานภายนอก ----------
     var visitors = [];
-    var visitorEditId = null;
 
     function fmtVisitorDate(iso) {
       if (!iso) return "-";
@@ -6998,10 +6945,7 @@
           "<td>" + esc(fmtVisitorDate(v.last_seen_at)) + "</td>" +
           "<td style='text-align:right;white-space:nowrap'>" +
             "<button class='btn btn-ghost btn-sm' type='button' data-vview='" + (v.id || "") + "' title='ดูข้อมูลทั้งหมดที่ดึงจาก LINE'>ดู</button> " +
-            "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button> " +
-            "<button class='btn btn-ghost btn-sm' type='button' data-vedit='" + (v.id || "") + "'>แก้ไข</button> " +
-            "<button class='btn btn-ghost btn-sm' type='button' data-vreset='" + (v.id || "") + "'>Key Pass</button> " +
-            "<button class='btn btn-ghost btn-sm' type='button' data-vdel='" + (v.id || "") + "' style='color:var(--red)'>ลบ</button>" +
+            "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button>" +
           "</td>";
         body.appendChild(tr);
       });
@@ -7012,12 +6956,6 @@
       if (viewBtn) { openVisitorView(viewBtn.getAttribute("data-vview")); return; }
       var ipBtn = e.target.closest("[data-vip]");
       if (ipBtn) { showVisitorIps(ipBtn.getAttribute("data-vip")); return; }
-      var editBtn = e.target.closest("[data-vedit]");
-      if (editBtn) { openVisitorEdit(editBtn.getAttribute("data-vedit")); return; }
-      var resetBtn = e.target.closest("[data-vreset]");
-      if (resetBtn) { openVisitorReset(resetBtn.getAttribute("data-vreset")); return; }
-      var delBtn = e.target.closest("[data-vdel]");
-      if (delBtn) { deleteVisitor(delBtn.getAttribute("data-vdel")); }
     });
 
     var VISITOR_LINE_SVG =
@@ -7076,113 +7014,6 @@
       document.getElementById("visitorViewMask").classList.add("hidden");
     }
 
-    function openVisitorEdit(id) {
-      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
-      if (!v) return;
-      visitorEditId = v.id;
-      document.getElementById("visitorEditName").value = v.name || "";
-      document.getElementById("visitorEditPosition").value = v.position || "";
-      var editBranch = document.getElementById("visitorEditBranch");
-      if (editBranch) editBranch.value = v.branch || "";
-      var ipInfo = document.getElementById("visitorEditIpInfo");
-      if (ipInfo) {
-        ipInfo.textContent = (v.hasKeypass ? "มี Key Pass แล้ว" : "ยังไม่มี Key Pass") +
-          " · IP ปัจจุบัน: " + (v.ip || "-") +
-          " · แจ้งซ่อม " + (v.ticket_count || 0) + " ครั้ง" +
-          " · เข้าครั้งแรก " + fmtVisitorDate(v.created_at);
-      }
-      document.getElementById("visitorEditMask").classList.remove("hidden");
-    }
-
-    function closeVisitorEdit() {
-      document.getElementById("visitorEditMask").classList.add("hidden");
-    }
-
-    function saveVisitorEdit() {
-      var name = document.getElementById("visitorEditName").value.trim();
-      var position = document.getElementById("visitorEditPosition").value.trim();
-      var branchEl = document.getElementById("visitorEditBranch");
-      var branch = branchEl ? branchEl.value.trim() : "";
-      if (!name) { toast("กรุณากรอกชื่อ"); return; }
-      var payload = { name: name, position: position, branch: branch };
-      fetch("/api/admin/visitors/" + visitorEditId, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          closeVisitorEdit();
-          if (!d.ok) { toast(d.message || "แก้ไขไม่สำเร็จ"); return; }
-          toast("บันทึกข้อมูลแล้ว");
-          loadVisitors();
-        })
-        .catch(function () { toast("แก้ไขไม่สำเร็จ กรุณาลองใหม่"); });
-    }
-
-    // ---------- รีเซ็ตรหัสผ่านให้ผู้ใช้ ----------
-    var visitorResetId = null;
-
-    function openVisitorReset(id) {
-      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
-      if (!v) return;
-      visitorResetId = v.id;
-      var info = document.getElementById("visitorResetInfo");
-      if (info) {
-        info.textContent = (v.name || "-") + " (" + (v.position || "-") + ")";
-      }
-      var result = document.getElementById("visitorResetResult");
-      if (result) { result.style.display = "none"; }
-      var kp = document.getElementById("visitorResetKp");
-      if (kp) { kp.textContent = ""; }
-      var issueBtn = document.getElementById("visitorResetIssueBtn");
-      if (issueBtn) { issueBtn.disabled = false; issueBtn.textContent = "ออก Key Pass ใหม่"; }
-      document.getElementById("visitorResetMask").classList.remove("hidden");
-    }
-
-    function closeVisitorReset() {
-      document.getElementById("visitorResetMask").classList.add("hidden");
-    }
-
-    function saveVisitorReset() {
-      var issueBtn = document.getElementById("visitorResetIssueBtn");
-      if (issueBtn) { issueBtn.disabled = true; issueBtn.textContent = "กำลังออก..."; }
-      fetch("/api/admin/visitors/" + visitorResetId + "/issue-keypass", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (!d.ok) {
-            toast(d.message || "ออก Key Pass ไม่สำเร็จ");
-            if (issueBtn) { issueBtn.disabled = false; issueBtn.textContent = "ออก Key Pass ใหม่"; }
-            return;
-          }
-          var result = document.getElementById("visitorResetResult");
-          var kp = document.getElementById("visitorResetKp");
-          if (result) result.style.display = "";
-          if (kp) { kp.textContent = d.keypass || "-----"; }
-          toast("ออก Key Pass ใหม่ให้ " + (d.name || "ผู้ใช้") + " แล้ว");
-          loadVisitors();
-        })
-        .catch(function () {
-          toast("ออก Key Pass ไม่สำเร็จ กรุณาลองใหม่");
-          if (issueBtn) { issueBtn.disabled = false; issueBtn.textContent = "ออก Key Pass ใหม่"; }
-        });
-    }
-
-    function deleteVisitor(id) {
-      if (!confirm("แน่ใจว่าต้องการลบผู้ใช้รายนี้? (บันทึกประวัติ IP จะถูกลบด้วย)")) return;
-      fetch("/api/admin/visitors/" + id, { method: "DELETE" })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (!d.ok) { toast(d.message || "ลบไม่สำเร็จ"); return; }
-          toast("ลบผู้ใช้แล้ว");
-          loadVisitors();
-        })
-        .catch(function () { toast("ลบไม่สำเร็จ กรุณาลองใหม่"); });
-    }
-
     function showVisitorIps(id) {
       var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
       var nameEl = document.getElementById("visitorIpsName");
@@ -7219,8 +7050,6 @@
     }
 
     window.openVisitorIps = showVisitorIps;
-    window.closeVisitorEdit = closeVisitorEdit;
-    window.saveVisitorEdit = saveVisitorEdit;
     window.closeVisitorIps = closeVisitorIps;
 
     // ---------- ANALYTICS (3D donut) ----------
