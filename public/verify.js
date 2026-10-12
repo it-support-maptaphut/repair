@@ -76,6 +76,14 @@
             '<span class="vg-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.7 13.1c-.4.6.02 1.4.75 1.4H10l-1 7.6c-.1.75.85 1.15 1.3.6L19.3 11c.42-.57.02-1.4-.73-1.4H14l1-6.9c.12-.75-.83-1.16-1.28-.62Z"/></svg></span>' +
             "<span>เข้าใช้งานเร่งด่วน</span>" +
           "</button>" +
+          '<div class="vg-or">หรือ</div>' +
+          '<div class="vg-kp-entry">' +
+            '<div class="vg-kp-entry-title">เข้าใช้งานด้วย Key Pass</div>' +
+            '<div class="vg-kp-entry-row">' +
+              '<input type="text" id="vgKpInput" class="vg-input vg-input-kp" maxlength="5" placeholder="กรอกรหัส 5 ตัว" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Key Pass">' +
+              '<button type="button" id="vgKpBtn" class="vg-btn vg-kp-btn">เข้าใช้งาน</button>' +
+            "</div>" +
+          "</div>" +
         "</div>" +
 
         // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา ----
@@ -138,6 +146,8 @@
     els.enter = document.getElementById("vgEnter");
     els.kpValue = document.getElementById("vgKpValue");
     els.kpCopy = document.getElementById("vgKpCopy");
+    els.kpInput = document.getElementById("vgKpInput");
+    els.kpBtn = document.getElementById("vgKpBtn");
 
     els.close.addEventListener("click", close);
     if (els.quick) els.quick.addEventListener("click", openQuick);
@@ -255,6 +265,18 @@
     els.next.addEventListener("click", profileSubmit);
     if (els.enter) els.enter.addEventListener("click", finishQuick);
     if (els.kpCopy) els.kpCopy.addEventListener("click", copyKeypass);
+    if (els.kpBtn) els.kpBtn.addEventListener("click", keypassLogin);
+    if (els.kpInput) {
+      els.kpInput.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        keypassLogin();
+      });
+      els.kpInput.addEventListener("input", function () {
+        els.kpInput.classList.remove("invalid");
+        hideErr();
+      });
+    }
     [els.name, els.position].forEach(function (el) {
       el.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
@@ -304,6 +326,7 @@
   function lock(on) {
     busy = on;
     if (els.next) els.next.disabled = on;
+    if (els.kpBtn) els.kpBtn.disabled = on;
   }
 
   function open(opts) {
@@ -313,6 +336,7 @@
     gate.removeAttribute("data-mode");
     current.quick = false;
     els.next.textContent = "สมัคร";
+    if (els.kpInput) els.kpInput.value = "";
     // ปุ่มปิดมีเฉพาะตอนสลับบัญชี (ปกติปิดไม่ได้ ไม่งั้นเกตติ้งเด้งกลับมาเรื่อย)
     canClose = !!o.allowClose;
     els.close.classList.toggle("hidden", !canClose);
@@ -471,6 +495,30 @@
       fallbackCopy(val);
       done();
     }
+  }
+
+  // ---------- เข้าใช้งานด้วย Key Pass (บัญชีเดิมบนเครื่องใหม่) ----------
+  function keypassLogin() {
+    if (busy) return;
+    var val = els.kpInput ? els.kpInput.value.trim() : "";
+    if (!val) { markInvalid(els.kpInput); showErr("กรุณากรอก Key Pass"); return; }
+    lock(true);
+    api("/api/visitors/keypass-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keypass: val })
+    }).then(function (r) {
+      lock(false);
+      if (!r.ok) { showErr(r.d.message || "Key Pass ไม่ถูกต้อง"); return; }
+      cache = { registered: true, authed: true, visitor: r.d.visitor || null };
+      hideErr();
+      hideGate();
+      toast("ยินดีต้อนรับกลับ");
+      fireAuthed(cache);
+    }).catch(function () {
+      lock(false);
+      showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
+    });
   }
 
   // ---------- เรียกใช้จากหน้าอื่น ----------

@@ -4030,3 +4030,9 @@ body.app-nav .vg-box {
 
 /* ---------- Gate: done pane ---------- */
 .vg-pane[data-pane="done"] .vg-btn { margin-top: 16px; }
+/* ---------- Gate: key-pass login entry ---------- */
+.vg-kp-entry { margin-top: 4px; }
+.vg-kp-entry-title { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--text); text-align: center; }
+.vg-kp-entry-row { display: flex; gap: 8px; align-items: stretch; }
+.vg-kp-entry-row .vg-input-kp { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
+.vg-kp-btn { flex: 0 0 auto; width: auto; margin-top: 0; padding-left: 18px; padding-right: 18px; }
