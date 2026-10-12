@@ -339,7 +339,7 @@
       <div class="devices-toolbar" style="align-items:flex-start;gap:14px">
         <div>
           <h3 class="tab-title" style="margin:0 0 4px">ระบบบัญชีผู้ใช้งานภายนอก</h3>
-          <p class="tf-field-hint" style="margin:0">ผู้ใช้เข้าใช้งานด้วยชื่อ + ตำแหน่ง และใช้ Key Pass 5 ตัวกลับเข้าบัญชีเดิมจากเครื่องอื่น — ถ้าผู้ใช้ทำ Key Pass หาย ให้กดปุ่ม "Key Pass" เพื่อออกใหม่</p>
+          <p class="tf-field-hint" style="margin:0">รายชื่อผู้ใช้งานภายนอกที่เข้าสู่ระบบ — กด "ดู" เพื่อเปิดข้อมูลทั้งหมดที่ดึงจาก LINE หรือ "IP" เพื่อดูประวัติเครือข่าย</p>
         </div>
       </div>
       <div class="table-wrap">
@@ -349,7 +349,6 @@
               <th>ชื่อ</th>
               <th>ตำแหน่ง</th>
               <th>สาขา</th>
-              <th>Key Pass</th>
               <th>IP ล่าสุด</th>
               <th style="text-align:right">ครั้งที่แจ้ง</th>
               <th>เข้าใช้งานล่าสุด</th>
@@ -4683,7 +4682,7 @@
       var empty = document.getElementById("visitorsEmpty");
       if (!body) return Promise.resolve();
       body.innerHTML =
-        '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
+        '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลดข้อมูล...</td></tr>';
       return fetch("/api/admin/visitors")
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -4692,7 +4691,7 @@
         })
         .catch(function () {
           body.innerHTML =
-            '<tr><td colspan="8" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ตรวจสอบว่าตั้งค่าตาราง external_visitors ใน Supabase แล้ว)</td></tr>';
+            '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:28px">โหลดข้อมูลไม่สำเร็จ (ตรวจสอบว่าตั้งค่าตาราง external_visitors ใน Supabase แล้ว)</td></tr>';
         });
     }
 
@@ -4714,9 +4713,6 @@
           "<td>" + esc(v.name || "-") + (v.hasLine ? " <span title='เข้าสู่ระบบด้วย LINE' style='color:#06c755;font-weight:700;font-size:11px'>LINE</span>" : "") + "</td>" +
           "<td>" + esc(v.position || "-") + "</td>" +
           "<td>" + esc(v.branch || "-") + "</td>" +
-          "<td>" + (v.hasKeypass
-            ? "<span style='color:var(--green);font-weight:700'>มี Key Pass</span>"
-            : "<span style='color:var(--muted);font-size:12px'>ยังไม่มี Key Pass</span>") + "</td>" +
           "<td><code style='font-size:12px'>" + esc(v.ip || "-") + "</code></td>" +
           "<td style='text-align:right'>" + (v.ticket_count || 0) + "</td>" +
           "<td>" + esc(fmtVisitorDate(v.last_seen_at)) + "</td>" +
