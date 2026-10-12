@@ -169,10 +169,17 @@
       else if (d.type === "accepted") showAccepted(d);
     };
     es.onerror = function () {
-      // ยังไม่เข้าสู่ระบบ (401) หรือเน็ตหลุด — ปิดแล้วรอเชื่อมใหม่เมื่อยังล็อกอินอยู่
+      // 401 (ยังไม่เข้าสู่ระบบ/เซสชันหลุด) หรือเน็ตหลุด — ตรวจสถานะใหม่ก่อนเชื่อมต่ออีกครั้ง
       if (es) { es.close(); es = null; }
       started = false;
       setTimeout(function () {
+        if (window.WanGate && window.WanGate.check) {
+          window.WanGate.check(true).then(function (st) {
+            if (st && st.authed) { start(); return; }
+            if (window.WanGate.open) window.WanGate.open({ state: st });
+          }).catch(function () {});
+          return;
+        }
         if (isAuthed()) start();
       }, 5000);
     };

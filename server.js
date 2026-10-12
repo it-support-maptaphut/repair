@@ -989,7 +989,10 @@ async function requireVisitorSession(req) {
 app.get("/api/visitors/me", async (req, res) => {
   try {
     const visitor = await resolveVisitor(req);
-    if (!visitor) {
+    // "เข้าสู่ระบบแล้ว" นับเฉพาะ session / cookie เครื่องเดิม / เลขเครื่องเดิม เท่านั้น
+    // รู้จักด้วย IP อย่างเดียว "ไม่นับ" (IP ใช้แค่ช่วยระบุตัวตนตอนส่งใบแจ้งซ่อม) — กันเคส authed:true แต่ API จริงตอบ 401
+    const authed = !!visitor && (visitor.matchedBy === "session" || visitor.matchedBy === "token" || visitor.matchedBy === "device");
+    if (!authed) {
       clearVisitorSessionCookie(req, res);
       return res.json({ ok: true, registered: false, authed: false, visitor: null });
     }
