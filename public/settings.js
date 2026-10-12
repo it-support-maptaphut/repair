@@ -13,11 +13,6 @@
       "</svg>" +
     "</span>";
 
-  function toast(msg) {
-    if (window.showToast) { window.showToast(msg); return; }
-    if (window.alert) { try { window.alert(msg); } catch (e) {} }
-  }
-
   function api(path, opts) {
     var o = opts || {};
     o.credentials = "same-origin";
@@ -50,38 +45,6 @@
     }
   }
 
-  function copyText(text, btn) {
-    var done = function () {
-      toast("คัดลอก ID แล้ว");
-      if (btn) {
-        var old = btn.textContent;
-        btn.textContent = "คัดลอกแล้ว";
-        btn.disabled = true;
-        setTimeout(function () { btn.textContent = old; btn.disabled = false; }, 1500);
-      }
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text) && done(); });
-      return;
-    }
-    if (fallbackCopy(text)) done();
-  }
-
-  function fallbackCopy(text) {
-    try {
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.top = "-1000px";
-      document.body.appendChild(ta);
-      ta.select();
-      var ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return ok;
-    } catch (e) { return false; }
-  }
-
   function build() {
     if (gate && gate.parentNode) return;
     gate = document.createElement("div");
@@ -100,10 +63,6 @@
         "</div>" +
         '<div class="settings-profile">' +
           '<span class="settings-avatar" id="srAvatar" aria-hidden="true"></span>' +
-          '<div class="settings-profile-meta">' +
-            '<h3 class="settings-profile-name" id="srPName">-</h3>' +
-            '<p class="settings-profile-sub" id="srPPos">-</p>' +
-          "</div>" +
         "</div>" +
         '<div class="settings-rows">' +
           '<div class="settings-row"><span class="sr-k">ชื่อ</span><span class="sr-v" id="srName">-</span></div>' +
@@ -111,11 +70,10 @@
           '<div class="settings-row"><span class="sr-k">ประจำสาขา</span><span class="sr-v" id="srBranch">-</span></div>' +
         "</div>" +
         '<div class="settings-line" id="srLineSection" hidden>' +
-          '<p class="settings-section">การเชื่อมต่อ LINE</p>' +
+          '<p class="settings-section">การเชื่อมต่อ</p>' +
           '<div class="settings-rows">' +
             '<div class="settings-row"><span class="sr-k">สถานะการเชื่อมต่อ</span><span class="sr-v sr-line-status">' + LINE_ICON + "<span>ไลน์</span></span></div>" +
             '<div class="settings-row"><span class="sr-k">ชื่อในไลน์</span><span class="sr-v" id="srLineName">-</span></div>' +
-            '<div class="settings-row"><span class="sr-k">ID line</span><span class="sr-v sr-line-id"><span id="srLineId">-</span><button type="button" class="sr-copy" id="srCopyId">คัดลอก</button></span></div>' +
           "</div>" +
         "</div>" +
         '<div class="settings-oa" id="srOaSection" hidden>' +
@@ -132,25 +90,16 @@
 
     els.ver = gate.querySelector("#settingsVer");
     els.avatar = gate.querySelector("#srAvatar");
-    els.pName = gate.querySelector("#srPName");
-    els.pPos = gate.querySelector("#srPPos");
     els.name = gate.querySelector("#srName");
     els.position = gate.querySelector("#srPosition");
     els.branch = gate.querySelector("#srBranch");
     els.lineSection = gate.querySelector("#srLineSection");
     els.lineName = gate.querySelector("#srLineName");
-    els.lineId = gate.querySelector("#srLineId");
-    els.copyBtn = gate.querySelector("#srCopyId");
     els.logoutBtn = gate.querySelector("#settingsLogout");
     els.oaSection = gate.querySelector("#srOaSection");
     els.oaQr = gate.querySelector("#srOaQr");
 
     gate.querySelector(".settings-close").addEventListener("click", close);
-    els.copyBtn.addEventListener("click", function () {
-      var id = els.lineId ? els.lineId.textContent.trim() : "";
-      if (!id || id === "-") return;
-      copyText(id, els.copyBtn);
-    });
     els.logoutBtn.addEventListener("click", doLogout);
     document.body.appendChild(gate);
 
@@ -206,9 +155,6 @@
   }
 
   function fill(visitor) {
-    if (!visitor) return;
-    els.pName.textContent = visitor.name || "ผู้ใช้งาน";
-    els.pPos.textContent = visitor.position || "-";
     els.name.textContent = visitor.name || "-";
     els.position.textContent = visitor.position || "-";
     if (els.branch) els.branch.textContent = visitor.branch || "-";
@@ -216,7 +162,6 @@
     var hasLine = !!visitor.hasLine;
     if (els.lineSection) els.lineSection.hidden = !hasLine;
     els.lineName.textContent = visitor.lineName || "-";
-    els.lineId.textContent = visitor.lineUid || "-";
 
     renderAvatar(els.avatar, visitor.linePictureUrl, visitor.lineName || visitor.name || "");
   }

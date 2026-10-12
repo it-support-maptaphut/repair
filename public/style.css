@@ -238,9 +238,10 @@ body.app-nav { font-size: 16px; }
 
 .settings-profile {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  margin: 0 0 16px;
+  gap: 10px;
+  margin: 0 0 18px;
 }
 .settings-avatar {
   flex: 0 0 auto;
@@ -258,30 +259,9 @@ body.app-nav { font-size: 16px; }
   border: 1px solid var(--line);
 }
 .settings-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.settings-profile-meta { min-width: 0; }
-.settings-profile-name {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  overflow-wrap: anywhere;
-}
-.settings-profile-sub {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: var(--muted);
-  overflow-wrap: anywhere;
-}
 
 .settings-line-ic { display: inline-flex; }
 .settings-line-ic svg { width: 16px; height: 16px; color: #06c755; }
-.sr-line-id > span {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 13px;
-}
 
 .settings-qr {
   display: flex;
