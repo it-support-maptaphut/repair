@@ -174,48 +174,22 @@
           </div>
         </div>
 
-        <div class="side-group" data-group="private">
-          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupPrivate">
-            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span class="side-group-label">ระบบจัดการข้อมูลส่วนตัว</span>
+        <div class="side-group" data-group="tickets">
+          <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupTickets">
+            <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span class="side-group-label">ระบบจดจำผู้ใช้</span>
             <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="side-group-items" id="admGroupPrivate">
-            <div class="side-group-inner side-group-private-inner">
-              <div class="side-group side-group-nested" data-group="pwip">
-                <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupPwip">
-                  <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                  <span class="side-group-label">ระบบบันทึกรหัสผ่าน (ส่วนตัว)</span>
-                  <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="side-group-items" id="admGroupPwip">
-                  <div class="side-group-inner">
-                    <button class="side-btn" data-tab="pwIP" data-perm="pwIP" type="button">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                      <span>รหัสผ่านส่วนตัว</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="side-group side-group-nested" data-group="tickets">
-                <button class="side-group-head" type="button" aria-expanded="false" aria-controls="admGroupTickets">
-                  <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  <span class="side-group-label">ระบบจดจำผู้ใช้</span>
-                  <svg class="side-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="side-group-items" id="admGroupTickets">
-                  <div class="side-group-inner">
-                    <button class="side-btn" data-tab="devices" data-perm="devices" type="button">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <span>บันทึก IP ADDRESS</span>
-                    </button>
-                    <button class="side-btn" data-tab="visitors" data-perm="visitors" type="button">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                      <span>ระบบจดจำผู้ใช้งานภายนอก</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+          <div class="side-group-items" id="admGroupTickets">
+            <div class="side-group-inner">
+              <button class="side-btn" data-tab="devices" data-perm="devices" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>บันทึก IP ADDRESS</span>
+              </button>
+              <button class="side-btn" data-tab="visitors" data-perm="visitors" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>ระบบจดจำผู้ใช้งานภายนอก</span>
+              </button>
             </div>
           </div>
         </div>
