@@ -6937,7 +6937,8 @@
           "<td>" + esc(fmtVisitorDate(v.last_seen_at)) + "</td>" +
           "<td style='text-align:right;white-space:nowrap'>" +
             "<button class='btn btn-ghost btn-sm' type='button' data-vview='" + (v.id || "") + "' title='ดูข้อมูลทั้งหมดที่ดึงจาก LINE'>ดู</button> " +
-            "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button>" +
+            "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button> " +
+            "<button class='btn btn-danger btn-sm' type='button' data-vdel='" + (v.id || "") + "' title='ลบผู้ใช้นี้ออกจากระบบ'>ลบ</button>" +
           "</td>";
         body.appendChild(tr);
       });
@@ -6948,7 +6949,22 @@
       if (viewBtn) { openVisitorView(viewBtn.getAttribute("data-vview")); return; }
       var ipBtn = e.target.closest("[data-vip]");
       if (ipBtn) { showVisitorIps(ipBtn.getAttribute("data-vip")); return; }
+      var delBtn = e.target.closest("[data-vdel]");
+      if (delBtn) { deleteVisitor(delBtn.getAttribute("data-vdel")); return; }
     });
+
+    function deleteVisitor(id) {
+      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
+      var label = (v && v.name) ? ' "' + v.name + '"' : "";
+      if (!window.confirm("ยืนยันลบผู้ใช้" + label + " ออกจากระบบ?")) return;
+      fetch("/api/admin/visitors/" + id, { method: "DELETE" })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (d) {
+          if (!d || !d.ok) { window.alert((d && d.message) || "ลบผู้ใช้ไม่สำเร็จ"); return; }
+          loadVisitors();
+        })
+        .catch(function () { window.alert("เชื่อมต่อไม่ได้ กรุณาลองใหม่"); });
+    }
 
     var VISITOR_LINE_SVG =
       "<svg viewBox='0 0 24 24' fill='currentColor' width='14' height='14'>" +

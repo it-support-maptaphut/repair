@@ -1147,7 +1147,28 @@ app.post("/api/visitors/keypass-login", rateLimit("kp", 5, 15 * 60 * 1000), asyn
 });
 
 // POST /api/auth/visitor-logout — ออกจากระบบ (ล้างทุกคุกกี้ผู้ใช้)
-app.post("/api/auth/visitor-logout", (req, res) => {
+// สำคัญ: ต้อง "เลิกจำเครื่องนี้" ด้วย (ล้าง token + device_id ของบัญชีที่ตรวจพบ)
+// ถ้าไม่ล้าง เลขเครื่อง (x-device-id) จะยังทำให้ระบบจำผู้ใช้กลับมา -> กดออกจากระบบแล้วไม่ออกจริง
+app.post("/api/auth/visitor-logout", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (adapter && adapter.ready) {
+      const token = parseCookies(req).visitor_token || "";
+      const deviceId = String(req.headers["x-device-id"] || "").trim().slice(0, 200) || null;
+      const session = verifyVisitorToken(parseCookies(req).vst_token);
+      let row = null;
+      if (session) row = await adapter.getVisitorById(session.v);
+      // ยืนยันด้วย cookie/เลขเครื่องเท่านั้น (ไม่นับ IP) แล้วค่อยเลิกจำ
+      if (!row && (token || deviceId)) {
+        row = await adapter.findVisitor({ ip: clientIp(req), token, deviceId, allowIpFallback: false });
+      }
+      if (row && row.matchedBy !== "ip") {
+        await adapter.updateVisitor(row.id, { token: "", device_id: "" });
+      }
+    }
+  } catch (err) {
+    console.error("[logout] เลิกจำเครื่องไม่สำเร็จ:", err && err.message);
+  }
   clearVisitorSessionCookie(req, res);
   clearVisitorTokenCookie(req, res);
   res.json({ ok: true });

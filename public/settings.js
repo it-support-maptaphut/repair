@@ -5,6 +5,17 @@
   var VERSION_FALLBACK = "V1.0.2";
   var gate = null;
   var els = {};
+  var oaEnabled = false;   // เปิดใช้ LINE OA ในระบบหรือยัง (จาก /api/config)
+  var hasLineNow = false;  // บัญชีนี้เชื่อมต่อ LINE แล้วหรือยัง
+
+  // แสดงส่วน LINE OA เฉพาะบัญชีที่เชื่อมต่อ LINE แล้วเท่านั้น
+  // ผู้ใช้ที่เข้าแบบเร่งด่วน (ไม่มี LINE) จะไม่เห็นการชวนเพิ่มเพื่อน LINE
+  function syncOa() {
+    if (!els.oaSection) return;
+    var show = oaEnabled && hasLineNow;
+    els.oaSection.hidden = !show;
+    if (show && els.oaQr) els.oaQr.src = "/api/line-oa-qr.png?size=240";
+  }
 
   var LINE_ICON =
     '<span class="settings-line-ic" aria-hidden="true">' +
@@ -122,15 +133,8 @@
     api("/api/config").then(function (r) {
       if (!r.ok || !r.d) return;
       if (r.d.versionLabel) els.ver.textContent = r.d.versionLabel;
-      var oa = r.d.lineOa || {};
-      if (els.oaSection) {
-        if (oa.enabled) {
-          els.oaSection.hidden = false;
-          els.oaQr.src = "/api/line-oa-qr.png?size=240";
-        } else {
-          els.oaSection.hidden = true;
-        }
-      }
+      oaEnabled = !!(r.d.lineOa && r.d.lineOa.enabled);
+      syncOa();
     }).catch(function () {});
   }
 
@@ -160,8 +164,10 @@
     if (els.branch) els.branch.textContent = visitor.branch || "-";
 
     var hasLine = !!visitor.hasLine;
+    hasLineNow = hasLine;
     if (els.lineSection) els.lineSection.hidden = !hasLine;
     els.lineName.textContent = visitor.lineName || "-";
+    syncOa();
 
     renderAvatar(els.avatar, visitor.linePictureUrl, visitor.lineName || visitor.name || "");
   }
