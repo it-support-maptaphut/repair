@@ -3035,6 +3035,19 @@
       </div>
     </div>
 
+    <div class="modal-mask hidden" id="visitorViewMask" role="dialog" aria-modal="true" aria-label="ข้อมูลผู้ใช้ภายนอก" onclick="if(event.target===this) closeVisitorView()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorView()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title">ข้อมูลผู้ใช้ภายนอก (ดึงจาก LINE)</h3>
+          <div id="visitorViewBody"></div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" type="button" onclick="closeVisitorView()">ปิด</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-mask hidden" id="ipFormMask" role="dialog" aria-modal="true" aria-label="เพิ่ม IP ADDRESS" onclick="if(event.target===this) closeIpForm()">
       <div class="modal">
         <button class="modal-close" type="button" title="ปิด" onclick="closeIpForm()">&times;</button>
@@ -6984,6 +6997,7 @@
           "<td style='text-align:right'>" + (v.ticket_count || 0) + "</td>" +
           "<td>" + esc(fmtVisitorDate(v.last_seen_at)) + "</td>" +
           "<td style='text-align:right;white-space:nowrap'>" +
+            "<button class='btn btn-ghost btn-sm' type='button' data-vview='" + (v.id || "") + "' title='ดูข้อมูลทั้งหมดที่ดึงจาก LINE'>ดู</button> " +
             "<button class='btn btn-ghost btn-sm' type='button' data-vip='" + (v.id || "") + "' title='ดูประวัติ IP'>IP</button> " +
             "<button class='btn btn-ghost btn-sm' type='button' data-vedit='" + (v.id || "") + "'>แก้ไข</button> " +
             "<button class='btn btn-ghost btn-sm' type='button' data-vreset='" + (v.id || "") + "'>Key Pass</button> " +
@@ -6994,6 +7008,8 @@
     }
 
     document.getElementById("visitorsBody").addEventListener("click", function (e) {
+      var viewBtn = e.target.closest("[data-vview]");
+      if (viewBtn) { openVisitorView(viewBtn.getAttribute("data-vview")); return; }
       var ipBtn = e.target.closest("[data-vip]");
       if (ipBtn) { showVisitorIps(ipBtn.getAttribute("data-vip")); return; }
       var editBtn = e.target.closest("[data-vedit]");
@@ -7003,6 +7019,62 @@
       var delBtn = e.target.closest("[data-vdel]");
       if (delBtn) { deleteVisitor(delBtn.getAttribute("data-vdel")); }
     });
+
+    var VISITOR_LINE_SVG =
+      "<svg viewBox='0 0 24 24' fill='currentColor' width='14' height='14'>" +
+        "<path d='M12 2C6.48 2 2 5.64 2 10.14c0 4.02 3.58 7.39 8.42 8.03.33.07.78.22.89.5.1.25.07.65.03.9l-.14.86c-.05.26-.21 1.02.89.56 1.1-.46 5.94-3.5 8.1-5.99 1.5-1.63 2.21-3.29 2.21-4.86C22.4 5.64 17.52 2 12 2z'/>" +
+      "</svg>";
+
+    function vvRow(label, value) {
+      return "<div style='display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line,#e5e7eb)'>" +
+        "<span style='flex:0 0 118px;color:var(--muted,#6b7280);font-size:13px'>" + label + "</span>" +
+        "<span style='flex:1;min-width:0;word-break:break-word;font-size:13px;color:var(--text,#111)'>" + value + "</span>" +
+        "</div>";
+    }
+
+    function vvSection(title) {
+      return "<p style='margin:14px 0 2px;font-size:12px;font-weight:700;color:var(--muted,#6b7280);letter-spacing:.04em;text-transform:uppercase'>" + title + "</p>";
+    }
+
+    function openVisitorView(id) {
+      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
+      if (!v) return;
+      var box = document.getElementById("visitorViewBody");
+      if (!box) return;
+      var avatar = v.linePictureUrl
+        ? "<img src='" + esc(v.linePictureUrl) + "' alt='' style='width:100%;height:100%;object-fit:cover' onerror=\"this.replaceWith(document.createTextNode('" + esc((v.name || "?").charAt(0).toUpperCase()) + "'))\">"
+        : esc(((v.name || "?").trim().charAt(0) || "?").toUpperCase());
+      var lineBadge = v.hasLine
+        ? "<span style='display:inline-flex;align-items:center;gap:5px;color:#06c755;font-weight:700;font-size:12px'>" + VISITOR_LINE_SVG + "เข้าสู่ระบบด้วย LINE</span>"
+        : "<span style='color:var(--muted,#6b7280);font-size:12px'>ไม่ได้เข้าสู่ระบบด้วย LINE</span>";
+      box.innerHTML =
+        "<div style='display:flex;align-items:center;gap:14px;margin-bottom:12px'>" +
+          "<span style='flex:0 0 auto;width:64px;height:64px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--green-soft,#eaf5ef);color:#1b7f4d;font-weight:700;font-size:26px;border:1px solid var(--line,#e5e7eb)'>" + avatar + "</span>" +
+          "<div style='min-width:0'>" +
+            "<div style='font-size:17px;font-weight:700;color:var(--text,#111)'>" + esc(v.name || "-") + "</div>" +
+            "<div style='font-size:13px;color:var(--muted,#6b7280)'>" + esc(v.position || "-") + (v.branch ? " · " + esc(v.branch) : "") + "</div>" +
+            "<div style='margin-top:5px'>" + lineBadge + "</div>" +
+          "</div>" +
+        "</div>" +
+        vvSection("ข้อมูลบัญชี") +
+        vvRow("ชื่อ", esc(v.name || "-")) +
+        vvRow("ตำแหน่ง", esc(v.position || "-")) +
+        vvRow("ประจำสาขา", esc(v.branch || "-")) +
+        vvRow("ครั้งที่แจ้งซ่อม", esc(String(v.ticket_count || 0))) +
+        vvRow("IP ล่าสุด", "<code>" + esc(v.ip || "-") + "</code>") +
+        vvRow("เข้าใช้งานล่าสุด", esc(fmtVisitorDate(v.last_seen_at))) +
+        vvRow("เข้าครั้งแรก", esc(fmtVisitorDate(v.created_at))) +
+        vvRow("Key Pass", v.hasKeypass ? "มี (ออกเมื่อ " + esc(fmtVisitorDate(v.keypass_at)) + ")" : "ยังไม่มี") +
+        vvSection("การเชื่อมต่อ LINE") +
+        vvRow("สถานะ", v.hasLine ? "<span style='color:#06c755;font-weight:700'>เชื่อมต่อแล้ว</span>" : "ยังไม่เชื่อมต่อ") +
+        vvRow("ชื่อในไลน์", esc(v.lineName || "-")) +
+        vvRow("LINE User ID", "<code style='word-break:break-all'>" + esc(v.lineUid || "-") + "</code>");
+      document.getElementById("visitorViewMask").classList.remove("hidden");
+    }
+
+    function closeVisitorView() {
+      document.getElementById("visitorViewMask").classList.add("hidden");
+    }
 
     function openVisitorEdit(id) {
       var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
