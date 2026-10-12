@@ -421,6 +421,8 @@ function publicVisitor(v) {
     hasKeypass: !!v.keypass_at,
     hasLine: hasLine,
     lineName: v.line_name || "",
+    linePictureUrl: v.line_picture_url || "",
+    lineUid: v.line_uid || "",
     // ผู้ใช้ที่มาจาก LINE แล้วยังกรอกข้อมูลไม่ครบ ต้องให้เติมก่อนใช้งาน
     needsProfile: !!(hasLine && (!v.name || !v.position || !v.branch))
   };
