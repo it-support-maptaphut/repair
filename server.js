@@ -631,7 +631,7 @@ app.use(function (req, res, next) {
 });
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/fonts", express.static(path.join(__dirname, "fonts")));
-app.get("/", (req, res) => res.redirect("/ticket.html"));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 const upload = multer({
   storage: multer.memoryStorage(),
