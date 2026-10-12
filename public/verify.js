@@ -1,6 +1,7 @@
 /* เกตติ้งเข้าสู่ระบบด้วย LINE (ทำงานคู่กับ line-login.js + /auth/line/*)
-   ขั้นที่ 1: แสดงปุ่ม "เข้าสู่ระบบด้วย LINE" อย่างเดียว
-   ขั้นที่ 2: หลัง LINE ส่งกลับ -> ให้กรอกชื่อ / ตำแหน่ง / ประจำสาขา แล้วกด "สมัคร" -> เข้าใช้งาน */
+   ขั้นที่ 1: เลือกวิธีเข้าใช้งาน (เข้าสู่ระบบด้วย LINE หรือ เข้าใช้งานเร่งด่วน)
+   ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา แล้วกดสมัคร / เข้าใช้งาน
+   ขั้นที่ 3: (ทางเร่งด่วน) แสดง Key Pass ให้เก็บไว้ แล้วเข้าใช้งาน */
 (function () {
   "use strict";
 
@@ -10,7 +11,7 @@
   var busy = false;
   var canClose = false;
   var onAuthed = [];
-  var current = { pane: "line" };
+  var current = { pane: "line", quick: false };
 
   function toast(msg) {
     if (window.showToast) { window.showToast(msg); return; }
@@ -66,13 +67,18 @@
           '<p class="vg-sub" id="vgSub">เข้าสู่ระบบด้วย LINE เพื่อแจ้งซ่อมและติดตามสถานะ</p>' +
         "</div>" +
 
-        // ---- ขั้นที่ 1: ปุ่มเข้าสู่ระบบด้วย LINE เท่านั้น ----
+        // ---- ขั้นที่ 1: เลือกวิธีเข้าใช้งาน (LINE / เร่งด่วน) ----
         '<div class="vg-pane" data-pane="line">' +
           // line-login.js เป็นตัวเติมปุ่มเข้ามาในช่องนี้
           '<div class="vg-line-slot" id="vgLineSlot"></div>' +
+          '<div class="vg-or">หรือ</div>' +
+          '<button type="button" class="vg-quick-btn" id="vgQuick">' +
+            '<span class="vg-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.7 13.1c-.4.6.02 1.4.75 1.4H10l-1 7.6c-.1.75.85 1.15 1.3.6L19.3 11c.42-.57.02-1.4-.73-1.4H14l1-6.9c.12-.75-.83-1.16-1.28-.62Z"/></svg></span>' +
+            "<span>เข้าใช้งานเร่งด่วน</span>" +
+          "</button>" +
         "</div>" +
 
-        // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา หลังล็อกอิน LINE ----
+        // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา ----
         '<div class="vg-pane hidden" data-pane="profile">' +
           '<div class="vg-fields">' +
             '<label for="vgName" class="vg-label">ชื่อ <span class="vg-req">*</span></label>' +
@@ -102,6 +108,20 @@
           '<button id="vgNext" class="vg-btn" type="button">สมัคร</button>' +
         "</div>" +
 
+        // ---- ขั้นที่ 3: แสดง Key Pass (ทางเร่งด่วน) ----
+        '<div class="vg-pane hidden" data-pane="done">' +
+          '<p class="vg-kp-lead">สมัครเรียบร้อยแล้ว เก็บ <strong>Key Pass</strong> นี้ไว้ใช้กู้บัญชีเมื่อเปลี่ยนเครื่องหรือเบราว์เซอร์</p>' +
+          '<div class="vg-kp-box">' +
+            '<span class="vg-kp-value" id="vgKpValue"></span>' +
+            '<button type="button" class="vg-kp-copy" id="vgKpCopy">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>' +
+              "<span>คัดลอก</span>" +
+            "</button>" +
+          "</div>" +
+          '<p class="vg-kp-warn">ถ้าไม่เก็บไว้ จะต้องให้ฝ่าย IT ออก Key Pass ใหม่</p>' +
+          '<button id="vgEnter" class="vg-btn" type="button">เข้าใช้งาน</button>' +
+        "</div>" +
+
         '<p id="vgErr" class="vg-err hidden"></p>' +
       "</div>";
     document.body.appendChild(gate);
@@ -114,8 +134,13 @@
     els.next = document.getElementById("vgNext");
     els.err = document.getElementById("vgErr");
     els.close = document.getElementById("vgClose");
+    els.quick = document.getElementById("vgQuick");
+    els.enter = document.getElementById("vgEnter");
+    els.kpValue = document.getElementById("vgKpValue");
+    els.kpCopy = document.getElementById("vgKpCopy");
 
     els.close.addEventListener("click", close);
+    if (els.quick) els.quick.addEventListener("click", openQuick);
     // กดพื้นหลังนอกกล่องก็ปิดได้เหมือนกัน
     gate.addEventListener("click", function (e) { if (e.target === gate) close(); });
     document.addEventListener("keydown", function (e) {
@@ -228,6 +253,8 @@
     }
 
     els.next.addEventListener("click", profileSubmit);
+    if (els.enter) els.enter.addEventListener("click", finishQuick);
+    if (els.kpCopy) els.kpCopy.addEventListener("click", copyKeypass);
     [els.name, els.position].forEach(function (el) {
       el.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
@@ -243,9 +270,15 @@
     gate.querySelectorAll(".vg-pane").forEach(function (p) {
       p.classList.toggle("hidden", p.getAttribute("data-pane") !== name);
     });
-    if (name === "profile") {
+    if (name === "profile" && current.quick) {
+      els.title.textContent = "เข้าใช้งานเร่งด่วน";
+      els.sub.textContent = "กรอกชื่อ / ตำแหน่ง / ประจำสาขา แล้วกดปุ่มด้านล่างเพื่อเข้าใช้งานทันที";
+    } else if (name === "profile") {
       els.title.textContent = "สมัครใช้งาน";
       els.sub.innerHTML = "เข้าสู่ระบบด้วย LINE เรียบร้อย<br>กรอกชื่อ / ตำแหน่ง / ประจำสาขา แล้วกดสมัครเพื่อเข้าใช้งาน";
+    } else if (name === "done") {
+      els.title.textContent = "สมัครสำเร็จ";
+      els.sub.textContent = "บัญชีของคุณพร้อมใช้งานแล้ว";
     } else {
       els.title.textContent = "เข้าสู่ระบบ";
       els.sub.textContent = "เข้าสู่ระบบด้วย LINE เพื่อแจ้งซ่อมและติดตามสถานะ";
@@ -278,6 +311,7 @@
     var o = opts || {};
     hideErr();
     gate.removeAttribute("data-mode");
+    current.quick = false;
     els.next.textContent = "สมัคร";
     // ปุ่มปิดมีเฉพาะตอนสลับบัญชี (ปกติปิดไม่ได้ ไม่งั้นเกตติ้งเด้งกลับมาเรื่อย)
     canClose = !!o.allowClose;
@@ -290,6 +324,7 @@
   function openProfileCompletion(visitor) {
     build();
     hideErr();
+    current.quick = false;
     canClose = false;
     els.close.classList.add("hidden");
     els.next.textContent = "สมัคร";
@@ -309,6 +344,28 @@
     }, 80);
   }
 
+  // ---------- เข้าใช้งานเร่งด่วน: กรอกชื่อ/ตำแหน่ง/สาขา แล้วเข้าใช้งานทันที (ไม่ต้อง LINE) ----------
+  function openQuick() {
+    build();
+    hideErr();
+    current.quick = true;
+    canClose = false;
+    els.close.classList.add("hidden");
+    els.next.textContent = "เข้าใช้งาน";
+    els.name.value = "";
+    els.position.value = "";
+    if (els.branch) els.branch.value = "";
+    var trigger = document.getElementById("vgBranchTrigger");
+    if (trigger) {
+      trigger.textContent = "เลือกสาขาที่คุณประจำอยู่";
+      trigger.classList.add("is-placeholder");
+    }
+    showPane("profile");
+    gate.setAttribute("data-mode", "quick");
+    gate.classList.remove("hidden");
+    setTimeout(function () { els.name.focus(); }, 80);
+  }
+
   // ปิดเกตติ้งได้เฉพาะตอนสลับบัญชี — ถ้ายังไม่ได้ยืนยันห้ามปิด ไม่งั้นเกตติ้งจะเด้งกลับมาเรื่อย
   function close() {
     if (!canClose) return;
@@ -319,7 +376,7 @@
     if (gate) gate.classList.add("hidden");
   }
 
-  // ---------- กด "สมัคร" → บันทึกข้อมูลแล้วเข้าใช้งาน ----------
+  // ---------- กด "สมัคร" / "เข้าใช้งาน" → บันทึกข้อมูล ----------
   function profileSubmit() {
     if (busy) return;
     var name = els.name.value.trim();
@@ -329,6 +386,29 @@
     if (!position) { markInvalid(els.position); showErr("กรุณากรอกตำแหน่ง"); return; }
     if (!branch) { markInvalid(document.getElementById("vgBranchTrigger") || els.branch); showErr("กรุณาเลือกสาขา"); return; }
     lock(true);
+
+    // ทางเร่งด่วน: สร้างบัญชีใหม่ทันที (ไม่ต้อง LINE) แล้วออก Key Pass ให้เก็บ
+    if (current.quick) {
+      api("/api/visitors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, position: position, branch: branch })
+      }).then(function (r) {
+        lock(false);
+        if (!r.ok) { showErr(r.d.message || "เข้าใช้งานไม่สำเร็จ กรุณาลองใหม่"); return; }
+        cache = { registered: true, authed: true, visitor: r.d.visitor || null };
+        gate.removeAttribute("data-mode");
+        if (els.kpValue) els.kpValue.textContent = r.d.keypass || "";
+        els.next.textContent = "สมัคร";
+        showPane("done");
+      }).catch(function () {
+        lock(false);
+        showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
+      });
+      return;
+    }
+
+    // ทาง LINE: เติมข้อมูลให้บัญชีที่ล็อกอิน LINE ไว้
     api("/api/visitors/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -345,6 +425,52 @@
       lock(false);
       showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
     });
+  }
+
+  // ---------- ปุ่ม "เข้าใช้งาน" หลังแสดง Key Pass (ทางเร่งด่วน) ----------
+  function finishQuick() {
+    var name = cache && cache.visitor && cache.visitor.name;
+    gate.removeAttribute("data-mode");
+    current.quick = false;
+    hideGate();
+    toast("ยินดีต้อนรับ" + (name ? " " + name : ""));
+    fireAuthed(cache);
+  }
+
+  // ---------- คัดลอก Key Pass ----------
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  function copyKeypass() {
+    var val = els.kpValue ? els.kpValue.textContent : "";
+    if (!val) return;
+    var label = els.kpCopy ? els.kpCopy.querySelector("span") : null;
+    var done = function () {
+      if (!els.kpCopy) return;
+      els.kpCopy.classList.add("is-done");
+      if (label) label.textContent = "คัดลอกแล้ว";
+      setTimeout(function () {
+        els.kpCopy.classList.remove("is-done");
+        if (label) label.textContent = "คัดลอก";
+      }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(val).then(done).catch(function () { fallbackCopy(val); done(); });
+    } else {
+      fallbackCopy(val);
+      done();
+    }
   }
 
   // ---------- เรียกใช้จากหน้าอื่น ----------
@@ -377,6 +503,7 @@
     state: function () { return cache; },
     open: open,
     openProfileCompletion: openProfileCompletion,
+    openQuick: openQuick,
     close: close,
     requireAuth: requireAuth,
     logout: logout,

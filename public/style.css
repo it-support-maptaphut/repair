@@ -3967,3 +3967,66 @@ body.app-nav .top-loader {
     animation: none;
   }
 }
+/* ---------- Gate: full-screen layout (override popup card) ---------- */
+.vg-gate,
+body.app-nav .vg-gate {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  background: #fff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
+}
+
+.vg-box,
+body.app-nav .vg-box {
+  width: 100%;
+  max-width: 560px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 44px 24px calc(44px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
+}
+
+@media (max-width: 420px) {
+  .vg-box,
+  body.app-nav .vg-box { padding: 28px 18px calc(28px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---------- Gate: quick-access button ---------- */
+.vg-quick-btn {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.vg-quick-btn:hover { background: #f2f7f4; border-color: #b7c7bd; }
+.vg-quick-btn:active { transform: scale(0.985); }
+.vg-quick-ic { display: inline-flex; color: #e0952a; }
+.vg-quick-ic svg { width: 19px; height: 19px; display: block; }
+
+/* ---------- Gate: done pane ---------- */
+.vg-pane[data-pane="done"] .vg-btn { margin-top: 16px; }
