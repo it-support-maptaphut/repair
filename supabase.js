@@ -1737,6 +1737,7 @@ async function listVisitors(limit = 300) {
     ? "id, name, position, ip, device_id, ticket_count, last_seen_at, created_at, username, credentials_at, keypass_at"
     : VISITOR_BASE_COLS;
   if (await ensureVisitorBranchCol()) cols += ", branch";
+  if (await ensureVisitorLineCols()) cols += ", line_uid, line_name, line_picture_url";
   const { data, error } = await supabase
     .from("external_visitors")
     .select(cols)

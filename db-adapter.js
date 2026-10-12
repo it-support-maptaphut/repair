@@ -1286,18 +1286,9 @@ function createPostgresAdapter() {
     },
 
     async listVisitors(limit = 300) {
-      if (!(await ensureVisitorCredCols())) {
-        const plain = await query(
-          `SELECT id, name, position, ip, device_id, ticket_count, last_seen_at, created_at
-             FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`,
-          [limit]
-        );
-        return plain.rows;
-      }
+      // SELECT * เพื่อให้ได้คอลัมน์ครบ (branch / LINE) โดยไม่พึ่ง migration — ฝั่ง API กรองเฉพาะฟิลด์ที่ปลอดภัยก่อนส่งออก
       const result = await query(
-        `SELECT id, name, position, ip, device_id, ticket_count, last_seen_at, created_at,
-                username, credentials_at, keypass_at
-           FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`,
+        `SELECT * FROM external_visitors ORDER BY last_seen_at DESC LIMIT $1`,
         [limit]
       );
       return result.rows;
