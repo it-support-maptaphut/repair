@@ -1,5 +1,5 @@
-/* เกตติ้งเข้าสู่ระบบด้วย LINE (ทำงานคู่กับ line-login.js + /auth/line/*)
-   ขั้นที่ 1: เลือกวิธีเข้าใช้งาน (เข้าสู่ระบบด้วย LINE หรือ เข้าใช้งานเร่งด่วน)
+/* เกตติ้งเข้าสู่ระบบด้วย LINE / Key Pass (ทำงานคู่กับ line-login.js + /auth/line/*)
+   ขั้นที่ 1: เลือกวิธีเข้าใช้งาน (LINE / ทางเร่งด่วน / Key Pass — กดแล้วเด้ง popup ให้กรอกรหัส)
    ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา แล้วกดสมัคร / เข้าใช้งาน
    ขั้นที่ 3: (ทางเร่งด่วน) แสดง Key Pass ให้เก็บไว้ แล้วเข้าใช้งาน */
 (function () {
@@ -77,13 +77,10 @@
             "<span>เข้าใช้งานเร่งด่วน</span>" +
           "</button>" +
           '<div class="vg-or">หรือ</div>' +
-          '<div class="vg-kp-entry">' +
-            '<div class="vg-kp-entry-title">เข้าใช้งานด้วย Key Pass</div>' +
-            '<div class="vg-kp-entry-row">' +
-              '<input type="text" id="vgKpInput" class="vg-input vg-input-kp" maxlength="5" placeholder="กรอกรหัส 5 ตัว" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Key Pass">' +
-              '<button type="button" id="vgKpBtn" class="vg-btn vg-kp-btn">เข้าใช้งาน</button>' +
-            "</div>" +
-          "</div>" +
+          '<button type="button" class="vg-quick-btn" id="vgKpOpen">' +
+            '<span class="vg-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' +
+            "<span>เข้าใช้งานด้วย Key Pass</span>" +
+          "</button>" +
         "</div>" +
 
         // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา ----
@@ -134,6 +131,26 @@
       "</div>";
     document.body.appendChild(gate);
 
+    // popup สำหรับกรอก Key Pass (กดปุ่ม "เข้าใช้งานด้วย Key Pass" แล้วเด้งมา)
+    var kpPopup = document.createElement("div");
+    kpPopup.id = "kpPopup";
+    kpPopup.className = "vg-gate hidden";
+    kpPopup.setAttribute("role", "dialog");
+    kpPopup.setAttribute("aria-modal", "true");
+    kpPopup.innerHTML =
+      '<div class="vg-box vg-kp-popup">' +
+        '<button type="button" class="vg-close" id="kpClose" aria-label="ปิด">&#215;</button>' +
+        '<div class="vg-head">' +
+          '<div class="vg-logo"><img class="vg-logo-img" src="logo-ticket/logo-wan.png" alt=""></div>' +
+          '<h2 class="vg-title">เข้าใช้งานด้วย Key Pass</h2>' +
+          '<p class="vg-sub">กรอกรหัส Key Pass 5 ตัวที่ฝ่ายไอทีออกให้ เพื่อเข้าใช้งานบัญชีเดิมของคุณ</p>' +
+        "</div>" +
+        '<input type="text" id="kpInput" class="vg-input vg-input-kp" maxlength="5" placeholder="กรอกรหัส 5 ตัว" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Key Pass">' +
+        '<button type="button" id="kpSubmit" class="vg-btn">เข้าใช้งาน</button>' +
+        '<p id="kpErr" class="vg-err hidden"></p>' +
+      "</div>";
+    document.body.appendChild(kpPopup);
+
     els.title = document.getElementById("vgTitle");
     els.sub = document.getElementById("vgSub");
     els.name = document.getElementById("vgName");
@@ -146,8 +163,12 @@
     els.enter = document.getElementById("vgEnter");
     els.kpValue = document.getElementById("vgKpValue");
     els.kpCopy = document.getElementById("vgKpCopy");
-    els.kpInput = document.getElementById("vgKpInput");
-    els.kpBtn = document.getElementById("vgKpBtn");
+    els.kpOpen = document.getElementById("vgKpOpen");
+    els.kpPopup = kpPopup;
+    els.kpInput = document.getElementById("kpInput");
+    els.kpSubmit = document.getElementById("kpSubmit");
+    els.kpClose = document.getElementById("kpClose");
+    els.kpErr = document.getElementById("kpErr");
 
     els.close.addEventListener("click", close);
     if (els.quick) els.quick.addEventListener("click", openQuick);
@@ -265,18 +286,26 @@
     els.next.addEventListener("click", profileSubmit);
     if (els.enter) els.enter.addEventListener("click", finishQuick);
     if (els.kpCopy) els.kpCopy.addEventListener("click", copyKeypass);
-    if (els.kpBtn) els.kpBtn.addEventListener("click", keypassLogin);
+    if (els.kpOpen) els.kpOpen.addEventListener("click", openKpPopup);
+    if (els.kpSubmit) els.kpSubmit.addEventListener("click", submitKeypass);
+    if (els.kpClose) els.kpClose.addEventListener("click", closeKpPopup);
+    if (els.kpPopup) {
+      els.kpPopup.addEventListener("click", function (e) { if (e.target === els.kpPopup) closeKpPopup(); });
+    }
     if (els.kpInput) {
       els.kpInput.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
         e.preventDefault();
-        keypassLogin();
+        submitKeypass();
       });
       els.kpInput.addEventListener("input", function () {
         els.kpInput.classList.remove("invalid");
-        hideErr();
+        hideKpErr();
       });
     }
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && els.kpPopup && !els.kpPopup.classList.contains("hidden")) closeKpPopup();
+    });
     [els.name, els.position].forEach(function (el) {
       el.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
@@ -326,7 +355,7 @@
   function lock(on) {
     busy = on;
     if (els.next) els.next.disabled = on;
-    if (els.kpBtn) els.kpBtn.disabled = on;
+    if (els.kpSubmit) els.kpSubmit.disabled = on;
   }
 
   function open(opts) {
@@ -337,6 +366,7 @@
     current.quick = false;
     els.next.textContent = "สมัคร";
     if (els.kpInput) els.kpInput.value = "";
+    if (els.kpPopup) els.kpPopup.classList.add("hidden");
     // ปุ่มปิดมีเฉพาะตอนสลับบัญชี (ปกติปิดไม่ได้ ไม่งั้นเกตติ้งเด้งกลับมาเรื่อย)
     canClose = !!o.allowClose;
     els.close.classList.toggle("hidden", !canClose);
@@ -497,11 +527,36 @@
     }
   }
 
-  // ---------- เข้าใช้งานด้วย Key Pass (บัญชีเดิมบนเครื่องใหม่) ----------
-  function keypassLogin() {
+  // ---------- ปุ่ม "เข้าใช้งานด้วย Key Pass" → เด้ง popup ให้กรอกรหัส ----------
+  function openKpPopup() {
+    build();
+    if (!els.kpInput) return;
+    els.kpInput.value = "";
+    els.kpInput.classList.remove("invalid");
+    hideKpErr();
+    if (els.kpPopup) els.kpPopup.classList.remove("hidden");
+    setTimeout(function () { els.kpInput.focus(); }, 80);
+  }
+
+  function hideKpErr() {
+    if (els.kpErr) els.kpErr.classList.add("hidden");
+  }
+
+  function closeKpPopup() {
+    if (els.kpPopup) els.kpPopup.classList.add("hidden");
+  }
+
+  function showKpErr(msg) {
+    if (!els.kpErr) { showErr(msg); return; }
+    els.kpErr.textContent = msg;
+    els.kpErr.classList.remove("hidden");
+  }
+
+  // ---------- กด "เข้าใช้งาน" ใน popup → ตรวจ Key Pass (บัญชีเดิมบนเครื่องใหม่) ----------
+  function submitKeypass() {
     if (busy) return;
     var val = els.kpInput ? els.kpInput.value.trim() : "";
-    if (!val) { markInvalid(els.kpInput); showErr("กรุณากรอก Key Pass"); return; }
+    if (!val) { markInvalid(els.kpInput); showKpErr("กรุณากรอก Key Pass"); return; }
     lock(true);
     api("/api/visitors/keypass-login", {
       method: "POST",
@@ -509,15 +564,15 @@
       body: JSON.stringify({ keypass: val })
     }).then(function (r) {
       lock(false);
-      if (!r.ok) { showErr(r.d.message || "Key Pass ไม่ถูกต้อง"); return; }
+      if (!r.ok) { showKpErr(r.d.message || "Key Pass ไม่ถูกต้อง"); return; }
       cache = { registered: true, authed: true, visitor: r.d.visitor || null };
-      hideErr();
+      closeKpPopup();
       hideGate();
       toast("ยินดีต้อนรับกลับ");
       fireAuthed(cache);
     }).catch(function () {
       lock(false);
-      showErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
+      showKpErr("เครือข่ายขัดข้อง กรุณาลองใหม่");
     });
   }
 

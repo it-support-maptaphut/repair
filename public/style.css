@@ -3967,13 +3967,19 @@ body.app-nav .top-loader {
     animation: none;
   }
 }
-/* ---------- Gate: full-screen layout (override popup card) ---------- */
+/* ---------- Gate: หน้า login — พื้นหลังแคนดี้สีเขียว + การ์ดลอยกลางจอ ---------- */
 .vg-gate,
 body.app-nav .vg-gate {
-  align-items: stretch;
-  justify-content: flex-start;
-  padding: 0;
-  background: #fff;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background:
+    radial-gradient(120% 90% at 18% 12%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 55%),
+    radial-gradient(110% 80% at 86% 92%, rgba(140, 225, 175, 0.4), rgba(255, 255, 255, 0) 62%),
+    repeating-linear-gradient(125deg, rgba(255, 255, 255, 0.5) 0 16px, rgba(255, 255, 255, 0) 16px 34px),
+    linear-gradient(135deg, #57b483 0%, #3aa26b 48%, #2a9864 100%);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   animation: none;
@@ -3981,27 +3987,28 @@ body.app-nav .vg-gate {
 
 .vg-box,
 body.app-nav .vg-box {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 560px;
-  min-height: 100%;
-  margin: 0 auto;
-  padding: 44px 24px calc(44px + env(safe-area-inset-bottom, 0px));
+  margin: auto;
+  padding: 34px 24px 30px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  background: #fff;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  box-shadow: 0 22px 60px rgba(9, 66, 38, 0.42), 0 0 0 6px rgba(255, 255, 255, 0.16) inset;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
   animation: none;
 }
 
 @media (max-width: 420px) {
   .vg-box,
-  body.app-nav .vg-box { padding: 28px 18px calc(28px + env(safe-area-inset-bottom, 0px)); }
+  body.app-nav .vg-box { padding: 26px 18px 26px; }
 }
 
 /* ---------- Gate: quick-access button ---------- */
@@ -4036,3 +4043,6 @@ body.app-nav .vg-box {
 .vg-kp-entry-row { display: flex; gap: 8px; align-items: stretch; }
 .vg-kp-entry-row .vg-input-kp { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
 .vg-kp-btn { flex: 0 0 auto; width: auto; margin-top: 0; padding-left: 18px; padding-right: 18px; }
+/* ---------- Gate: Key Pass popup ---------- */
+.vg-kp-popup { max-width: 360px; }
+.vg-kp-popup .vg-input { margin-top: 2px; text-align: center; letter-spacing: 4px; text-transform: uppercase; }
