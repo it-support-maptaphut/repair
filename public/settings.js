@@ -72,7 +72,7 @@
         '<div class="settings-line" id="srLineSection" hidden>' +
           '<p class="settings-section">การเชื่อมต่อ</p>' +
           '<div class="settings-rows">' +
-            '<div class="settings-row"><span class="sr-k">สถานะการเชื่อมต่อ</span><span class="sr-v sr-line-status">' + LINE_ICON + "<span>ไลน์</span></span></div>" +
+            '<div class="settings-row"><span class="sr-k">การเชื่อมต่อ</span><span class="sr-v sr-line-status">' + LINE_ICON + "<span>ไลน์</span></span></div>" +
             '<div class="settings-row"><span class="sr-k">ชื่อในไลน์</span><span class="sr-v" id="srLineName">-</span></div>' +
           "</div>" +
         "</div>" +
