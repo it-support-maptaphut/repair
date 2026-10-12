@@ -153,14 +153,6 @@
 
     .btn-call:hover { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(0, 178, 106, .4); }
 
-    .btn-line {
-      color: #06a944;
-      background: #eafaf0;
-      border: 1px solid #c7efd7;
-    }
-
-    .btn-line:hover { background: #dcf6e6; }
-
     .btn-text { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
     .btn-text strong { font-size: 17px; font-weight: 700; }
     .btn-text small { font-size: 11.5px; font-weight: 500; opacity: .8; }
@@ -182,43 +174,6 @@
 
     .qr-wrap p { margin: 12px 0 0; font-size: 13.5px; color: #6b7c72; }
 
-    /* ---------- Services ---------- */
-    .svc {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .svc li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 13px 12px;
-      border-radius: 13px;
-      background: #f6faf8;
-      border: 1px solid #e9f1ec;
-      font-size: 13.5px;
-      font-weight: 600;
-      color: #1c3a2b;
-    }
-
-    .svc-ic {
-      display: inline-flex;
-      width: 34px;
-      height: 34px;
-      flex: 0 0 auto;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      background: #e2f6ec;
-      color: #0e8a53;
-    }
-
-    .svc-ic svg { width: 19px; height: 19px; }
-
     .note {
       margin: 18px 4px 0;
       font-size: 12.5px;
@@ -237,7 +192,6 @@
     @media (max-width: 380px) {
       .hero h1 { font-size: 21px; }
       .hero-logo { height: 64px; }
-      .svc { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -264,44 +218,12 @@
             <small>โทรติดต่อฝ่ายไอที</small>
           </span>
         </a>
-
-        <a class="btn btn-line" href="https://line.me/ti/p/gePTlMsOIf" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2C6.48 2 2 5.64 2 10.14c0 4.02 3.58 7.39 8.42 8.03.33.07.78.22.89.5.1.25.07.65.03.9l-.14.86c-.05.26-.21 1.02.89.56 1.1-.46 5.94-3.5 8.1-5.99 1.5-1.63 2.21-3.29 2.21-4.86C22.4 5.64 17.52 2 12 2zM8.4 12.9H6.7a.5.5 0 0 1-.5-.5V9a.5.5 0 0 1 1 0v2.9h1.2a.5.5 0 0 1 0 1zm1.9-.5a.5.5 0 0 1-1 0V9a.5.5 0 0 1 1 0v3.4zm4.2 0a.5.5 0 0 1-.9.3l-1.7-2.26v1.96a.5.5 0 0 1-1 0V9a.5.5 0 0 1 .9-.3l1.7 2.26V9a.5.5 0 0 1 1 0v3.4zm3.3-.7a.5.5 0 0 1 0 1h-1.8a.5.5 0 0 1-.5-.5V9a.5.5 0 0 1 .5-.5h1.8a.5.5 0 0 1 0 1h-1.3v.7h1.3a.5.5 0 0 1 0 1h-1.3v.7h1.3z" />
-          </svg>
-          <span class="btn-text">
-            <strong>IT SUPPORT</strong>
-            <small>แชทผ่าน LINE Official</small>
-          </span>
-        </a>
       </section>
 
       <section class="card qr-wrap">
         <h2 class="card-title">สแกน QR Code</h2>
         <img src="logo-ms/my-qr/image.png" alt="QR Code ติดต่อ IT SUPPORT">
         <p>สแกนด้วยกล้องมือถือเพื่อติดต่อฝ่ายไอที</p>
-      </section>
-
-      <section class="card">
-        <h2 class="card-title">เราช่วยเรื่อง</h2>
-        <ul class="svc">
-          <li>
-            <span class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg></span>
-            คอมพิวเตอร์
-          </li>
-          <li>
-            <span class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg></span>
-            เครื่องพิมพ์
-          </li>
-          <li>
-            <span class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg></span>
-            เน็ตเวิร์ก
-          </li>
-          <li>
-            <span class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg></span>
-            อุปกรณ์สำนักงาน
-          </li>
-        </ul>
       </section>
 
       <p class="note">* หากแจ้งซ่อมผ่านระบบแล้ว ทีม IT จะติดต่อกลับโดยเร็ว</p>
