@@ -5,7 +5,10 @@
   "description": "ระบบแจ้งซ่อมอุปกรณ์ IT ผ่าน Line OA",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check config.js && node --check db-adapter.js && node --check supabase.js && node --check cloudinary.js && node --check notify.js && node --check db-migrate.js",
+    "lint": "npm run check",
+    "audit": "npm audit --omit=dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.115.0",

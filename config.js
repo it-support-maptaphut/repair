@@ -8,6 +8,8 @@ module.exports = {
   ADMIN_USER: process.env.ADMIN_USER || "",
   ADMIN_PASS: process.env.ADMIN_PASS || "",
   ADMIN_SECRET: process.env.ADMIN_SECRET || "",
+  USER_SECRET: process.env.USER_SECRET || "",
+  VISITOR_SECRET: process.env.VISITOR_SECRET || "",
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",

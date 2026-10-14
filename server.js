@@ -16,16 +16,49 @@ const riPdf = require("./repair-intake-pdf");
 
 const app = express();
 
-app.set("trust proxy", true);
+// ---------- trust proxy (SEC-02) ----------
+// ต้องระบุ "จำนวนชั้น" ของ proxy ที่เชื่อถือได้ ไม่ใช่ true ลอย ๆ
+// เพราะถ้าเชื่อ X-Forwarded-For ทั้งหมด ผู้โจมตีจะปลอม header เพื่อบายพาส rate limit ได้
+// ค่าเริ่มต้น 1 ชั้น (เช่น Vercel) — ปรับได้ผ่าน env TRUST_PROXY
+const TRUST_PROXY = (function () {
+  const raw = process.env.TRUST_PROXY;
+  if (raw === undefined || raw === null || String(raw).trim() === "") return 1;
+  const s = String(raw).trim();
+  if (s === "false" || s === "0") return false;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : s;
+})();
+app.set("trust proxy", TRUST_PROXY);
 
+// ใช้ req.ip ของ Express (คำนวณตาม trust proxy แล้ว) แทนการอ่าน header เอง
 function clientIp(req) {
-  const xff = req.headers["x-forwarded-for"];
-  if (xff) {
-    const first = String(xff).split(",")[0].trim();
-    if (first) return first;
-  }
-  return (req.socket && req.socket.remoteAddress) || "";
+  return (req && req.ip) || (req && req.socket && req.socket.remoteAddress) || "";
 }
+
+// ---------- security headers (SEC-06) ----------
+app.disable("x-powered-by");
+app.use(function (req, res, next) {
+  res.set("X-Content-Type-Options", "nosniff");
+  res.set("X-Frame-Options", "SAMEORIGIN");
+  res.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.set("Permissions-Policy", "geolocation=(self), microphone=(self), camera=(self)");
+  res.set(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "img-src 'self' data: blob: https:; " +
+      "media-src 'self' blob: https:; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src 'self' data: https://fonts.gstatic.com; " +
+      "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; " +
+      "connect-src 'self' https:; " +
+      "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'"
+  );
+  const proto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  if (req.secure || proto === "https") {
+    res.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
 
 // ---------- cookie (ไม่ใช้ library — แปลง header เอง) ----------
 function parseCookies(req) {
@@ -50,7 +83,15 @@ app.use(express.json());
 
 const ADMIN_USER = config.ADMIN_USER || "admin";
 const ADMIN_PASS = config.ADMIN_PASS;
-const ADMIN_SECRET = config.ADMIN_SECRET;
+let ADMIN_SECRET = config.ADMIN_SECRET;
+if (!ADMIN_SECRET) {
+  // SEC-03: fail-safe — ไม่ปล่อยให้เซ็น token ด้วยคีย์ว่าง (จะถูก forge ได้)
+  ADMIN_SECRET = crypto.randomBytes(48).toString("hex");
+  console.error("[security] ยังไม่ได้ตั้ง ADMIN_SECRET ใน .env — ใช้คีย์เฉพาะกิจชั่วคราว (session จะหายเมื่อรีสตาร์ตเซิร์ฟเวอร์)");
+}
+// SEC-03: แยกคีย์ตามชนิด token (ถ้าไม่ตั้ง จะ fallback ไปใช้ ADMIN_SECRET เพื่อความเข้ากันได้)
+const USER_SECRET = config.USER_SECRET || ADMIN_SECRET;
+const VISITOR_SECRET = config.VISITOR_SECRET || ADMIN_SECRET;
 const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
 const APP_VERSION = config.APP_VERSION || "1.0.2";
 const APP_VERSION_LABEL = config.APP_VERSION_LABEL || "V" + APP_VERSION;
@@ -74,7 +115,11 @@ const PN_KEY = (function () {
   try { k = Buffer.from(raw, "base64"); } catch (e) { k = null; }
   // AES-256-GCM ต้องการ key ยาว 32 ไบต์พอดี
   if (k && k.length === 32) return k;
-  console.warn("[security] PASSWORD_NOTE_KEY ไม่ใช่ Base64 ของ key 32 ไบต์ — จะใช้คีย์สำรองจาก ADMIN_SECRET แทน (ข้อมูลเดิมจะถอดได้)");
+  console.error(
+    "[security] PASSWORD_NOTE_KEY ไม่ใช่ Base64 ของคีย์ 32 ไบต์ — กำลังใช้คีย์สำรองจาก ADMIN_SECRET แทน\n" +
+      "           กรุณาตั้งค่าที่ถูกต้อง: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"\n" +
+      "           (ค่าเดิมยังถอดได้ด้วยคีย์สำรอง แต่ควร rotate คีย์และบันทึกโน้ตรหัสผ่านใหม่)"
+  );
   return PN_FALLBACK_KEY;
 })();
 
@@ -162,7 +207,7 @@ const USER_SESSION_TTL = 8 * 60 * 60 * 1000; // 8 ชม.
 
 function signUserToken(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const sig = crypto.createHmac("sha256", ADMIN_SECRET).update(body).digest("base64url");
+  const sig = crypto.createHmac("sha256", USER_SECRET).update(body).digest("base64url");
   return body + "." + sig;
 }
 
@@ -171,7 +216,7 @@ function verifyUserToken(token) {
   try {
     const [bodyB64, sig] = String(token).split(".");
     if (!bodyB64 || !sig) return null;
-    const expect = crypto.createHmac("sha256", ADMIN_SECRET).update(bodyB64).digest("base64url");
+    const expect = crypto.createHmac("sha256", USER_SECRET).update(bodyB64).digest("base64url");
     const a = Buffer.from(sig);
     const b = Buffer.from(expect);
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
@@ -195,6 +240,30 @@ function setUserCookie(res, token) {
 
 function clearUserCookie(res) {
   res.append("Set-Cookie", "su_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
+}
+
+// ---------- CSRF (SEC-09): double-submit cookie ----------
+// cookie csrf_token (อ่านได้ด้วย JS) + header x-csrf-token ต้องตรงกันในทุก request ที่เปลี่ยนข้อมูล
+function setCsrfCookie(req, res) {
+  const token = crypto.randomBytes(24).toString("base64url");
+  res.append(
+    "Set-Cookie",
+    "csrf_token=" + encodeURIComponent(token) + "; Path=/; SameSite=Lax; Max-Age=28800" + (isHttps(req) ? "; Secure" : "")
+  );
+  return token;
+}
+
+function csrfOk(req, res) {
+  const method = String(req.method || "GET").toUpperCase();
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return true;
+  const cookie = parseCookies(req).csrf_token || "";
+  const header = String(req.headers["x-csrf-token"] || "");
+  if (cookie && header && cookie.length === header.length &&
+      crypto.timingSafeEqual(Buffer.from(cookie), Buffer.from(header))) {
+    return true;
+  }
+  res.status(403).json({ ok: false, message: "CSRF token ไม่ถูกต้อง กรุณารีเฟรชหน้าแล้วลองใหม่" });
+  return false;
 }
 
 // ดึงข้อมูลพนักงานจาก DB (สิทธิ์สดเสมอ ไม่เคยฝังใน token)
@@ -364,7 +433,7 @@ const VISITOR_IP_FALLBACK_HOURS = 12;                 // ใช้ IP ช่ว�
 
 function signVisitorToken(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const sig = crypto.createHmac("sha256", ADMIN_SECRET).update(body).digest("base64url");
+  const sig = crypto.createHmac("sha256", VISITOR_SECRET).update(body).digest("base64url");
   return body + "." + sig;
 }
 
@@ -373,7 +442,7 @@ function verifyVisitorToken(token) {
   try {
     const [bodyB64, sig] = String(token).split(".");
     if (!bodyB64 || !sig) return null;
-    const expect = crypto.createHmac("sha256", ADMIN_SECRET).update(bodyB64).digest("base64url");
+    const expect = crypto.createHmac("sha256", VISITOR_SECRET).update(bodyB64).digest("base64url");
     const a = Buffer.from(sig);
     const b = Buffer.from(expect);
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
@@ -441,12 +510,16 @@ function publicVisitor(v) {
 // admin → เข้าได้ทั้งหมด / พนักงาน (system_users) → ต้องมีสิทธิ์ตรงตามเมนู
 app.use("/api/admin", async (req, res, next) => {
   if (req.path.startsWith("/login")) return next();
-  if (isAdminAuthed(req)) return next();
+  if (isAdminAuthed(req)) {
+    if (!csrfOk(req, res)) return;
+    return next();
+  }
   const username = isUserAuthed(req);
   if (username) {
     try {
       const su = await loadSuUser(username);
       if (su) {
+        if (!csrfOk(req, res)) return;
         req.suUser = su;
         return next();
       }
@@ -510,6 +583,7 @@ app.post("/api/auth/login", (req, res) => {
   }
   const token = signAdminToken({ e: "admin", exp: Date.now() + ADMIN_SESSION_TTL });
   setAdminCookie(res, token);
+  setCsrfCookie(req, res);
   res.json({ ok: true, user: ADMIN_USER });
 });
 
@@ -520,6 +594,8 @@ app.post("/api/auth/logout", (req, res) => {
 
 app.get("/api/auth/me", (req, res) => {
   const authed = isAdminAuthed(req);
+  // ออก CSRF token ให้ session เดิมที่ยังไม่มี (auto-heal หลังอัปเดตระบบ)
+  if (authed && !parseCookies(req).csrf_token) setCsrfCookie(req, res);
   res.json({ ok: true, authed: authed, user: authed ? "admin" : null });
 });
 
@@ -536,6 +612,7 @@ app.post("/api/auth/user-login", async (req, res) => {
     }
     const token = signUserToken({ e: "user", u: username, exp: Date.now() + USER_SESSION_TTL });
     setUserCookie(res, token);
+    setCsrfCookie(req, res);
     res.json({
       ok: true,
       user: { username: username, permissions: Array.isArray(cred.permissions) ? cred.permissions : [] }
@@ -557,6 +634,7 @@ app.get("/api/auth/user-me", async (req, res) => {
   try {
     const su = await loadSuUser(username);
     if (!su) return res.json({ ok: true, authed: false, user: null });
+    if (!parseCookies(req).csrf_token) setCsrfCookie(req, res);
     res.json({ ok: true, authed: true, user: su });
   } catch (err) {
     console.error(err);
@@ -616,7 +694,6 @@ app.get("/admin-db.html", serveAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin-db.html"));
 });
 
-app.use(express.json());
 app.use(function (req, res, next) {
   // หน้า login: ห้ามแคชไว้ทุกกรณี เพื่อไม่ให้รหัสผ่าน/ฟอร์มค้างในแคชเบราว์เซอร์
   const noStore = ["/admin", "/admin.html", "/admin-mobile.html", "/admin-db", "/admin-db.html",
@@ -633,12 +710,78 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/fonts", express.static(path.join(__dirname, "fonts")));
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
+// SEC-07: allowlist ชนิดไฟล์ที่ยอมรับ (กันอัปไฟล์อันตราย/สคริปต์ขึ้น bucket สาธารณะ)
+const ALLOWED_MIME = new Set([
+  "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif",
+  "audio/webm", "audio/ogg", "audio/opus", "audio/mpeg", "audio/mp3",
+  "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/wav", "audio/x-wav", "audio/aac",
+  "application/pdf", "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/csv", "text/plain", "application/zip",
+  "application/x-7z-compressed", "application/vnd.rar", "application/x-rar-compressed"
+]);
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024, files: 12 }
+  limits: { fileSize: 10 * 1024 * 1024, files: 12 },
+  fileFilter: function (req, file, cb) {
+    const mime = String(file.mimetype || "").toLowerCase();
+    if (ALLOWED_MIME.has(mime)) return cb(null, true);
+    const err = new Error("ไม่อนุญาตไฟล์ชนิดนี้: " + (file.mimetype || "unknown"));
+    err.code = "UNSUPPORTED_FILE_TYPE";
+    cb(err);
+  }
 });
 
-app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields([{ name: "photos", maxCount: 12 }, { name: "audio", maxCount: 1 }]), async (req, res) => {
+// ตรวจ magic bytes ของรูป/เสียง (กันไฟล์ที่แอบอ้างเป็นรูป) — เอกสารปล่อยผ่าน (ชนิดซับซ้อนหลากหลาย)
+function magicOk(buf, mimetype) {
+  if (!buf || buf.length < 4) return false;
+  const mime = String(mimetype || "").toLowerCase();
+  const b = buf;
+  const sig = {
+    jpeg: b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+    png: b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47,
+    gif: b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46,
+    webp: b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && buf.length > 11 &&
+      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50,
+    webm: b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3,
+    ogg: b[0] === 0x4f && b[1] === 0x67 && b[2] === 0x67 && b[3] === 0x53,
+    mp3: (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0),
+    wav: b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && buf.length > 11 &&
+      b[8] === 0x57 && b[9] === 0x41 && b[10] === 0x56 && b[11] === 0x45,
+    mp4: buf.length > 11 && b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70,
+  };
+  if (mime.indexOf("image/") === 0) {
+    if (mime === "image/jpeg" || mime === "image/jpg") return sig.jpeg;
+    if (mime === "image/png") return sig.png;
+    if (mime === "image/gif") return sig.gif;
+    if (mime === "image/webp") return sig.webp;
+    return sig.jpeg || sig.png || sig.gif || sig.webp;
+  }
+  if (mime.indexOf("audio/") === 0) {
+    return sig.webm || sig.ogg || sig.mp3 || sig.wav || sig.mp4;
+  }
+  return true; // เอกสาร: ปล่อยผ่าน (ตรวจชนิดเชิงลึกที่ขั้นอื่น)
+}
+
+function verifyMagic(req, res, next) {
+  let files = [];
+  if (Array.isArray(req.files)) files = req.files;
+  else if (req.files && typeof req.files === "object") files = Object.keys(req.files).reduce((a, k) => a.concat(req.files[k] || []), []);
+  if (req.file) files.push(req.file);
+  for (const f of files) {
+    if (!magicOk(f.buffer, f.mimetype)) {
+      return res.status(400).json({ ok: false, message: "เนื้อหาไฟล์ไม่ตรงกับชนิดที่แจ้ง: " + (f.originalname || "") });
+    }
+  }
+  next();
+}
+
+app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields([{ name: "photos", maxCount: 12 }, { name: "audio", maxCount: 1 }]), verifyMagic, async (req, res) => {
   try {
     const body = req.body || {};
     const device = String(body.device || "").trim();
@@ -1443,7 +1586,7 @@ app.delete("/api/admin/visitors/:id", async (req, res) => {
 
 
 // ---------- โน้ตอุปกรณ์ (Device Notebook) ----------
-app.post("/api/admin/upload-device-photo", upload.single("photo"), async (req, res) => {
+app.post("/api/admin/upload-device-photo", upload.single("photo"), verifyMagic, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ ok: false, message: "ไม่มีไฟล์รูป" });
     const name = "dev-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
@@ -2298,7 +2441,7 @@ app.get("/api/admin/field-work/:id", async (req, res) => {
   }
 });
 
-app.post("/api/admin/field-work", upload.array("files", 10), async (req, res) => {
+app.post("/api/admin/field-work", upload.array("files", 10), verifyMagic, async (req, res) => {
   try {
     const adapter = db.getAdapter();
     if (!adapter.ready) return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
@@ -2325,7 +2468,7 @@ app.post("/api/admin/field-work", upload.array("files", 10), async (req, res) =>
   }
 });
 
-app.put("/api/admin/field-work/:id", upload.array("files", 10), async (req, res) => {
+app.put("/api/admin/field-work/:id", upload.array("files", 10), verifyMagic, async (req, res) => {
   try {
     const adapter = db.getAdapter();
     const id = Number(req.params.id);
@@ -2805,6 +2948,30 @@ app.delete("/api/admin/system-users/:username", async (req, res) => {
   }
 });
 
+// ---------- จำกัดปลายทางฐานข้อมูล (SEC-08) ----------
+// อนุญาตเฉพาะ host ที่ตั้งค่าไว้แล้ว / Supabase / รายการใน ALLOWED_DB_HOSTS
+// เพื่อกัน SSRF และการสแกนพอร์ตภายในจากเซิร์ฟเวอร์
+function isAllowedDbHost(host) {
+  const h = String(host || "").trim().toLowerCase();
+  if (!h) return false;
+  if (config.PG_HOST && h === String(config.PG_HOST).trim().toLowerCase()) return true;
+  if (/(^|\.)supabase\.(co|com)$/.test(h)) return true;
+  if (/(^|\.)supabase\.in$/.test(h)) return true;
+  if (/(^|\.)pooler\.supabase\.com$/.test(h)) return true;
+  const allow = String(process.env.ALLOWED_DB_HOSTS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return allow.includes(h);
+}
+function rejectDbHost(res, host) {
+  return res.status(400).json({
+    ok: false,
+    message: "ไม่อนุญาตให้เชื่อมต่อโฮสต์นี้: " + String(host || "") +
+      " (เพิ่มได้ที่ ALLOWED_DB_HOSTS ใน .env หากเป็นเซิร์ฟเวอร์ภายในของคุณ)",
+  });
+}
+
 // ---------- API ทดสอบการเชื่อมต่อฐานข้อมูล ----------
 app.get("/api/admin/db-test", async (req, res) => {
   const host = String(req.query.host || "").trim();
@@ -2851,7 +3018,8 @@ app.post("/api/admin/db-test", async (req, res) => {
       if (!host || !database || !user) {
         return res.json({ ok: false, message: "กรุณาระบุ Host, Database, และ Username" });
       }
-      
+      if (!isAllowedDbHost(host)) return rejectDbHost(res, host);
+
       // Create temporary postgres adapter for testing
       const { Pool } = require("pg");
       const testPool = new Pool({
@@ -3268,7 +3436,7 @@ app.post("/api/tickets/:ticketNo/status", suOrAdminTicketPerm, async (req, res) 
   }
 });
 
-app.post("/api/tickets/:ticketNo/finish", suOrAdminTicketPerm, upload.array("photos", 3), async (req, res) => {
+app.post("/api/tickets/:ticketNo/finish", suOrAdminTicketPerm, upload.array("photos", 3), verifyMagic, async (req, res) => {
   try {
     const adapter = db.getAdapter();
     const ticketNo = String(req.params.ticketNo || "").trim();
@@ -3353,6 +3521,7 @@ app.post("/api/admin/db-switch", async (req, res) => {
     if (!mode || !["supabase", "postgres"].includes(mode)) {
       return res.status(400).json({ ok: false, message: "โหมดไม่ถูกต้อง" });
     }
+    if (mode === "postgres" && host && !isAllowedDbHost(host)) return rejectDbHost(res, host);
     const result = await db.switchDatabase(mode, { host, port, database, user, password, ssl });
     if (result.ok) {
       res.json(result);
@@ -3382,7 +3551,8 @@ app.post("/api/admin/migrate/start", async (req, res) => {
     if (!host || !database || !user) {
       return res.status(400).json({ ok: false, message: "กรุณาระบุ PostgreSQL connection details" });
     }
-    
+    if (!isAllowedDbHost(host)) return rejectDbHost(res, host);
+
     const pgOptions = { host, port, database, user, password, ssl };
     const jobId = migrate.createMigrationJob(pgOptions);
     const job = migrate.getJobStatus(jobId);
@@ -3440,7 +3610,8 @@ app.post("/api/admin/migrate/verify", async (req, res) => {
     if (!host || !database || !user) {
       return res.status(400).json({ ok: false, message: "กรุณาระบุ PostgreSQL connection details" });
     }
-    
+    if (!isAllowedDbHost(host)) return rejectDbHost(res, host);
+
     const { createClient } = require("@supabase/supabase-js");
     const { Pool } = require("pg");
     
@@ -3495,10 +3666,11 @@ app.get("/api/admin/db-config", async (req, res) => {
   try {
     const adapter = db.getAdapter();
 
+    // SEC-01: ห้ามส่งค่าลับออกจากเซิร์ฟเวอร์ — ส่งแค่ metadata + ว่ามีค่าหรือไม่
     const supa = {
       url: config.SUPABASE_URL || "",
-      secretKey: config.SUPABASE_SECRET_KEY || "",
-      serviceRoleKey: config.SUPABASE_SERVICE_ROLE_KEY || "",
+      hasSecretKey: !!config.SUPABASE_SECRET_KEY,
+      hasServiceRoleKey: !!config.SUPABASE_SERVICE_ROLE_KEY,
       connected: false,
       message: "ยังไม่ได้ตั้งค่า Supabase ใน .env",
     };
@@ -3514,7 +3686,7 @@ app.get("/api/admin/db-config", async (req, res) => {
       port: String(config.PG_PORT || "5432"),
       database: config.PG_DATABASE || "",
       user: config.PG_USER || "",
-      password: config.PG_PASSWORD || "",
+      hasPassword: !!config.PG_PASSWORD,
       ssl: String(config.PG_SSL) === "true",
       connected: false,
       message: "ยังไม่ได้ตั้งค่า PGSQL (กดแก้ไขฐานข้อมูลเพื่อตั้ง)",
@@ -3587,13 +3759,16 @@ app.post("/api/admin/db-config/save-pg", async (req, res) => {
     const host = String(body.host || "").trim();
     const database = String(body.database || "").trim();
     const user = String(body.user || "").trim();
-    const pgpass = String(body.pgpass || "");
     const port = String(body.port || "5432").trim();
     const ssl = body.ssl === true || body.ssl === "true";
+    // SEC-01: รหัสเดิมไม่ถูกส่งกลับไปที่เบราว์เซอร์ ถ้าช่องว่างให้ใช้ค่าเดิมใน .env
+    let pgpass = String(body.pgpass == null ? "" : body.pgpass);
+    if (pgpass === "" && config.PG_PASSWORD) pgpass = String(config.PG_PASSWORD);
 
     if (!host || !database || !user) {
       return res.status(400).json({ ok: false, message: "กรุณาระบุ Host, Database และ User" });
     }
+    if (!isAllowedDbHost(host)) return rejectDbHost(res, host);
 
     const { Pool } = require("pg");
     const pool = new Pool({
@@ -3683,6 +3858,21 @@ app.get("/api/admin/db-sync/status", async (req, res) => {
 });
 
 // ============================================================
+
+// ---------- error handler (multer/อัปโหลด + อื่น ๆ) ----------
+app.use(function (err, req, res, next) {
+  if (!err) return next();
+  if (err instanceof multer.MulterError) {
+    const msg = err.code === "LIMIT_FILE_SIZE" ? "ไฟล์ใหญ่เกิน 10 MB" :
+      err.code === "LIMIT_FILE_COUNT" ? "จำนวนไฟล์เกินกำหนด" : "อัปโหลดไฟล์ไม่สำเร็จ";
+    return res.status(400).json({ ok: false, message: msg });
+  }
+  if (err.code === "UNSUPPORTED_FILE_TYPE") {
+    return res.status(400).json({ ok: false, message: err.message });
+  }
+  console.error("[error]", err.message);
+  res.status(500).json({ ok: false, message: "server error" });
+});
 
 if (process.env.VERCEL) {
   module.exports = app;

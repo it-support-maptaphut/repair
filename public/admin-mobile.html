@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="csrf.js"></script>
   <script src="no-zoom.js"></script>
 <!-- บล็อกเบราว์เซอร์สำรอง/เติมรหัสผ่านอัตโนมัติ -->
 <script src="no-save.js" defer></script>
@@ -11359,10 +11360,10 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
       btn.type = "button";
       btn.className = "tf-dev-opt";
       btn.setAttribute("aria-pressed", "false");
-      var svg = opt.img
-        ? '<img class="tf-dev-logo" src="' + opt.img + '" alt="' + opt.label + '" loading="lazy">'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + opt.icon + "</svg>";
-      btn.innerHTML = svg + "<span>" + opt.label + "</span>";
+    var svg = opt.img
+      ? '<img class="tf-dev-logo" src="' + esc(opt.img) + '" alt="' + esc(opt.label) + '" loading="lazy">'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + opt.icon + "</svg>";
+    btn.innerHTML = svg + "<span>" + esc(opt.label) + "</span>";
       btn.addEventListener("click", function () { tfToggle({ type: type, label: opt.label }); });
       grid.appendChild(btn);
     });
@@ -11427,10 +11428,10 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     }
     var dbMatch = (tfDevOpts[dev.type] || []).filter(function (o) { return o.name === dev.label; })[0];
     if (dbMatch && dbMatch.icon_url) {
-      return '<span class="tf-prob-logo"><img src="' + dbMatch.icon_url + '" alt="' + dbMatch.name + '" loading="lazy"></span>';
-    }
-    if (match && match.img) {
-      return '<span class="tf-prob-logo"><img src="' + match.img + '" alt="' + match.label + '" loading="lazy"></span>';
+        return '<span class="tf-prob-logo"><img src="' + esc(dbMatch.icon_url) + '" alt="' + esc(dbMatch.name) + '" loading="lazy"></span>';
+      }
+      if (match && match.img) {
+        return '<span class="tf-prob-logo"><img src="' + esc(match.img) + '" alt="' + esc(match.label) + '" loading="lazy"></span>';
     }
     if (match && match.icon) {
       return '<span class="tf-prob-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + match.icon + "</svg></span>";
@@ -11919,7 +11920,7 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
   function dopt$(id) { return document.getElementById(id); }
 
   function doptIconHtml(opt) {
-    if (opt && opt.icon_url) return '<img src="' + opt.icon_url + '" alt="' + opt.name + '" loading="lazy">';
+    if (opt && opt.icon_url) return '<img src="' + esc(opt.icon_url) + '" alt="' + esc(opt.name) + '" loading="lazy">';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (TF_CAT_FALLBACK[doptCat] || "") + "</svg>";
   }
 

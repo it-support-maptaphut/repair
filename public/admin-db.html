@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<script src="csrf.js"></script>
 <script src="no-zoom.js"></script>
 <!-- บล็อกเบราว์เซอร์สำรอง/เติมรหัสผ่านอัตโนมัติ -->
 <script src="no-save.js" defer></script>
@@ -355,7 +356,7 @@
         <tr><th>Secret Token</th><td><span id="supaSecret" class="db-val">••••••••</span></td></tr>
         <tr><th>Service Role</th><td><span id="supaService" class="db-val">••••••••</span></td></tr>
       </table>
-      <label class="db-checkrow"><input type="checkbox" id="revealSupabase" onchange="toggleReveal()"> แสดงคีย์</label>
+      <p class="db-hint" style="margin-top:6px;">เพื่อความปลอดภัย ระบบไม่ส่งค่าคีย์/รหัสผ่านกลับมาแสดงบนเบราว์เซอร์ — แสดงเฉพาะสถานะว่าตั้งค่าแล้วหรือยัง</p>
       <p id="supaMsg" class="db-hint" style="margin-top:6px;color:#063;font-weight:700;"></p>
     </fieldset>
 
@@ -501,18 +502,17 @@
     });
   }
 
-  // --- แสดงค่าที่เป็น secret ---
+  // --- แสดงสถานะค่าลับ (ไม่แสดงค่าจริง — ซ่อนฝั่งเซิร์ฟเวอร์, SEC-01) ---
   function toggleReveal() {
-    var on = el("revealSupabase").checked;
     var pairs = [
-      ["supaSecret", state.supabase ? state.supabase.secretKey : ""],
-      ["supaService", state.supabase ? state.supabase.serviceRoleKey : ""],
-      ["pgPass", state.pg ? state.pg.password : ""],
+      ["supaSecret", state.supabase ? state.supabase.hasSecretKey : false],
+      ["supaService", state.supabase ? state.supabase.hasServiceRoleKey : false],
+      ["pgPass", state.pg ? state.pg.hasPassword : false],
     ];
     pairs.forEach(function (p) {
-      var v = on && p[1] ? p[1] : "••••••••";
+      var v = p[1] ? "ตั้งค่าแล้ว" : "-";
       el(p[0]).textContent = v;
-      el(p[0]).classList.toggle("empty", !v);
+      el(p[0]).classList.toggle("empty", !p[1]);
     });
   }
 
@@ -530,8 +530,8 @@
     state.supabase = s;
     el("supaUrl").textContent = s.url || "-";
     el("supaUrl").classList.toggle("empty", !s.url);
-    el("supaSecret").textContent = s.secretKey ? "••••••••" : "-";
-    el("supaService").textContent = s.serviceRoleKey ? "••••••••" : "-";
+    el("supaSecret").textContent = s.hasSecretKey ? "ตั้งค่าแล้ว" : "-";
+    el("supaService").textContent = s.hasServiceRoleKey ? "ตั้งค่าแล้ว" : "-";
     el("supaBadge").textContent = s.connected ? "เชื่อมต่อแล้ว" : "ไม่เชื่อมต่อ";
     led("supaLed", s.connected ? "ok" : "err");
     el("supaMsg").textContent = s.connected ? "✓ " + (s.message || "เชื่อมต่อได้") : (s.message || "ตรวจไม่พบการเชื่อมต่อ");
@@ -545,7 +545,7 @@
     el("pgPort").textContent = p.port || "-";
     el("pgDb").textContent = p.database || "-";
     el("pgUser").textContent = p.user || "-";
-    el("pgPass").textContent = p.password ? "••••••••" : "-";
+    el("pgPass").textContent = p.hasPassword ? "ตั้งค่าแล้ว" : "-";
     el("pgSsl").textContent = p.ssl ? "ใช้ SSL" : "ไม่ใช้";
     ["pgHost", "pgPort", "pgDb", "pgUser", "pgSsl"].forEach(function (id) {
       el(id).classList.toggle("empty", !el(id).textContent || el(id).textContent === "-");
@@ -665,7 +665,7 @@
         renderSupa(d.supabase);
         renderPg(d.pg);
         renderSync(d.lastSync);
-        if (!el("revealSupabase").checked) toggleReveal();
+        toggleReveal();
       })
       .catch(function () { setMsg("pageMsg", "เครือข่ายขัดข้อง กรุณาลองใหม่", false); });
   }
@@ -712,7 +712,8 @@
       el("pgFPort").value = state.pg.port || "5432";
       el("pgFDb").value = state.pg.database || "";
       el("pgFUser").value = state.pg.user || "";
-      el("pgFPass").value = state.pg.password || "";
+      el("pgFPass").value = "";
+      el("pgFPass").placeholder = state.pg.hasPassword ? "•••••••• (เว้นว่าง = ใช้รหัสเดิม)" : "รหัสผ่าน PostgreSQL";
       el("pgFSsl").value = state.pg.ssl ? "true" : "";
     }
     clearMsg("pgFormOk");
