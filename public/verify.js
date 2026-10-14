@@ -13,6 +13,13 @@
   var onAuthed = [];
   var current = { pane: "line", quick: false };
 
+  // สัญญาณว่า "ตัดสินใจเรื่องการยืนยันตัวตนเสร็จแล้ว" ให้ splash.js รอ ก่อนซ่อนหน้าโหลด
+  var readyResolve = null;
+  window.__authReady = new Promise(function (resolve) { readyResolve = resolve; });
+  function signalReady() {
+    if (readyResolve) { var r = readyResolve; readyResolve = null; r(); }
+  }
+
   function toast(msg) {
     if (window.showToast) { window.showToast(msg); return; }
     if (window.alert) { try { window.alert(msg); } catch (e) {} }
@@ -615,14 +622,23 @@
 
   // ---------- เปิดเกตติ้งอัตโนมัติเมื่อยังไม่ได้ยืนยันตัวตน ----------
   function warm() {
+    // เปิดเกตติ้งไว้ก่อนทันที (fail-closed) เพื่อไม่ให้ผู้ใช้เห็นหรือค้างที่หน้าแจ้งซ่อมระหว่างตรวจสอบสิทธิ์
+    // splash ที่ทับอยู่ด้านบนจะบังไว้จนกว่าจะรู้ผล จึงไม่มีหน้าจอกะพริบ
+    try { open({}); } catch (e) {}
     check().then(function (st) {
-      if (!st.authed) {
-        open({ state: st });
-      } else if (st.visitor && st.visitor.needsProfile) {
+      if (st.authed && st.visitor && st.visitor.needsProfile) {
         // มาจาก LINE แล้วยังกรอกข้อมูลไม่ครบ -> ให้กรอกแล้วสมัคร
         openProfileCompletion(st.visitor);
+      } else if (st.authed) {
+        // ยืนยันตัวตนแล้ว -> ปิดเกตติ้งที่เปิดไว้ชั่วคราว
+        hideGate();
+        gate.removeAttribute("data-mode");
       }
-    }).catch(function () {});
+      // ยังไม่ยืนยันตัวตน -> คงเกตติ้งที่เปิดไว้ตามเดิม
+    }).catch(function () {
+      // ตรวจสอบไม่สำเร็จ (เช่น เซิร์ฟเวอร์/ฐานข้อมูลขัดข้อง) -> คงเกตติ้งไว้ กันค้างที่หน้าแจ้งซ่อม
+      try { open({}); } catch (e) {}
+    }).then(signalReady);
   }
 
   if (document.readyState === "loading") {
