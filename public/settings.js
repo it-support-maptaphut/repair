@@ -79,6 +79,7 @@
           '<div class="settings-row"><span class="sr-k">ชื่อ</span><span class="sr-v" id="srName">-</span></div>' +
           '<div class="settings-row"><span class="sr-k">ตำแหน่ง</span><span class="sr-v" id="srPosition">-</span></div>' +
           '<div class="settings-row"><span class="sr-k">ประจำสาขา</span><span class="sr-v" id="srBranch">-</span></div>' +
+          '<div class="settings-row"><span class="sr-k">Key Pass</span><span class="sr-v"><span class="sr-code" id="srKeypass">—</span><button type="button" class="sr-copy" id="srKeypassCopy" disabled>คัดลอก</button></span></div>' +
         "</div>" +
         '<div class="settings-line" id="srLineSection" hidden>' +
           '<p class="settings-section">การเชื่อมต่อ</p>' +
@@ -104,6 +105,8 @@
     els.name = gate.querySelector("#srName");
     els.position = gate.querySelector("#srPosition");
     els.branch = gate.querySelector("#srBranch");
+    els.keypass = gate.querySelector("#srKeypass");
+    els.keypassCopy = gate.querySelector("#srKeypassCopy");
     els.lineSection = gate.querySelector("#srLineSection");
     els.lineName = gate.querySelector("#srLineName");
     els.logoutBtn = gate.querySelector("#settingsLogout");
@@ -112,6 +115,7 @@
 
     gate.querySelector(".settings-close").addEventListener("click", close);
     els.logoutBtn.addEventListener("click", doLogout);
+    if (els.keypassCopy) els.keypassCopy.addEventListener("click", copyKeypass);
     document.body.appendChild(gate);
 
     loadVersion();
@@ -170,6 +174,52 @@
     syncOa();
 
     renderAvatar(els.avatar, visitor.linePictureUrl, visitor.lineName || visitor.name || "");
+    loadKeypass(visitor);
+  }
+
+  // แสดง Key Pass ของผู้ใช้ (ดึงจาก /api/visitors/me/keypass)
+  function loadKeypass(visitor) {
+    if (!els.keypass) return;
+    els.keypass.textContent = "—";
+    if (els.keypassCopy) els.keypassCopy.disabled = true;
+    if (!visitor.hasKeypass) {
+      els.keypass.textContent = "ยังไม่มี (ติดต่อฝ่าย IT)";
+      return;
+    }
+    api("/api/visitors/me/keypass").then(function (r) {
+      if (r.ok && r.d && r.d.keypass) {
+        els.keypass.textContent = r.d.keypass;
+        if (els.keypassCopy) els.keypassCopy.disabled = false;
+      } else {
+        els.keypass.textContent = "ติดต่อฝ่าย IT";
+      }
+    }).catch(function () { els.keypass.textContent = "—"; });
+  }
+
+  function fallbackCopy(text, ok) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); ok(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  function copyKeypass() {
+    var val = els.keypass ? els.keypass.textContent : "";
+    if (!val || val === "—" || els.keypassCopy && els.keypassCopy.disabled) return;
+    var flash = function () {
+      if (!els.keypassCopy) return;
+      els.keypassCopy.textContent = "คัดลอกแล้ว";
+      setTimeout(function () { els.keypassCopy.textContent = "คัดลอก"; }, 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(val).then(flash).catch(function () { fallbackCopy(val, flash); });
+    } else {
+      fallbackCopy(val, flash);
+    }
   }
 
   window.openSettings = open;

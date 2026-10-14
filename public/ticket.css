@@ -236,6 +236,59 @@ body.ticket-page .voice-help {
   padding: 2px 0 2px 12px;
   margin: 0 0 12px;
 }
+
+/* ---------- Remote support (UltraViewer) ---------- */
+body.ticket-page .remote-sub { margin-top: 14px; }
+body.ticket-page .remote-sub .field-label { font-size: 13.5px; margin-bottom: 6px; }
+body.ticket-page .remote-guide { margin: 0 0 4px; }
+body.ticket-page .remote-guide img {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--tk-line);
+  box-shadow: var(--tk-shadow-sm);
+  background: #fff;
+  cursor: zoom-in;
+}
+
+/* ---------- Image lightbox (zoom) ---------- */
+body.ticket-page .img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 30, 20, 0.82);
+  animation: ticketFadeUp 0.2s ease both;
+}
+body.ticket-page .img-lightbox img {
+  max-width: min(92vw, 900px);
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: var(--tk-shadow-pop);
+  background: #fff;
+}
+body.ticket-page .img-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--tk-ink);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--tk-shadow-sm);
+}
 body.ticket-page .mic-btn {
   display: inline-flex;
   align-items: center;

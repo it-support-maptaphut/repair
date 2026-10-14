@@ -2771,6 +2771,8 @@
 <link rel="stylesheet" href="admin-travel.css">
 <!-- ระบบบันทึกปฏิบัติงานนอกสถานที่ (ใช้ stylesheet เดียวกับ desktop) -->
 <link rel="stylesheet" href="admin-fieldwork.css">
+<!-- ธีม Windows XP (Luna) — โหลดท้ายสุดเพื่อทับธีมเดิม; ลบบรรทัดนี้เพื่อกลับธีมเดิม -->
+<link rel="stylesheet" href="admin-xp.css">
 </head>
 <body class="mobile-admin">
   <div class="mob-topbar">
@@ -2987,6 +2989,26 @@
           <div id="visitorViewBody"></div>
           <div class="modal-actions">
             <button class="btn btn-ghost" type="button" onclick="closeVisitorView()">ปิด</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-mask hidden" id="visitorEditMask" role="dialog" aria-modal="true" aria-label="แก้ไขข้อมูลผู้ใช้ภายนอก" onclick="if(event.target===this) closeVisitorEdit()">
+      <div class="modal">
+        <button class="modal-close" type="button" title="ปิด" onclick="closeVisitorEdit()">&times;</button>
+        <div class="modal-body">
+          <h3 class="modal-title">แก้ไขข้อมูลผู้ใช้ภายนอก</h3>
+          <p class="tf-field-hint">แก้ไข "ชื่อ" และ "ตำแหน่ง" ที่จะแสดงในระบบ (Key Pass แก้ไขไม่ได้ — ต้องกด "ออกใหม่" เท่านั้น)</p>
+          <label class="tf-field-label" for="vEditName">ชื่อ</label>
+          <input id="vEditName" type="text" style="width:100%" />
+          <label class="tf-field-label" for="vEditPosition" style="margin-top:12px">ตำแหน่ง</label>
+          <input id="vEditPosition" type="text" style="width:100%" />
+          <label class="tf-field-label" for="vEditBranch" style="margin-top:12px">สาขา</label>
+          <input id="vEditBranch" type="text" style="width:100%" />
+          <div class="modal-actions">
+            <button class="btn btn-ghost" type="button" onclick="closeVisitorEdit()">ยกเลิก</button>
+            <button class="btn" type="button" onclick="saveVisitorEdit()">บันทึก</button>
           </div>
         </div>
       </div>
@@ -4106,6 +4128,18 @@
               <div class="det-k">รายละเอียด</div>
               <div class="det-v symptom" id="detSSymptom">-</div>
             </div>
+            <div class="det-item full">
+              <div class="det-k">การแก้ไขด้วย remote (UltraViewer)</div>
+              <div class="det-v" id="detSRemoteEnabled">-</div>
+            </div>
+            <div class="det-item">
+              <div class="det-k">UltraViewer ID</div>
+              <div class="det-v" id="detSRemoteId">-</div>
+            </div>
+            <div class="det-item">
+              <div class="det-k">รหัสผ่าน (Password)</div>
+              <div class="det-v" id="detSRemotePassword">-</div>
+            </div>
           </div>
         </div>
       </div>
@@ -4151,6 +4185,18 @@
                 <div class="det-item full">
                   <div class="det-k">รายละเอียด</div>
                   <div class="det-v symptom" id="detSymptom">-</div>
+                </div>
+                <div class="det-item full">
+                  <div class="det-k">การแก้ไขด้วย remote (UltraViewer)</div>
+                  <div class="det-v" id="detRemoteEnabled">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">UltraViewer ID</div>
+                  <div class="det-v" id="detRemoteId">-</div>
+                </div>
+                <div class="det-item">
+                  <div class="det-k">รหัสผ่าน (Password)</div>
+                  <div class="det-v" id="detRemotePassword">-</div>
                 </div>
               </div>
 
@@ -7000,7 +7046,8 @@
           "<div style='min-width:0'>" +
             "<div style='font-size:17px;font-weight:700;color:var(--text,#111)'>" + esc(v.name || "-") + "</div>" +
             "<div style='font-size:13px;color:var(--muted,#6b7280)'>" + esc(v.position || "-") + (v.branch ? " · " + esc(v.branch) : "") + "</div>" +
-            "<div style='margin-top:5px'>" + lineBadge + "</div>" +
+            "<div style='margin-top:5px'>" + lineBadge +
+              " <button class='btn btn-ghost btn-sm' type='button' id='vvEdit'>แก้ไขชื่อ/ตำแหน่ง</button></div>" +
           "</div>" +
         "</div>" +
         vvSection("ข้อมูลบัญชี") +
@@ -7011,12 +7058,106 @@
         vvRow("IP ล่าสุด", "<code>" + esc(v.ip || "-") + "</code>") +
         vvRow("เข้าใช้งานล่าสุด", esc(fmtVisitorDate(v.last_seen_at))) +
         vvRow("เข้าครั้งแรก", esc(fmtVisitorDate(v.created_at))) +
-        vvRow("Key Pass", v.hasKeypass ? "มี (ออกเมื่อ " + esc(fmtVisitorDate(v.keypass_at)) + ")" : "ยังไม่มี") +
+        vvRow("Key Pass",
+          "<span id='vvKpVal' style='font-family:ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.14em;color:#0b3fa3'>" + (v.hasKeypass ? "•••••" : "ยังไม่มี") + "</span>" +
+          " <button class='btn btn-ghost btn-sm' type='button' id='vvKpShow' data-shown='0'>แสดง</button>" +
+          " <button class='btn btn-ghost btn-sm' type='button' id='vvKpIssue'>ออกใหม่</button>" +
+          (v.hasKeypass ? "<div style='font-size:11px;color:var(--muted,#6b7280);margin-top:3px'>ออกเมื่อ " + esc(fmtVisitorDate(v.keypass_at)) + "</div>" : "")
+        ) +
         vvSection("การเชื่อมต่อ LINE") +
         vvRow("สถานะ", v.hasLine ? "<span style='color:#06c755;font-weight:700'>เชื่อมต่อแล้ว</span>" : "ยังไม่เชื่อมต่อ") +
         vvRow("ชื่อในไลน์", esc(v.lineName || "-")) +
         vvRow("LINE User ID", "<code style='word-break:break-all'>" + esc(v.lineUid || "-") + "</code>");
       document.getElementById("visitorViewMask").classList.remove("hidden");
+      var kpShowBtn = document.getElementById("vvKpShow");
+      if (kpShowBtn) kpShowBtn.addEventListener("click", function () { toggleVisitorKeypass(String(id)); });
+      var kpIssueBtn = document.getElementById("vvKpIssue");
+      if (kpIssueBtn) kpIssueBtn.addEventListener("click", function () { issueVisitorKeypass(String(id)); });
+      var editBtn = document.getElementById("vvEdit");
+      if (editBtn) editBtn.addEventListener("click", function () { openVisitorEdit(String(id)); });
+    }
+
+    function toggleVisitorKeypass(id) {
+      var valEl = document.getElementById("vvKpVal");
+      var btn = document.getElementById("vvKpShow");
+      if (!valEl || !btn) return;
+      if (btn.getAttribute("data-shown") === "1") {
+        var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
+        valEl.textContent = (v && v.hasKeypass) ? "•••••" : "ยังไม่มี";
+        btn.textContent = "แสดง";
+        btn.setAttribute("data-shown", "0");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "กำลังโหลด...";
+      fetch("/api/admin/visitors/" + id + "/keypass")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          btn.disabled = false;
+          if (!d || !d.ok) { btn.textContent = "แสดง"; window.alert((d && d.message) || "แสดง Key Pass ไม่สำเร็จ"); return; }
+          if (!d.keypass) { valEl.textContent = "ยังไม่มี"; valEl.style.color = "var(--muted,#6b7280)"; }
+          else { valEl.textContent = d.keypass; valEl.style.color = "#0b3fa3"; }
+          btn.textContent = "ซ่อน";
+          btn.setAttribute("data-shown", "1");
+        })
+        .catch(function () { btn.disabled = false; btn.textContent = "แสดง"; window.alert("เชื่อมต่อไม่ได้ กรุณาลองใหม่"); });
+    }
+
+    function issueVisitorKeypass(id) {
+      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
+      var label = (v && v.name) ? ' "' + v.name + '"' : "";
+      if (!window.confirm("ออก Key Pass ใหม่ให้ผู้ใช้" + label + "?\nKey Pass เดิมจะใช้ไม่ได้ทันที")) return;
+      fetch("/api/admin/visitors/" + id + "/issue-keypass", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (d) {
+          if (!d || !d.ok) { window.alert((d && d.message) || "ออก Key Pass ใหม่ไม่สำเร็จ"); return; }
+          var valEl = document.getElementById("vvKpVal");
+          var btn = document.getElementById("vvKpShow");
+          if (valEl) { valEl.textContent = d.keypass; valEl.style.color = "#0b3fa3"; }
+          if (btn) { btn.textContent = "ซ่อน"; btn.setAttribute("data-shown", "1"); }
+          if (v) { v.hasKeypass = true; v.keypass_at = new Date().toISOString(); }
+          window.prompt("Key Pass ใหม่ (คัดลอกส่งให้ผู้ใช้ได้เลย — ระบบจะไม่แสดงซ้ำ):", d.keypass);
+        })
+        .catch(function () { window.alert("เชื่อมต่อไม่ได้ กรุณาลองใหม่"); });
+    }
+
+    function openVisitorEdit(id) {
+      var v = visitors.filter(function (x) { return String(x.id) === String(id); })[0];
+      if (!v) return;
+      var mask = document.getElementById("visitorEditMask");
+      if (!mask) return;
+      mask.setAttribute("data-vid", String(id));
+      document.getElementById("vEditName").value = v.name || "";
+      document.getElementById("vEditPosition").value = v.position || "";
+      document.getElementById("vEditBranch").value = v.branch || "";
+      mask.classList.remove("hidden");
+    }
+
+    function closeVisitorEdit() {
+      var mask = document.getElementById("visitorEditMask");
+      if (mask) mask.classList.add("hidden");
+    }
+
+    function saveVisitorEdit() {
+      var mask = document.getElementById("visitorEditMask");
+      if (!mask) return;
+      var id = mask.getAttribute("data-vid");
+      var name = document.getElementById("vEditName").value.trim();
+      var position = document.getElementById("vEditPosition").value.trim();
+      var branch = document.getElementById("vEditBranch").value.trim();
+      if (!name) { window.alert("กรุณากรอกชื่อ"); return; }
+      fetch("/api/admin/visitors/" + id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, position: position, branch: branch })
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (d) {
+          if (!d || !d.ok) { window.alert((d && d.message) || "บันทึกไม่สำเร็จ"); return; }
+          closeVisitorEdit();
+          Promise.resolve(loadVisitors()).then(function () { openVisitorView(id); });
+        })
+        .catch(function () { window.alert("เชื่อมต่อไม่ได้ กรุณาลองใหม่"); });
     }
 
     function closeVisitorView() {
@@ -8028,6 +8169,9 @@
       document.getElementById("detHandler").textContent = row.handler_name || "ยังไม่ระบุ";
       document.getElementById("detDuration").textContent = ticketDuration(row);
       document.getElementById("detSymptom").innerHTML = fmtSymptoms(row.symptom) || "-";
+      document.getElementById("detRemoteEnabled").textContent = row.remote_enabled ? "เปิดใช้งาน (Remote)" : "ไม่ใช้งาน";
+      document.getElementById("detRemoteId").textContent = row.remote_id || "-";
+      document.getElementById("detRemotePassword").textContent = row.remote_password || "-";
 
       var groups = splitPhotos(row.ticket_photos);
       fillPhotoGrid("detPhotos", groups.problem);
@@ -8069,6 +8213,9 @@
       document.getElementById("detSLoc").textContent = locText;
       document.getElementById("detSHandler").textContent = row.handler_name || "ยังไม่ระบุ";
       document.getElementById("detSDuration").textContent = ticketDuration(row);
+      document.getElementById("detSRemoteEnabled").textContent = row.remote_enabled ? "เปิดใช้งาน (Remote)" : "ไม่ใช้งาน";
+      document.getElementById("detSRemoteId").textContent = row.remote_id || "-";
+      document.getElementById("detSRemotePassword").textContent = row.remote_password || "-";
       var mask = document.getElementById("detSimpleMask");
       if (mask) {
         mask.classList.remove("hidden");

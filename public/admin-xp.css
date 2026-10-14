@@ -1,0 +1,654 @@
+/* =====================================================================
+   admin-xp.css  —  Windows XP (Luna / Bliss) theme for the ADMIN pages
+   ---------------------------------------------------------------------
+   Scope: admin.html, admin-mobile.html, admin-db.html, admin-login.html
+   Loaded AFTER admin.css / admin-mobile.css / admin-retro.css.
+
+   ปลอดภัย / ย้อนกลับได้ง่าย:
+     - เป็นไฟล์ธีม "ส่วนเพิ่ม" (override) ล้วน ๆ ไม่แก้ HTML logic หรือ JS
+     - ไม่แตะไฟล์ CSS เดิม
+     - ถ้าต้องการกลับไปธีมเดิม: ลบ <link rel="stylesheet" href="admin-xp.css">
+       ออกจากหน้า HTML ที่เกี่ยวข้อง
+   ===================================================================== */
+
+:root {
+  --xp-face:      #ece9d8;   /* พื้นผิวหน้าต่าง XP (dialog face) */
+  --xp-face-2:    #d4d0c8;
+  --xp-gray:      #c0c0c0;
+  --xp-light:     #ffffff;
+  --xp-shadow:    #808080;
+  --xp-darkest:   #404040;
+  --xp-title-a:   #0058e6;
+  --xp-title-b:   #3f8cf3;
+  --xp-navy:      #000080;
+  --xp-sel:       #316ac5;
+  --xp-field:     #7f9db9;
+  --xp-bord:      #aca899;
+  --xp-font: Tahoma, "MS Sans Serif", "Microsoft Sans Serif", "Prompt", "Sarabun", system-ui, sans-serif;
+  --xp-mono: "Courier New", Consolas, monospace;
+  --xp-win:   linear-gradient(180deg, #0058e6 0%, #3f8cf3 8%, #1d66de 40%, #1454c9 92%, #0b3fa3 100%);
+  --xp-btn:   linear-gradient(180deg, #fdfdfd 0%, #f2f2f2 45%, #e6e6e6 55%, #d8d8d8 100%);
+  --xp-btn-h: linear-gradient(180deg, #fffdf4 0%, #ffeec2 55%, #ffdf8a 100%);
+}
+
+/* ---------- พื้นฐาน ---------- */
+html { background: #7cb037; }
+html, body { font-family: var(--xp-font) !important; }
+
+body {
+  background: #7cb037 url("xp-bliss.svg") center center / cover no-repeat fixed !important;
+  color: #000 !important;
+}
+body.admin-login-page,
+body.mobile-admin,
+body.admin-db-page { color: #000 !important; }
+
+::selection { background: var(--xp-sel); color: #fff; }
+
+/* ปิด fx ทันสมัยทั้งระบบ ให้ดูเรียบแบบ XP */
+* {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  letter-spacing: normal !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- แถบเลื่อนแบบวินโดว์ (XP) ---------- */
+* { scrollbar-width: thin; scrollbar-color: #b5b5b5 #ece9d8; }
+::-webkit-scrollbar { width: 16px; height: 16px; }
+::-webkit-scrollbar-track { background: #f1efe2; border-left: 1px solid #d4d0c8; }
+::-webkit-scrollbar-thumb {
+  background: #cdcabb;
+  border: 1px solid #fff;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-right-color: #808080;
+  border-bottom-color: #808080;
+}
+::-webkit-scrollbar-thumb:hover { background: #c0bca9; }
+
+/* รหัส/เลข ใช้ฟอนต์โมโน */
+.tno, .ticket-no, .inbox-no, .stat-num, .tf-success-no,
+.w-result-v, .w-result-k, .many-lines b,
+td[data-c="no"], .wl-chip, .w-sn, .w-spec .k { font-family: var(--xp-mono) !important; }
+
+/* =====================================================================
+   เลย์เอาต์หลัก (desktop)
+   ===================================================================== */
+.layout { background: var(--xp-face) !important; }
+.main { background: var(--xp-face) !important; padding: 10px 14px 30px !important; }
+
+/* แถบชื่องานด้านบน = title bar ของหน้าต่าง XP */
+.main::before {
+  content: "SYSTEM ADMIN IT — ระบบจัดการงานแจ้งซ่อม" !important;
+  display: block !important;
+  background: var(--xp-win) !important;
+  color: #fff !important;
+  font-family: var(--xp-font) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .2px !important;
+  padding: 6px 10px !important;
+  border: 1px solid #0831a3 !important;
+  border-bottom: 1px solid #0831a3 !important;
+  border-radius: 6px 6px 0 0 !important;
+  margin-bottom: 10px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4) !important;
+}
+
+/* ---------- Sidebar = แผงงาน XP ---------- */
+.sidebar {
+  background: var(--xp-face) !important;
+  border-right: 1px solid var(--xp-bord) !important;
+  box-shadow: none !important;
+  padding: 10px 8px 12px !important;
+}
+.sidebar-header, .side-brand {
+  background: var(--xp-win) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+  margin: 0 0 8px !important;
+  padding: 8px 10px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4) !important;
+}
+.side-title { color: #fff !important; font-size: 17px !important; font-weight: 700 !important; text-shadow: 1px 1px 1px rgba(0,0,0,.45) !important; }
+.side-sub { color: #dbe8ff !important; font-size: 10px !important; font-weight: 400 !important; }
+.side-logo { background: #fff !important; border: 1px solid #0831a3 !important; border-radius: 4px !important; }
+
+.side-status .ss-name { color: #fff !important; }
+.side-status .ss-badge { background: rgba(255,255,255,.22) !important; color: #fff !important; border-radius: 3px !important; }
+.ss-dot { box-shadow: 0 0 0 1px rgba(0,0,0,.35) !important; }
+
+.sidebar-toggle {
+  background: var(--xp-btn) !important;
+  color: #000 !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 3px !important;
+}
+.sidebar-toggle:hover { background: var(--xp-btn-h) !important; color: #000 !important; }
+
+.side-group { margin: 2px 0 !important; }
+.side-group-head {
+  background: var(--xp-face-2) !important;
+  color: var(--xp-navy) !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  border: 1px solid var(--xp-bord) !important;
+  border-radius: 3px !important;
+  padding: 6px 8px !important;
+  font-family: var(--xp-font) !important;
+}
+.side-group-head:hover { color: #0831a3 !important; background: #e6ebf7 !important; }
+
+.side-btn {
+  color: #000 !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  margin: 1px 0 !important;
+  padding: 7px 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+}
+.side-btn:hover { background: #dbe8fb !important; color: #000 !important; border-color: #b7cdf0 !important; }
+.side-btn.is-active {
+  background: linear-gradient(180deg, #5aa0f4 0%, #2f7ae6 48%, #1f66d8 100%) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border: 1px solid #0d3f92 !important;
+  border-left: 1px solid #0d3f92 !important;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.35) !important;
+}
+.side-btn svg { color: currentColor !important; }
+.side-foot { color: #000 !important; border-top: 1px solid var(--xp-bord) !important; }
+
+/* สวิตช์ธีม (ถ้ามี) */
+.theme-group { border-top: 1px solid var(--xp-bord) !important; }
+.theme-opt.is-on {
+  background: linear-gradient(180deg, #5aa0f4, #1f66d8) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: inset 3px 0 0 #0d3f92 !important;
+}
+.theme-opt svg { color: currentColor !important; }
+
+/* =====================================================================
+   สถิติการ์ด = หน้าต่างเล็ก XP
+   ===================================================================== */
+.stats { gap: 8px !important; margin-bottom: 12px !important; }
+.stat-card {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+  padding: 10px 12px !important;
+  box-shadow: inset 0 0 0 1px #fff, 2px 2px 0 rgba(0,0,0,.10) !important;
+}
+.stat-card.is-active {
+  background: linear-gradient(180deg, #5aa0f4, #1f66d8) !important;
+  border-color: #0d3f92 !important;
+}
+.stat-card.is-active .stat-label,
+.stat-card.is-active .stat-icon,
+.stat-card.is-active .stat-num { color: #fff !important; }
+.stat-icon {
+  background: #fff !important;
+  color: var(--xp-navy) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 4px !important;
+  width: 38px; height: 38px;
+}
+.stat-num { color: #000 !important; font-size: 21px !important; }
+.stat-label { color: #333 !important; font-size: 10px !important; }
+
+/* =====================================================================
+   ปุ่ม = ปุ่ม XP (push button)
+   ===================================================================== */
+button, .btn, .w-btn, .status-btn, .icon-btn, .pdf-chip, .btn-inbox, .btn-refresh,
+.ana-refresh, .ana-filter-reset {
+  font-family: var(--xp-font) !important;
+  background: var(--xp-btn) !important;
+  color: #000 !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 0 #fff, inset -1px -1px 0 #b0b0b0 !important;
+  transition: none !important;
+}
+button:hover, .btn:hover, .w-btn:hover, .status-btn:hover, .icon-btn:hover,
+.pdf-chip:hover, .btn-inbox:hover, .btn-refresh:hover, .ana-refresh:hover {
+  color: #000 !important;
+  border-color: #e8a020 !important;
+  background: var(--xp-btn-h) !important;
+}
+button:active, .btn:active, .w-btn:active, .status-btn:active, .icon-btn:active,
+.pdf-chip:active, .btn-inbox:active, .btn-refresh:active {
+  background: #e4e2d8 !important;
+  border-color: #808080 !important;
+  box-shadow: inset 1px 1px 0 #b0b0b0 !important;
+}
+.btn-primary, .w-btn-primary {
+  background: linear-gradient(180deg, #5aa0f4 0%, #2f7ae6 48%, #1f66d8 100%) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border: 1px solid #0d3f92 !important;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.4) !important;
+}
+.btn-primary:hover, .w-btn-primary:hover {
+  color: #fff !important;
+  background: linear-gradient(180deg, #6aacf6, #2a72e0) !important;
+  border-color: #0d3f92 !important;
+}
+.btn-danger { background: linear-gradient(180deg, #e05a5a, #b02020) !important; color: #fff !important; border-color: #6a0000 !important; }
+.btn-ghost { background: var(--xp-face) !important; color: #000 !important; }
+.btn-approve, .status-btn.approve { background: linear-gradient(180deg, #7fd07f, #2e8a2e) !important; color: #fff !important; font-weight: 700 !important; border-color: #1f6b1f !important; }
+.btn-finish, .status-btn.finish { background: linear-gradient(180deg, #5aa0f4, #1f66d8) !important; color: #fff !important; font-weight: 700 !important; border-color: #0d3f92 !important; }
+.btn-edit { background: #dbe8ff !important; color: #00338d !important; }
+.btn-share, .btn-drive { background: #d8ece6 !important; color: #066 !important; }
+.pdf-chip { color: #00338d !important; }
+
+/* =====================================================================
+   ตารางข้อมูล
+   ===================================================================== */
+.table-wrap {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+  padding: 3px !important;
+  box-shadow: inset 0 0 0 1px #fff, 2px 2px 0 rgba(0,0,0,.10) !important;
+}
+table { background: #fff !important; width: 100%; font-family: var(--xp-font) !important; }
+table th {
+  background: linear-gradient(180deg, #f4f2ea, #dcd9cd) !important;
+  color: #00338d !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  border: 1px solid #b7b3a4 !important;
+  border-radius: 0 !important;
+  padding: 7px 9px !important;
+  white-space: nowrap;
+}
+table td {
+  border: 1px solid #e2ded0 !important;
+  padding: 7px 9px !important;
+  color: #000 !important;
+  background: #fff !important;
+  font-size: 13px !important;
+}
+table tr:nth-child(even) td { background: #f4f2ea !important; }
+
+tr.ticket-card:hover td { background: var(--xp-sel) !important; color: #fff !important; }
+tr.ticket-card:hover td span, tr.ticket-card:hover td .badge,
+tr.ticket-card:hover td a, tr.ticket-card:hover td .symp-item { color: #fff !important; }
+tr.ticket-card:hover td .badge, tr.ticket-card:hover td .pdf-chip,
+tr.ticket-card:hover td .dev-tag { background: #1b4fb0 !important; border-color: #cfe2ff !important; }
+
+.tno { color: #00338d !important; font-size: 14px !important; font-weight: 700 !important; }
+.t-date { color: #000 !important; }
+.cell-user { color: #000 !important; }
+td[data-c="symptom"] .cell-trunc { color: #000 !important; }
+
+/* Badge สถานะ */
+.badge {
+  background: var(--xp-face-2) !important;
+  border: 1px solid #808080 !important;
+  color: #000 !important;
+  border-radius: 3px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+}
+.badge::before { display: none !important; }
+.b-new { background: #fff1b3 !important; color: #7a5c00 !important; border-color: #d9a406 !important; }
+.b-working { background: #cfe2ff !important; color: #00338d !important; border-color: #4a80c8 !important; }
+.b-done { background: #c6e8c6 !important; color: #0a5a0a !important; border-color: #2e8a2e !important; }
+.b-broken { background: #f7c4c4 !important; color: #7f0000 !important; border-color: #b02020 !important; }
+.b-ok { background: #d8f5e8 !important; color: #0f7a4d !important; border-color: #0f7a4d !important; }
+
+/* แท็กหมวดอุปกรณ์ */
+.dev-tag {
+  background: #eef2fb !important;
+  border: 1px solid #b7cdf0 !important;
+  border-left: 3px solid #1f66d8 !important;
+  color: #00338d !important;
+  font-size: 11px !important;
+  border-radius: 2px !important;
+}
+.dev-tag.soft { border-left-color: #5aa0f4 !important; }
+
+/* =====================================================================
+   แถบเครื่องมือ
+   ===================================================================== */
+.mbar, .devices-toolbar {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+  padding: 8px !important;
+  margin-bottom: 10px !important;
+  gap: 8px !important;
+  box-shadow: inset 0 0 0 1px #fff !important;
+}
+.mbar input, .mbar select, .devices-toolbar input, .devices-toolbar select,
+.ana-sel, .ana-date-input { font-family: var(--xp-font) !important; }
+
+/* =====================================================================
+   ฟอร์ม / ช่องกรอก = ช่องสลักแบบ XP
+   ===================================================================== */
+input, select, textarea, .ana-sel, .ana-date-input, .w-drop {
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #7f7f7f #fff #fff #7f7f7f !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+  font-family: var(--xp-font) !important;
+  font-size: 13px !important;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,.12) !important;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border-color: #316ac5 !important;
+  box-shadow: 0 0 0 1px #7ba2e0 inset !important;
+}
+input::placeholder, textarea::placeholder { color: #8a8a8a !important; }
+
+/* =====================================================================
+   วินโดว์ / โมดอล = หน้าต่าง XP
+   ===================================================================== */
+.modal-mask { background: rgba(10,40,90,.32) !important; }
+.modal {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 7px !important;
+  box-shadow: 6px 6px 22px rgba(0,0,0,.5) !important;
+  /* ให้เลื่อนเนื้อหาได้เหมือนเดิม (admin.css ตั้ง overflow:auto ไว้) */
+  overflow: auto !important;
+}
+.modal::before {
+  content: "SYSTEM ADMIN IT" !important;
+  display: block !important;
+  background: var(--xp-win) !important;
+  color: #fff !important;
+  font-family: var(--xp-font) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 5px 10px !important;
+  border-bottom: 1px solid #0831a3 !important;
+  border-radius: 6px 6px 0 0 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4) !important;
+}
+.modal-body { background: var(--xp-face) !important; padding: 16px 18px 18px !important; }
+.modal-title { color: var(--xp-navy) !important; font-size: 16px !important; font-weight: 700 !important; }
+.modal-no, .tf-field-hint, .tf-success-desc { color: #000 !important; }
+.form-field label { color: #000 !important; font-weight: 700 !important; }
+
+.modal-close {
+  position: absolute; top: 3px; right: 3px;
+  background: linear-gradient(180deg, #f08a6d, #d5472a) !important;
+  color: #fff !important;
+  border: 1px solid #fff !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55) !important;
+}
+.modal-close:hover { background: #c0401c !important; color: #fff !important; }
+
+/* =====================================================================
+   Toast = ป้ายเหลือง XP
+   ===================================================================== */
+.toast {
+  background: #ffffe1 !important;
+  color: #000 !important;
+  border: 1px solid #000 !important;
+  border-radius: 0 !important;
+  font-weight: 700 !important;
+}
+
+/* =====================================================================
+   ตรวจสอบประกัน / โน้ต
+   ===================================================================== */
+.wl-chip { border: 1px solid #000 !important; border-radius: 3px !important; }
+.wl-expired { background: #b02020 !important; color: #fff !important; }
+.wl-warn { background: #ffd34d !important; color: #000 !important; }
+.wl-good { background: #2e8a2e !important; color: #fff !important; }
+.wl-none { background: var(--xp-face-2) !important; color: #000 !important; }
+
+.wn-choose-card {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+  box-shadow: inset 0 0 0 1px #fff, 2px 2px 0 rgba(0,0,0,.10) !important;
+  padding: 14px !important;
+}
+.wn-choose-card:hover { background: #dbe8ff !important; }
+.wn-choose-ico { background: linear-gradient(180deg,#5aa0f4,#1f66d8) !important; color: #fff !important; border-radius: 4px !important; }
+.wn-choose-name { color: #00338d !important; font-size: 14px; }
+.wn-choose-desc { color: #404040 !important; }
+.wn-choose-grid .wn-choose-card:focus { outline: 1px dotted #000 !important; }
+.wn-back { color: var(--xp-navy) !important; }
+.wn-journal-text { border-left: 2px dashed #808080 !important; color: #000 !important; }
+.modal.wn-journal-modal { background: transparent !important; border: none !important; box-shadow: none !important; }
+.modal.wn-journal-modal::before { display: none !important; }
+
+/* =====================================================================
+   รายการงานทั้งหมด (worklog)
+   ===================================================================== */
+.wl-date-head {
+  background: var(--xp-win) !important;
+  color: #fff !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 4px !important;
+}
+.wl-date-count { background: #1f66d8 !important; color: #fff !important; }
+
+/* =====================================================================
+   กล่องข้อความ (inbox)
+   ===================================================================== */
+.inbox-item {
+  background: #fff !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+}
+.inbox-no { color: #00338d !important; font-size: 14px !important; font-weight: 700 !important; }
+.inbox-time, .inbox-loc, .inbox-reporter { color: #000 !important; }
+.inbox-empty { color: #000 !important; }
+.inbox-badge { background: #ffd24a !important; color: #000 !important; border: 1px solid #d9a406 !important; border-radius: 3px !important; }
+
+/* =====================================================================
+   วิเคราะห์ (analytics)
+   ===================================================================== */
+.ana-filter, .ana-date-input, .ana-sel {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+}
+.ana-sel, .ana-date-input { background: #fff !important; border-color: #7f7f7f #fff #fff #7f7f7f !important; border-radius: 0 !important; }
+.ana-tip {
+  background: #ffffe1 !important;
+  border: 1px solid #000 !important;
+  border-radius: 0 !important;
+  color: #000 !important;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.35) !important;
+}
+.ana-device-chip { background: linear-gradient(180deg,#5aa0f4,#1f66d8) !important; color: #fff !important; border: 1px solid #0d3f92 !important; border-radius: 3px !important; }
+.ana-rep-chart { color: #000 !important; }
+
+/* =====================================================================
+   หน้าตรวจสอบประกัน (ผลลัพธ์)
+   ===================================================================== */
+.w-bar, .w-result, .w-result-item {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 5px !important;
+}
+.w-label, .w-note, .w-result-k, .w-result-v, .w-result-name, .w-result-cat { color: #000 !important; }
+.w-result-name { font-weight: 700 !important; color: #00338d !important; }
+
+/* =====================================================================
+   รายการว่าง / pagination
+   ===================================================================== */
+.empty { color: #000 !important; }
+.users-empty-hint { color: #000 !important; }
+.pagination .btn { font-family: var(--xp-mono) !important; }
+
+/* =====================================================================
+   หน้าต่างรายละเอียดแบบมือถือ (det-simple)
+   ===================================================================== */
+.det-simple {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 7px !important;
+}
+.det-simple-head { background: var(--xp-win) !important; border-radius: 6px 6px 0 0 !important; }
+.det-simple-head .tno { color: #fff !important; }
+
+/* =====================================================================
+   หน้าเข้าสู่ระบบ Admin  (admin-login.html)
+   ===================================================================== */
+body.admin-login-page { background: #7cb037 url("xp-bliss.svg") center center / cover no-repeat fixed !important; }
+.admin-login-page .admin-login-box {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 8px !important;
+  box-shadow: 6px 6px 22px rgba(0,0,0,.5) !important;
+  padding: 12px 14px 14px !important;
+  animation: none !important;
+  overflow: hidden !important;
+}
+.admin-login-page .admin-login-box::before {
+  content: "SYSTEM ADMIN IT" !important;
+  display: block !important;
+  background: var(--xp-win) !important;
+  color: #fff !important;
+  font-family: var(--xp-font) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 5px 10px !important;
+  margin: -12px -14px 12px !important;
+  border-bottom: 1px solid #0831a3 !important;
+}
+.admin-login-page .admin-login-title { color: var(--xp-navy) !important; font-size: 15px !important; font-weight: 700 !important; }
+.admin-login-page .admin-login-sub { color: #333 !important; font-size: 11px !important; }
+.admin-login-page .admin-login-field label { color: #000 !important; font-weight: 700 !important; font-size: 12px !important; }
+.admin-login-page .admin-login-field .verify-input {
+  border: 2px solid !important;
+  border-color: #7f7f7f #fff #fff #7f7f7f !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,.12) !important;
+  font-family: var(--xp-font) !important;
+}
+.admin-login-page .admin-login-field .verify-input:focus { outline: none !important; border-color: #316ac5 !important; }
+
+/* =====================================================================
+   Password-note popup (pn-*)
+   ===================================================================== */
+.pn-pop {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 7px !important;
+  box-shadow: 6px 6px 22px rgba(0,0,0,.5) !important;
+}
+.pn-pop-close { color: #000 !important; border-radius: 3px !important; }
+.pn-pop-close:hover { background: #d4d0c8 !important; }
+.pn-pop-title { color: var(--xp-navy) !important; }
+.pn-pop-sub { color: #000 !important; }
+.pn-pop-field label { color: #000 !important; }
+.pn-pop-field input {
+  border: 2px solid !important; border-color: #7f7f7f #fff #fff #7f7f7f !important; border-radius: 0 !important;
+  background: #fff !important; color: #000 !important; box-shadow: inset 1px 1px 0 rgba(0,0,0,.12) !important;
+  font-family: var(--xp-mono) !important;
+}
+.pn-pop-field input:focus { outline: none !important; border-color: #316ac5 !important; }
+.pn-eye { color: #000 !important; }
+.pn-btn-primary {
+  background: linear-gradient(180deg, #5aa0f4, #1f66d8) !important; color: #fff !important;
+  border: 1px solid #0d3f92 !important; border-radius: 3px !important; font-weight: 700 !important;
+}
+.pn-btn-primary:hover { background: linear-gradient(180deg, #6aacf6, #2a72e0) !important; opacity: 1 !important; }
+.pn-btn-ghost {
+  background: var(--xp-btn) !important; color: #000 !important;
+  border: 1px solid #003c74 !important; border-radius: 3px !important; font-weight: 400 !important;
+}
+.pn-btn-ghost:hover { background: var(--xp-btn-h) !important; opacity: 1 !important; }
+.pn-pop-err { color: #b00020 !important; font-weight: 700 !important; }
+.pn-masked { color: #000 !important; }
+.pn-rec { background: var(--xp-face) !important; border: 1px solid #0831a3 !important; border-radius: 5px !important; }
+.pn-rec-head { color: var(--xp-navy) !important; }
+.pn-rec-row { border-top: 1px dashed #b7b3a4 !important; }
+.pn-rec-label { color: #333 !important; }
+.pn-rec-val { color: #000 !important; }
+.pn-copy-btn {
+  background: var(--xp-btn) !important; color: #000 !important;
+  border: 1px solid #003c74 !important; border-radius: 3px !important; font-weight: 400 !important;
+}
+.pn-copy-btn:hover { background: var(--xp-btn-h) !important; }
+.pn-empty, .pn-muted { color: #666 !important; }
+
+/* =====================================================================
+   หน้า admin-db
+   ===================================================================== */
+body.admin-db-page .main::before { content: "SYSTEM ADMIN IT — ฐานข้อมูลอุปกรณ์" !important; }
+
+/* =====================================================================
+   มือถือ (admin-mobile.html) — topbar/drawer
+   ===================================================================== */
+body.mobile-admin .mob-topbar {
+  background: var(--xp-win) !important;
+  color: #fff !important;
+  box-shadow: inset 0 -1px 0 #0831a3, 0 1px 2px rgba(0,0,0,.25) !important;
+}
+body.mobile-admin .mob-topbar .mob-title { text-shadow: 1px 1px 1px rgba(0,0,0,.45) !important; }
+body.mobile-admin .mob-topbar .mob-menu-btn {
+  border: 1px solid rgba(255,255,255,.7) !important;
+  border-radius: 3px !important;
+  background: rgba(255,255,255,.15) !important;
+  color: #fff !important;
+}
+body.mobile-admin .mob-topbar .mob-menu-btn:active { background: rgba(255,255,255,.3) !important; }
+
+body.mobile-admin .mob-backdrop { background: rgba(10,40,90,.32) !important; }
+
+body.mobile-admin #sidebar {
+  background: var(--xp-face) !important;
+  border-right: 1px solid #0831a3 !important;
+}
+body.mobile-admin .mob-side-title {
+  background: var(--xp-win) !important;
+  color: #fff !important;
+  border-radius: 5px !important;
+  padding: 10px 8px !important;
+  margin-bottom: 10px !important;
+}
+body.mobile-admin .mob-side-title small { color: #dbe8ff !important; }
+body.mobile-admin .mob-side-title .side-logo { border: 1px solid #0831a3 !important; border-radius: 4px !important; }
+
+body.mobile-admin #sidebar .mob-cats { border-bottom: 1px solid var(--xp-bord) !important; }
+body.mobile-admin #sidebar .mob-cat {
+  background: var(--xp-btn) !important;
+  color: #000 !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 0 #fff, inset -1px -1px 0 #b0b0b0 !important;
+}
+body.mobile-admin #sidebar .mob-cat.is-active {
+  background: linear-gradient(180deg, #5aa0f4, #1f66d8) !important;
+  border-color: #0d3f92 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+body.mobile-admin #sidebar .mob-logout {
+  background: var(--xp-btn) !important;
+  color: #000 !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 3px !important;
+}
+body.mobile-admin #sidebar .mob-logout:hover { background: var(--xp-btn-h) !important; }
+body.mobile-admin #sidebar .mob-logout svg { width: 16px; height: 16px; }
+
+/* =====================================================================
+   มือถือ: ย่อระยะให้พอดี
+   ===================================================================== */
+@media (max-width: 767px) {
+  .main { padding: 8px 8px 24px !important; }
+  .main::before { font-size: 11px !important; padding: 5px 8px !important; }
+  .stat-card { padding: 8px 10px !important; }
+  .sidebar { padding: 8px 6px !important; }
+}

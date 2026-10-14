@@ -47,7 +47,77 @@ var voiceUnsupported = document.getElementById("voiceUnsupported");
 var copyTicketBtn = document.getElementById("copyTicketBtn");
 var successClose = document.getElementById("successClose");
 
-var modeBtns = document.querySelectorAll(".mode-btn");
+var modeBtns = document.querySelectorAll(".mode-btn[data-mode]");
+
+// ---------- การแก้ไขด้วย remote (UltraViewer) ----------
+var remoteBtns = document.querySelectorAll(".remote-btn");
+var remotePanel = document.getElementById("remotePanel");
+var remoteIdInput = document.getElementById("remoteId");
+var remotePwInput = document.getElementById("remotePw");
+var remoteMode = "no";
+
+function setRemote(mode) {
+  remoteMode = mode === "yes" ? "yes" : "no";
+  remoteBtns.forEach(function (b) {
+    var on = b.getAttribute("data-remote") === remoteMode;
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-checked", on ? "true" : "false");
+  });
+  if (remotePanel) remotePanel.classList.toggle("hidden", remoteMode !== "yes");
+  if (remoteMode !== "yes") {
+    if (remoteIdInput) remoteIdInput.classList.remove("invalid");
+    if (remotePwInput) remotePwInput.classList.remove("invalid");
+  }
+}
+
+// ---------- Image lightbox (ซูมรูปคู่มือ remote) ----------
+var remoteGuideImg = document.querySelector(".remote-guide img");
+var imgLightbox = document.getElementById("imgLightbox");
+var imgLightboxImg = document.getElementById("imgLightboxImg");
+var imgLightboxClose = document.getElementById("imgLightboxClose");
+
+function openImgLightbox(src, alt) {
+  if (!imgLightbox || !imgLightboxImg) return;
+  imgLightboxImg.src = src;
+  imgLightboxImg.alt = alt || "";
+  imgLightbox.classList.remove("hidden");
+}
+
+function closeImgLightbox() {
+  if (!imgLightbox) return;
+  imgLightbox.classList.add("hidden");
+  if (imgLightboxImg) imgLightboxImg.src = "";
+}
+
+if (remoteGuideImg) {
+  remoteGuideImg.addEventListener("click", function () {
+    openImgLightbox(this.src, this.alt);
+  });
+}
+if (imgLightbox) {
+  imgLightbox.addEventListener("click", function (e) {
+    if (e.target === imgLightbox) closeImgLightbox();
+  });
+}
+if (imgLightboxClose) imgLightboxClose.addEventListener("click", closeImgLightbox);
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") closeImgLightbox();
+});
+
+remoteBtns.forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    setRemote(btn.getAttribute("data-remote"));
+    saveDraftSoon();
+  });
+});
+
+[remoteIdInput, remotePwInput].forEach(function (el) {
+  if (!el) return;
+  el.addEventListener("input", function () {
+    el.classList.remove("invalid");
+    saveDraftSoon();
+  });
+});
 
 // ---------- โหมดพิมพ์ / พิมพ์ด้วยเสียง ----------
 function setMode(mode) {
@@ -323,6 +393,16 @@ function submitForm() {
     invalidField(positionText, "กรุณากรอกตำแหน่ง / สถานที่");
     return;
   }
+  if (remoteMode === "yes") {
+    if (!remoteIdInput.value.trim()) {
+      invalidField(remoteIdInput, "กรุณากรอก Your ID ของ UltraViewer");
+      return;
+    }
+    if (!remotePwInput.value.trim()) {
+      invalidField(remotePwInput, "กรุณากรอก Password ของ UltraViewer");
+      return;
+    }
+  }
 
   submitBtn.disabled = true;
   showLoading();
@@ -335,6 +415,9 @@ function submitForm() {
   formData.append("device", device.value.trim());
   formData.append("location", getLocation());
   formData.append("zone_count", "0");
+  formData.append("remote_enabled", remoteMode);
+  formData.append("remote_id", remoteMode === "yes" ? remoteIdInput.value.trim() : "");
+  formData.append("remote_password", remoteMode === "yes" ? remotePwInput.value.trim() : "");
 
   fetch("/api/tickets", { method: "POST", body: formData })
     .then(function (res) {
@@ -456,11 +539,12 @@ function collectDraft() {
     if (b.getAttribute("data-mode") === "voice" && b.classList.contains("is-active")) mode = "voice";
   });
   return {
-    v: 3,
+    v: 4,
     symptom: symptomText.value,
     branch: getSelectedBranch(),
     position: positionText.value,
     mode: mode,
+    remote: remoteMode,
     savedAt: Date.now()
   };
 }
@@ -505,6 +589,7 @@ function restoreDraft() {
   }
   positionText.value = d.position || "";
   setMode(d.mode === "voice" ? "voice" : "type");
+  setRemote(d.remote === "yes" ? "yes" : "no");
   return true;
 }
 

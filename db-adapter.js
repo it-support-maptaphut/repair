@@ -503,6 +503,24 @@ function createPostgresAdapter() {
     }
   };
 
+  // เตรียมคอลัมน์ "การแก้ไขด้วย remote (UltraViewer)" ในตาราง tickets
+  let ticketRemoteColsReady = false;
+  const ensureTicketRemoteCols = async () => {
+    if (ticketRemoteColsReady) return true;
+    try {
+      await query(`
+        ALTER TABLE tickets ADD COLUMN IF NOT EXISTS remote_enabled boolean NOT NULL DEFAULT false;
+        ALTER TABLE tickets ADD COLUMN IF NOT EXISTS remote_id text NOT NULL DEFAULT '';
+        ALTER TABLE tickets ADD COLUMN IF NOT EXISTS remote_password text NOT NULL DEFAULT '';
+      `);
+      ticketRemoteColsReady = true;
+      return true;
+    } catch (err) {
+      console.error("[PostgreSQL] เตรียมคอลัมน์การแก้ไขด้วย remote ไม่สำเร็จ:", err.message);
+      return false;
+    }
+  };
+
   // เตรียมตารางระบบบันทึกเบิกค่าเดินทางให้ PostgreSQL ตรงกับ Supabase (รันครั้งเดียวต่อ process)
   let travelTablesReady = false;
   const ensureTravelTables = async () => {
@@ -821,6 +839,9 @@ function createPostgresAdapter() {
     archive_size: row.archive_size,
     archived_at: row.archived_at,
     audio_url: row.audio_url || "",
+    remote_enabled: !!row.remote_enabled,
+    remote_id: row.remote_id || "",
+    remote_password: row.remote_password || "",
   });
   
   const mapDevice = (row) => ({
@@ -865,20 +886,34 @@ function createPostgresAdapter() {
       return prefix + String(seq).padStart(3, "0");
     },
     
-    async createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl }) {
+    async createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl, remoteEnabled, remoteId, remotePassword }) {
+      await ensureTicketRemoteCols();
       const acceptedAtVal = acceptedAt || null;
       const audioUrlVal = audioUrl || "";
+      const remoteEnabledVal = !!remoteEnabled;
+      const remoteIdVal = remoteEnabled ? String(remoteId || "") : "";
+      const remotePasswordVal = remoteEnabled ? String(remotePassword || "") : "";
       const tryInsert = () =>
         query(
-          `INSERT INTO tickets (ticket_no, device, symptom, location, reporter_name, reporter_phone, reporter_line_id, status, handler_name, status_date, status_time, source, approved_at, accepted_at, audio_url)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          `INSERT INTO tickets (ticket_no, device, symptom, location, reporter_name, reporter_phone, reporter_line_id, status, handler_name, status_date, status_time, source, approved_at, accepted_at, audio_url, remote_enabled, remote_id, remote_password)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
            RETURNING id`,
-          [ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status || "new", handlerName || "", statusDate || null, statusTime || "", source || "external", status === "working" ? new Date() : null, acceptedAtVal, audioUrlVal]
+          [ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status || "new", handlerName || "", statusDate || null, statusTime || "", source || "external", status === "working" ? new Date() : null, acceptedAtVal, audioUrlVal, remoteEnabledVal, remoteIdVal, remotePasswordVal]
         );
       try {
         const result = await tryInsert();
         return result.rows[0].id;
       } catch (e) {
+        // ยังไม่ได้ ran SQL เพิ่มคอลัมน์ remote_* — ลอง insert โดยไม่มีข้อมูล remote
+        if (/remote_enabled|remote_id|remote_password/.test(e.message)) {
+          const retry = await query(
+            `INSERT INTO tickets (ticket_no, device, symptom, location, reporter_name, reporter_phone, reporter_line_id, status, handler_name, status_date, status_time, source, approved_at, accepted_at, audio_url)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+             RETURNING id`,
+            [ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status || "new", handlerName || "", statusDate || null, statusTime || "", source || "external", status === "working" ? new Date() : null, acceptedAtVal, audioUrlVal]
+          );
+          return retry.rows[0].id;
+        }
         // ยังไม่ได้ ran SQL เพิ่มคอลัมน์ accepted_at / audio_url
         if (/accepted_at/.test(e.message)) {
           if (source === "external") {
@@ -949,6 +984,7 @@ function createPostgresAdapter() {
     },
     
     async listTickets(limit = 500) {
+      await ensureTicketRemoteCols();
       const result = await query(
         `SELECT t.*, 
           json_agg(json_build_object('id', tp.id, 'cloud_url', tp.cloud_url, 'sort_order', tp.sort_order) ORDER BY tp.sort_order) FILTER (WHERE tp.id IS NOT NULL) as ticket_photos

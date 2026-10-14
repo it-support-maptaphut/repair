@@ -61,7 +61,7 @@ async function genTicketNo(device) {
   return prefix + String(seq).padStart(3, "0");
 }
 
-async function createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl, visitorId }) {
+async function createTicket({ ticketNo, device, symptom, location, reporterName, reporterPhone, reporterLineId, status, handlerName, statusDate, statusTime, source, acceptedAt, audioUrl, visitorId, remoteEnabled, remoteId, remotePassword }) {
   const accepted_at = acceptedAt || null;
   const payload = {
     ticket_no: ticketNo,
@@ -79,7 +79,10 @@ async function createTicket({ ticketNo, device, symptom, location, reporterName,
     approved_at: status === "working" ? new Date().toISOString() : null,
     accepted_at,
     audio_url: audioUrl || "",
-    visitor_id: visitorId || null
+    visitor_id: visitorId || null,
+    remote_enabled: !!remoteEnabled,
+    remote_id: remoteEnabled ? String(remoteId || "") : "",
+    remote_password: remoteEnabled ? String(remotePassword || "") : ""
   };
   let res = await supabase
     .from("tickets")
@@ -131,6 +134,18 @@ async function createTicket({ ticketNo, device, symptom, location, reporterName,
       .select("id")
       .single();
   }
+  if (res.error && /remote_enabled|remote_id|remote_password/.test(res.error.message)) {
+    // ยังไม่ได้ ran SQL เพิ่มคอลัมน์ remote_* — เก็บงานโดยไม่มีข้อมูล remote
+    const p6 = Object.assign({}, payload);
+    delete p6.remote_enabled;
+    delete p6.remote_id;
+    delete p6.remote_password;
+    res = await supabase
+      .from("tickets")
+      .insert(p6)
+      .select("id")
+      .single();
+  }
   if (res.error) throw res.error;
   return res.data.id;
 }
@@ -160,7 +175,7 @@ async function updateArchive(ticketNo, gzipBase64, sizeBytes) {
 
 async function listTickets(limit = 500) {
   const cols =
-    "id,ticket_no,device,symptom,location,reporter_name,reporter_phone,reporter_line_id,status,handler_name,status_date,status_time,source,approved_at,created_at,pdf_url,archive_size,archived_at,audio_url,ticket_photos(id,cloud_url,sort_order)";
+    "id,ticket_no,device,symptom,location,reporter_name,reporter_phone,reporter_line_id,status,handler_name,status_date,status_time,source,approved_at,created_at,pdf_url,archive_size,archived_at,audio_url,remote_enabled,remote_id,remote_password,ticket_photos(id,cloud_url,sort_order)";
   const { data, error } = await supabase
     .from("tickets")
     .select(cols)

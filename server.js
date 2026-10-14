@@ -791,6 +791,9 @@ app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields(
     const phone = String(body.reporter_phone || "").trim();
     const reporterLineId = String(body.reporter_line_id || "").trim();
     const handlerName = String(body.handler_name || "").trim();
+    const remoteEnabled = ["yes", "true", "1", "on"].indexOf(String(body.remote_enabled || "").trim().toLowerCase()) !== -1;
+    const remoteId = remoteEnabled ? String(body.remote_id || "").trim() : "";
+    const remotePassword = remoteEnabled ? String(body.remote_password || "").trim() : "";
     const statusDateRaw = String(body.status_date || "").trim();
     const statusDate = /^\d{4}-\d{2}-\d{2}$/.test(statusDateRaw) ? statusDateRaw : null;
     const statusTime = String(body.status_time || "").trim();
@@ -815,6 +818,9 @@ app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields(
 
     if (!symptom || !location) {
       return res.status(400).json({ ok: false, message: "ข้อมูลไม่ครบ" });
+    }
+    if (remoteEnabled && (!remoteId || !remotePassword)) {
+      return res.status(400).json({ ok: false, message: "กรุณากรอก Your ID และ Password สำหรับการแก้ไขด้วย remote" });
     }
     const adapter = db.getAdapter();
     if (!adapter.ready) {
@@ -874,7 +880,10 @@ app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields(
       source,
       acceptedAt,
       audioUrl,
-      visitorId: (visitor && visitor.id) || null
+      visitorId: (visitor && visitor.id) || null,
+      remoteEnabled,
+      remoteId,
+      remotePassword
     });
     await adapter.addPhotos(ticketId, urls);
     await adapter.recordDevice({ ip: clientIp(req), ticketNo });
@@ -1504,6 +1513,30 @@ app.get("/api/admin/visitors/:id/ips", async (req, res) => {
     }
     const ips = await adapter.listVisitorIps(Number(req.params.id));
     res.json({ ok: true, ips });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "server error" });
+  }
+});
+
+// GET /api/admin/visitors/:id/keypass — แสดง Key Pass ปัจจุบัน (ถอดรหัสจาก keypass_enc)
+app.get("/api/admin/visitors/:id/keypass", async (req, res) => {
+  try {
+    const adapter = db.getAdapter();
+    if (!adapter.ready) {
+      return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
+    }
+    if (!keypassEncReady()) {
+      return res.status(503).json({ ok: false, message: "ยังไม่ได้ตั้งค่า VISITOR_KEYPASS_ENC_KEY ใน .env (แสดง Key Pass เดิมไม่ได้)" });
+    }
+    const id = Number(req.params.id);
+    const row = await adapter.getVisitorById(id);
+    if (!row) return res.status(404).json({ ok: false, message: "ไม่พบผู้ใช้นี้" });
+    const keypass = keypassDecrypt(row.keypass_enc);
+    if (!keypass) {
+      return res.json({ ok: true, keypass: null, hasKeypass: false, message: "ยังไม่มี Key Pass (กด 'ออกใหม่' เพื่อสร้าง)" });
+    }
+    res.json({ ok: true, keypass: keypass, hasKeypass: true, keypass_at: row.keypass_at || null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "server error" });

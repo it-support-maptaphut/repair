@@ -72,6 +72,68 @@
         '<path d="M34 112 h52 l-5 30 a7 7 0 0 1 -7 6 H46 a7 7 0 0 1 -7 -6 Z" fill="#ffffff" opacity="0.9"/>' +
         '<rect x="29" y="104" width="62" height="12" rx="6" fill="#ffffff"/>' +
       "</svg>";
+    // ฉากประดับ (wallpaper): คอมตั้งโต๊ะ + จอแสดงชื่อระบบ (กะพริบ) + UPS และสายไฟ
+    var SCENE =
+      '<svg class="vg-desk-svg" viewBox="0 0 480 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' +
+        '<defs>' +
+          '<radialGradient id="vgLampGlow" cx="120" cy="144" r="180" gradientUnits="userSpaceOnUse">' +
+            '<stop offset="0" stop-color="#ffe9a8" stop-opacity="0.6"/>' +
+            '<stop offset="0.5" stop-color="#ffe9a8" stop-opacity="0.22"/>' +
+            '<stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/>' +
+          '</radialGradient>' +
+        '</defs>' +
+        '<rect x="0" y="252" width="480" height="48" fill="#05122e" opacity="0.45"/>' +
+        '<rect x="58" y="238" width="16" height="62" fill="#0a1c3f" opacity="0.85"/>' +
+        '<rect x="406" y="238" width="16" height="62" fill="#0a1c3f" opacity="0.85"/>' +
+        '<rect x="30" y="240" width="420" height="7" fill="#081733" opacity="0.9"/>' +
+        '<rect x="30" y="228" width="420" height="14" rx="3" fill="#0d2350" opacity="0.92"/>' +
+        '<rect x="30" y="228" width="420" height="4" rx="2" fill="#3f79d6" opacity="0.5"/>' +
+        '<rect x="198" y="208" width="84" height="8" rx="4" fill="#0d2350" opacity="0.9"/>' +
+        '<rect x="228" y="184" width="24" height="26" fill="#0d2350" opacity="0.9"/>' +
+        '<rect x="146" y="62" width="188" height="132" rx="12" fill="#0d2350" opacity="0.95"/>' +
+        '<rect x="146" y="62" width="188" height="132" rx="12" fill="none" stroke="#3f79d6" stroke-width="2" opacity="0.45"/>' +
+        '<rect x="158" y="74" width="164" height="108" rx="6" fill="#04101f"/>' +
+        '<g class="vg-screen-on" fill="#9fe9ff" font-family="Segoe UI, Tahoma, sans-serif" text-anchor="middle">' +
+          '<rect class="vg-scan" x="158" y="74" width="164" height="4" fill="#cfeaff" opacity="0.12"/>' +
+          '<text x="240" y="102" font-size="13" font-weight="700">\u0e23\u0e30\u0e1a\u0e1a\u0e41\u0e08\u0e49\u0e07\u0e0b\u0e48\u0e2d\u0e21</text>' +
+          '<text x="240" y="120" font-size="13" font-weight="700">\u0e02\u0e2d\u0e07\u0e23\u0e49\u0e32\u0e19\u0e27\u0e23\u0e23\u0e13</text>' +
+          '<text x="240" y="138" font-size="13" font-weight="700">\u0e2a\u0e32\u0e02\u0e32\u0e21\u0e32\u0e1a\u0e15\u0e32\u0e1e\u0e38\u0e15</text>' +
+          '<text x="240" y="160" font-size="11" opacity="0.85">(\u0e44\u0e2d\u0e17\u0e35\u0e0b\u0e31\u0e1e\u0e1e\u0e2d\u0e23\u0e4c\u0e15)</text>' +
+        '</g>' +
+        '<rect x="348" y="122" width="92" height="110" rx="8" fill="#0d2350" opacity="0.95"/>' +
+        '<rect x="348" y="122" width="92" height="110" rx="8" fill="none" stroke="#3f79d6" stroke-width="2" opacity="0.4"/>' +
+        '<rect x="364" y="140" width="60" height="9" rx="2" fill="#04101f"/>' +
+        '<rect x="364" y="154" width="60" height="9" rx="2" fill="#04101f"/>' +
+        '<rect x="364" y="168" width="60" height="9" rx="2" fill="#04101f"/>' +
+        '<circle class="vg-led" cx="378" cy="200" r="5" fill="#6cf07a"/>' +
+        '<circle cx="394" cy="200" r="5" fill="#ff5a5a" opacity="0.7"/>' +
+        '<rect x="150" y="216" width="150" height="11" rx="3" fill="#0a1c3f" opacity="0.9"/>' +
+        '<g stroke="#3f79d6" stroke-width="1" opacity="0.35">' +
+          '<line x1="164" y1="219" x2="164" y2="224"/><line x1="184" y1="219" x2="184" y2="224"/><line x1="204" y1="219" x2="204" y2="224"/><line x1="224" y1="219" x2="224" y2="224"/><line x1="244" y1="219" x2="244" y2="224"/><line x1="264" y1="219" x2="264" y2="224"/><line x1="284" y1="219" x2="284" y2="224"/>' +
+        '</g>' +
+        '<ellipse cx="326" cy="222" rx="9" ry="6" fill="#0a1c3f" opacity="0.9"/>' +
+        '<rect x="204" y="262" width="104" height="32" rx="5" fill="#0d2350" opacity="0.95"/>' +
+        '<rect x="204" y="262" width="104" height="32" rx="5" fill="none" stroke="#3f79d6" stroke-width="2" opacity="0.4"/>' +
+        '<rect x="214" y="270" width="44" height="6" rx="2" fill="#04101f"/>' +
+        '<rect x="214" y="280" width="44" height="6" rx="2" fill="#04101f"/>' +
+        '<circle class="vg-led" cx="290" cy="272" r="4" fill="#6cf07a"/>' +
+        '<circle cx="290" cy="284" r="4" fill="#ff5a5a" opacity="0.55"/>' +
+        '<path d="M240 216 C240 248 236 256 236 262" fill="none" stroke="#cfe0ff" stroke-width="3" stroke-linecap="round" opacity="0.4"/>' +
+        '<path d="M308 284 C352 286 400 288 430 286" fill="none" stroke="#cfe0ff" stroke-width="3" stroke-linecap="round" opacity="0.4"/>' +
+        '<rect x="428" y="272" width="24" height="26" rx="3" fill="#0a1c3f" opacity="0.9"/>' +
+        '<circle cx="435" cy="280" r="2" fill="#3f79d6" opacity="0.7"/>' +
+        '<circle cx="445" cy="280" r="2" fill="#3f79d6" opacity="0.7"/>' +
+        '<circle cx="440" cy="289" r="2" fill="#3f79d6" opacity="0.7"/>' +
+        '<g class="vg-lamp">' +
+          '<ellipse cx="80" cy="226" rx="24" ry="8" fill="#0d2350" opacity="0.95"/>' +
+          '<rect x="76" y="150" width="8" height="78" rx="4" fill="#0d2350" opacity="0.95"/>' +
+          '<path d="M80 150 C80 120 98 112 120 116" fill="none" stroke="#0d2350" stroke-width="8" stroke-linecap="round" opacity="0.95"/>' +
+          '<path d="M112 114 C100 122 96 132 96 142 L144 142 C144 132 140 122 128 114 Z" fill="#123063" opacity="0.98"/>' +
+          '<path d="M96 142 L144 142" stroke="#3f79d6" stroke-width="2" opacity="0.5"/>' +
+          '<circle class="vg-lamp-bulb" cx="120" cy="144" r="6" fill="#ffe9a8"/>' +
+        '</g>' +
+        '<polygon class="vg-lamp-glow" points="120 144 28 252 340 252" fill="url(#vgLampGlow)"/>' +
+      "</svg>";
     gate = document.createElement("div");
     gate.id = "verifyGate";
     gate.className = "vg-gate hidden";
@@ -82,10 +144,10 @@
         '<button type="button" class="vg-close hidden" id="vgClose" aria-label="ปิด">&#215;</button>' +
         '<aside class="vg-visual" aria-hidden="true">' +
           '<div class="vg-brand">' +
-            '<img class="vg-brand-logo" src="logo-ticket/logo-wan.png" alt="">' +
-            '<span class="vg-brand-th">วรรณ</span>' +
-            '<span class="vg-brand-en">WAN</span>' +
+            '<span class="vg-brand-th">ระบบแจ้งซ่อมของร้านวรรณสาขามาบตาพุต</span>' +
+            '<span class="vg-brand-en">(ไอทีซัพพอร์ต)</span>' +
           "</div>" +
+          '<div class="vg-scene" aria-hidden="true">' + SCENE + "</div>" +
           '<div class="vg-plants vg-plants-a">' + PLANT + "</div>" +
           '<div class="vg-plants vg-plants-b">' + PLANT + "</div>" +
         "</aside>" +
@@ -101,14 +163,13 @@
           '<div class="vg-line-slot" id="vgLineSlot"></div>' +
           '<div class="vg-or">หรือ</div>' +
           '<button type="button" class="vg-quick-btn" id="vgQuick">' +
-            '<span class="vg-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.7 13.1c-.4.6.02 1.4.75 1.4H10l-1 7.6c-.1.75.85 1.15 1.3.6L19.3 11c.42-.57.02-1.4-.73-1.4H14l1-6.9c.12-.75-.83-1.16-1.28-.62Z"/></svg></span>' +
             "<span>เข้าใช้งานเร่งด่วน</span>" +
           "</button>" +
           '<div class="vg-or">หรือ</div>' +
           '<button type="button" class="vg-quick-btn" id="vgKpOpen">' +
-            '<span class="vg-quick-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' +
             "<span>เข้าใช้งานด้วย Key Pass</span>" +
           "</button>" +
+          '<a class="vg-home-link" href="index.html">ย้อนกลับสู่หน้าหลัก</a>' +
         "</div>" +
 
         // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา ----

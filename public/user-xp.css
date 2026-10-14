@@ -112,6 +112,30 @@ body.app-nav .bn-ico {
 body.app-nav .bn-ico svg { width: 16px !important; height: 16px !important; }
 body.app-nav .bn-label { color: inherit !important; }
 
+/* มือถือจอแคบ: ให้แท็บหดได้ + ตัดข้อความด้วย ... เพื่อไม่ให้ปุ่มท้าย (ตั้งค่า) ล้นขวาจนกดไม่ได้ */
+@media (max-width: 560px) {
+  body.app-nav .bottom-nav .bn-tab {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 0 8px !important;
+    overflow: hidden !important;
+  }
+  body.app-nav .bottom-nav .bn-label {
+    display: block !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  body.app-nav .bottom-nav .bn-ico { flex: 0 0 auto !important; }
+}
+@media (max-width: 420px) {
+  body.app-nav .bottom-nav .xp-start span { display: none !important; }
+  body.app-nav .bottom-nav .xp-start { padding: 0 8px !important; }
+  body.app-nav .bottom-nav .xp-tray { padding: 0 6px !important; gap: 4px !important; }
+  body.app-nav .bottom-nav .bn-tab { padding: 0 6px !important; }
+}
+
 /* start button + system tray injected by xp-taskbar.js */
 body.app-nav .bottom-nav .xp-start {
   flex: 0 0 auto;
@@ -714,26 +738,95 @@ body.app-nav .vg-box.vg-main::before {
 
 /* ---- คอลัมน์ซ้าย: แผงแบรนด์สีฟ้า XP ---- */
 body.app-nav .vg-main .vg-visual {
-  background: linear-gradient(160deg, #3f8cf3 0%, #1d66de 48%, #0b3fa3 100%) !important;
+  background: linear-gradient(160deg, #9ecf77 0%, #6fae4a 48%, #3d7d2b 100%) !important;
   border-radius: 0 !important;
 }
 body.app-nav .vg-main .vg-visual::before,
 body.app-nav .vg-main .vg-visual::after { display: none !important; }
 body.app-nav .vg-main .vg-plants { display: none !important; }
+body.app-nav .vg-main .vg-brand { display: none !important; }
 body.app-nav .vg-main .vg-brand-th {
+  max-width: 280px;
+  font-family: var(--xp-font) !important;
+  font-size: 22px !important;
+  line-height: 1.35 !important;
   color: #fff !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45) !important;
 }
 body.app-nav .vg-main .vg-brand-en {
+  font-family: var(--xp-font) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-indent: 0 !important;
   color: #cfe2ff !important;
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3) !important;
 }
-body.app-nav .vg-main .vg-brand-logo {
-  background: #fff !important;
-  border: 2px solid #fff !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+
+/* ---- ฉากประดับ (wallpaper): คอมตั้งโต๊ะ จอกะพริบ + UPS/สายไฟ ---- */
+body.app-nav .vg-main .vg-visual { overflow: hidden; }
+body.app-nav .vg-main .vg-scene {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 62%;
+  pointer-events: none;
+  opacity: 0.95;
 }
+body.app-nav .vg-main .vg-scene svg { width: 100%; height: 100%; display: block; }
+
+.vg-scene .vg-screen-on { animation: vgScreenFlicker 4.4s steps(1, end) infinite; }
+.vg-scene .vg-led { animation: vgLedBlink 1.5s steps(1, end) infinite; }
+.vg-scene .vg-scan { animation: vgScan 5.5s linear infinite; }
+.vg-scene .vg-lamp-bulb { animation: vgLampBulb 3.2s steps(1, end) infinite; }
+.vg-scene .vg-lamp-glow { animation: vgLampGlow 3.2s steps(1, end) infinite; }
+
+@keyframes vgScreenFlicker {
+  0%, 6%, 10%, 45%, 49%, 80%, 86%, 100% { opacity: 1; }
+  7% { opacity: 0.2; }
+  8% { opacity: 0.85; }
+  46% { opacity: 0.35; }
+  47% { opacity: 0.9; }
+  81% { opacity: 0.1; }
+  83% { opacity: 0.8; }
+}
+@keyframes vgLedBlink {
+  0%, 48% { opacity: 1; }
+  50%, 100% { opacity: 0.22; }
+}
+@keyframes vgScan {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(104px); }
+}
+@keyframes vgLampBulb {
+  0%, 24%, 28%, 62%, 66%, 100% { opacity: 1; }
+  25% { opacity: 0.15; }
+  26% { opacity: 0.9; }
+  63% { opacity: 0.2; }
+  64% { opacity: 0.85; }
+}
+@keyframes vgLampGlow {
+  0%, 14%, 20%, 58%, 64%, 100% { opacity: 1; }
+  16% { opacity: 0.35; }
+  18% { opacity: 0.85; }
+  60% { opacity: 0.25; }
+  62% { opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vg-scene .vg-screen-on,
+  .vg-scene .vg-led,
+  .vg-scene .vg-scan,
+  .vg-scene .vg-lamp-bulb,
+  .vg-scene .vg-lamp-glow { animation: none !important; }
+}
+
+/* ฟอนต์ยุค 90s ให้ทั้งเกตติ้ง */
+body.app-nav .vg-gate { font-family: var(--xp-font) !important; }
 
 /* ---- คอลัมน์ขวา: ตัวหน้าต่างสีเทา + ข้อความ ---- */
 body.app-nav .vg-main .vg-form { background: var(--xp-face) !important; }
@@ -797,6 +890,12 @@ body.app-nav .vg-dropdown li.is-active {
 body.app-nav .vg-dropdown li.is-selected { color: #000080 !important; }
 body.app-nav .vg-dropdown .vg-check { color: inherit !important; }
 
+/* สาขาเป็นฟิลด์ล่างสุด — เปิดรายการขึ้นด้านบน กันขอบล่างของหน้าต่างตัด */
+body.app-nav .vg-gate .vg-pane[data-pane="profile"] .vg-dropdown {
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+}
+
 /* ---- ปุ่มต่างๆ ---- */
 body.app-nav .vg-btn {
   color: #000 !important;
@@ -833,7 +932,10 @@ body.app-nav .vg-line-btn:hover { background: #05b34b !important; }
 body.app-nav .vg-line-btn:active { transform: none !important; }
 
 body.app-nav .vg-quick-btn {
+  justify-content: center !important;
   color: #000 !important;
+  font-family: var(--xp-font) !important;
+  font-size: 14px !important;
   font-weight: 700 !important;
   border: 2px solid !important;
   border-color: #fff #808080 #808080 #fff !important;
@@ -846,6 +948,19 @@ body.app-nav .vg-quick-btn:hover {
   border-color: #fff #808080 #808080 #fff !important;
 }
 body.app-nav .vg-quick-ic { color: #000080 !important; }
+
+/* ลิงก์ย้อนกลับสู่หน้าหลัก */
+body.app-nav .vg-home-link {
+  display: block;
+  width: max-content;
+  margin: 16px auto 2px;
+  font-family: var(--xp-font) !important;
+  font-size: 12px;
+  color: #000080 !important;
+  text-decoration: underline;
+  cursor: pointer;
+}
+body.app-nav .vg-home-link:hover { color: #d00000 !important; }
 
 body.app-nav .vg-main .vg-back {
   color: #000 !important;
@@ -1191,6 +1306,95 @@ body.app-nav .splash-bar-fill {
   background: linear-gradient(180deg, #5aa0f4 0%, #1d66de 55%, #1454c9 100%) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
+
+/* =========================================================================
+   CONFIRM DIALOG  (start button -> home)  -- injected by xp-taskbar.js
+   ========================================================================= */
+body.app-nav .xp-confirm-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(10, 40, 90, 0.32) !important;
+}
+body.app-nav .xp-confirm-gate[hidden] { display: none !important; }
+body.app-nav .xp-confirm-win {
+  width: min(380px, 100%);
+  background: var(--xp-face);
+  border: 3px solid #0a52c8;
+  border-radius: 8px 8px 4px 4px;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  font-family: var(--xp-font);
+}
+body.app-nav .xp-confirm-bar {
+  display: flex;
+  align-items: center;
+  padding: 3px 4px 3px 10px;
+  background: linear-gradient(180deg, #0058e6 0%, #3f8cf3 8%, #1d66de 40%, #1454c9 92%, #0b3fa3 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+body.app-nav .xp-confirm-title {
+  flex: 1;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}
+body.app-nav .xp-confirm-x {
+  width: 22px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f0896a, #d5472a);
+  color: #fff;
+  font-family: var(--xp-font);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+body.app-nav .xp-confirm-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 20px 6px;
+  text-align: left;
+}
+body.app-nav .xp-confirm-ico { width: 34px; height: 34px; flex: 0 0 auto; }
+body.app-nav .xp-confirm-text {
+  margin: 0;
+  padding-top: 4px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #000;
+}
+body.app-nav .xp-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 20px 18px;
+}
+body.app-nav .xp-confirm-btn {
+  min-width: 90px;
+  padding: 5px 16px;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fdfdfd 0%, #f2f2f2 45%, #e6e6e6 55%, #d8d8d8 100%);
+  color: #000;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 #fff, inset -1px -1px 0 #b0b0b0;
+}
+body.app-nav .xp-confirm-btn:hover { border-color: #e8a020; }
+body.app-nav .xp-confirm-btn:active { filter: brightness(0.96); }
+body.app-nav .xp-confirm-btn:focus-visible { outline: 1px solid #1d66de; outline-offset: 1px; }
 
 /* top progress loader */
 body.app-nav .top-loader { background: transparent !important; }

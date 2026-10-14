@@ -138,6 +138,28 @@
         <input type="text" id="positionText" class="text-input" maxlength="120" autocomplete="off">
       </div>
 
+      <div class="field" id="remoteField">
+        <label class="field-label">การแก้ไขด้วย remote <span class="opt-hint">ไม่บังคับ</span></label>
+        <div class="mode-group" role="radiogroup" aria-label="ต้องการแก้ไขด้วย remote หรือไม่">
+          <button type="button" class="mode-btn remote-btn is-active" data-remote="no" role="radio" aria-checked="true">ไม่</button>
+          <button type="button" class="mode-btn remote-btn" data-remote="yes" role="radio" aria-checked="false">ใช่</button>
+        </div>
+        <div id="remotePanel" class="voice-panel hidden">
+          <p class="voice-help">การแก้ไขด้วย remote ผู้ใช้ต้องเปิดใช้งาน <strong>UltraViewer</strong> และทำการกรอก Your ID / Password</p>
+          <figure class="remote-guide">
+            <img src="ultrav-tr/ultra-tr-j.jpg" alt="ตัวอย่างหน้าจอ UltraViewer แสดงตำแหน่ง Your ID และ Password" decoding="async">
+          </figure>
+          <div class="remote-sub">
+            <label for="remoteId" class="field-label">Your ID <span class="req">*</span></label>
+            <input type="text" id="remoteId" class="text-input" maxlength="60" autocomplete="off" inputmode="numeric">
+          </div>
+          <div class="remote-sub">
+            <label for="remotePw" class="field-label">Password <span class="req">*</span></label>
+            <input type="text" id="remotePw" class="text-input" maxlength="60" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
       <input type="hidden" id="device" value="">
     </section>
 
@@ -151,6 +173,11 @@
 <div id="loadingOverlay" class="overlay hidden">
   <div class="spinner"></div>
   <p class="overlay-msg">กำลังส่งข้อมูล...</p>
+</div>
+
+<div id="imgLightbox" class="img-lightbox hidden" role="dialog" aria-modal="true" aria-label="ดูรูปขยาย">
+  <button id="imgLightboxClose" class="img-lightbox-close" type="button" aria-label="ปิด">&times;</button>
+  <img id="imgLightboxImg" src="" alt="">
 </div>
 
 <div id="successOverlay" class="overlay hidden">
