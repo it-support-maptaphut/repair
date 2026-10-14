@@ -1,0 +1,1211 @@
+/* =====================================================================
+   user-xp.css  —  Windows XP (Luna / Bliss) theme for the user pages
+   Scope: pages whose <body> has class "app-nav"  (ticket / contact /
+          my-tickets).  Loaded AFTER style.css / ticket.css / my-tickets.css.
+   ===================================================================== */
+
+:root {
+  --xp-face:      #ece9d8;
+  --xp-face-2:    #d4d0c8;
+  --xp-gray:      #c0c0c0;
+  --xp-light:     #ffffff;
+  --xp-shadow:    #808080;
+  --xp-darkest:   #404040;
+  --xp-title-a:   #0058e6;
+  --xp-title-b:   #3f8cf3;
+  --xp-navy:      #000080;
+  --xp-sel:       #316ac5;
+  --xp-field:     #7f9db9;
+  --xp-font: Tahoma, "MS Sans Serif", "Microsoft Sans Serif", "Prompt", "Sarabun", system-ui, sans-serif;
+}
+
+/* Fallback face for the very first paint before the SVG loads */
+html { background: #7cb037; }
+
+body.app-nav {
+  font-family: var(--xp-font) !important;
+  color: #000 !important;
+  background: #7cb037 url("xp-bliss.svg") center center / cover no-repeat fixed !important;
+}
+
+/* ---------- generic panel behaviour: flat, beveled, no modern fx --------- */
+body.app-nav *:not(.spinner):not(.bn-ico):not(.success-icon) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ============================== TOP NAVBAR ============================== */
+body.app-nav .navbar {
+  background: linear-gradient(180deg, #0058e6 0%, #3f8cf3 8%, #1d66de 40%, #1454c9 92%, #0b3fa3 100%) !important;
+  border-bottom: 2px solid #0831a3 !important;
+  box-shadow: none !important;
+}
+body.app-nav .navbar-title,
+body.app-nav .navbar-brand,
+body.app-nav .navbar-brand span {
+  color: #fff !important;
+  font-family: var(--xp-font) !important;
+  font-weight: 700 !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5) !important;
+  letter-spacing: 0.2px !important;
+}
+body.app-nav .navbar-logo,
+body.app-nav .navbar-logo-img {
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* ============================== BOTTOM NAV (= XP taskbar) =============== */
+body.app-nav .bottom-nav {
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  transform: none !important;
+  height: 38px !important;
+  padding: 0 4px !important;
+  padding-bottom: 0 !important;
+  gap: 3px !important;
+  border: none !important;
+  border-top: 2px solid #5fa2f2 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(180deg,
+      #1f63dc 0%, #3f8cf3 5%, #2664de 12%, #2a6be0 45%,
+      #1a5cd2 88%, #0d3ea0 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+body.has-bottom-nav { padding-bottom: 54px !important; }
+
+body.app-nav .bottom-nav .bn-tab {
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  gap: 6px !important;
+  padding: 0 12px !important;
+  margin: 4px 1px !important;
+  min-width: 0 !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  border: 1px solid #0d3f92 !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #4a94f0 0%, #2f7ae6 48%, #1f66d8 100%) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.35),
+              inset -1px -1px 0 rgba(0, 0, 0, 0.18) !important;
+}
+body.app-nav .bottom-nav .bn-tab:hover {
+  color: #fff !important;
+  background: linear-gradient(180deg, #5aa0f4 0%, #3a84ea 48%, #2a72e0 100%) !important;
+}
+body.app-nav .bottom-nav .bn-tab:active { transform: none !important; }
+body.app-nav .bottom-nav .bn-tab.is-active {
+  color: #fff !important;
+  background: linear-gradient(180deg, #1b4fb0 0%, #2358bf 100%) !important;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+body.app-nav .bn-ico {
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+body.app-nav .bn-ico svg { width: 16px !important; height: 16px !important; }
+body.app-nav .bn-label { color: inherit !important; }
+
+/* start button + system tray injected by xp-taskbar.js */
+body.app-nav .bottom-nav .xp-start {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 4px 4px 1px;
+  padding: 0 12px 0 8px;
+  height: 30px;
+  border: 1px solid #0a5a12;
+  border-radius: 0 10px 10px 0;
+  cursor: pointer;
+  color: #fff;
+  font: 700 15px var(--xp-font);
+  font-style: italic;
+  letter-spacing: 0.3px;
+  background: linear-gradient(180deg, #5fd35f 0%, #3aa93a 45%, #2e8a2e 55%, #1f6b1f 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+body.app-nav .bottom-nav .xp-start:hover {
+  background: linear-gradient(180deg, #6fdd6f 0%, #46b446 45%, #379637 55%, #256f25 100%);
+}
+body.app-nav .bottom-nav .xp-start:active {
+  background: linear-gradient(180deg, #2e8a2e 0%, #256f25 100%);
+}
+body.app-nav .xp-start .xp-flag { width: 18px; height: 18px; flex: 0 0 auto; }
+
+body.app-nav .bottom-nav .xp-tray {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  margin: 4px 1px 4px auto;
+  padding: 0 10px;
+  color: #fff;
+  border-left: 1px solid #0d3f92;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, #2a7ae8 0%, #1c5fd0 100%);
+}
+body.app-nav .xp-tray svg { width: 15px; height: 15px; }
+body.app-nav .xp-clock { font: 400 12px var(--xp-font); color: #fff; }
+
+/* ============================== OVERLAY / TOAST ======================== */
+body.app-nav .overlay { background: rgba(10, 40, 90, 0.32) !important; }
+body.app-nav .overlay .spinner {
+  border: 3px solid #b8c8dd !important;
+  border-top-color: #0a52c8 !important;
+}
+body.app-nav .overlay-msg { color: #fff !important; font-weight: 700 !important; }
+
+body.app-nav .toast {
+  background: #ffffe1 !important;
+  color: #000 !important;
+  border: 1px solid #000 !important;
+  border-radius: 0 !important;
+  font-family: var(--xp-font) !important;
+  font-weight: 700 !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+/* =========================================================================
+   TICKET PAGE  (แจ้งซ่อม)
+   ========================================================================= */
+body.ticket-page .draft-banner {
+  background: #ffffe1 !important;
+  border: 1px solid #000 !important;
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3) !important;
+}
+body.ticket-page .draft-banner-text strong { color: #7a5c00 !important; }
+body.ticket-page .draft-banner-text span,
+body.ticket-page .draft-banner-text small { color: #5c4a10 !important; }
+body.ticket-page .draft-close { color: #5c4a10 !important; }
+body.ticket-page .draft-btn {
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .draft-btn:hover { background: #fff4d6 !important; transform: none !important; }
+body.ticket-page .draft-btn.restore {
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  border-color: #003c74 !important;
+  box-shadow: none !important;
+}
+
+/* window title bar above the form + window body */
+body.ticket-page .form-wrap { position: relative; }
+body.ticket-page .form-wrap::before {
+  content: "แจ้งซ่อมอุปกรณ์ IT";
+  display: block;
+  margin: 0 0 -1px;
+  padding: 6px 10px;
+  color: #fff;
+  font-family: var(--xp-font);
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(90deg, #0058e6, #3f8cf3);
+  border: 1px solid #0831a3;
+  border-radius: 8px 8px 0 0;
+}
+body.ticket-page .step.is-active {
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-top: none !important;
+  border-radius: 0 0 8px 8px !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+body.ticket-page .step-heading { color: #000080 !important; }
+body.ticket-page .step-line { background: #808080 !important; }
+
+body.ticket-page .field-label { color: #000 !important; font-weight: 700 !important; }
+body.ticket-page .field-hint,
+body.ticket-page .opt-hint { color: #333 !important; }
+body.ticket-page .req { color: #c00 !important; }
+
+body.ticket-page .text-input,
+body.ticket-page textarea.text-input,
+body.ticket-page select.text-input {
+  background: #fff !important;
+  color: #000 !important;
+  font-family: var(--xp-font) !important;
+  border: 2px solid !important;
+  border-color: #7f7f7f #ffffff #ffffff #7f7f7f !important;
+  border-radius: 0 !important;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.12) !important;
+}
+body.ticket-page .text-input:focus {
+  border-color: #316ac5 !important;
+  box-shadow: 0 0 0 1px #7ba2e0 inset !important;
+  outline: none !important;
+}
+body.ticket-page .text-input.invalid { border-color: #c00 !important; }
+
+/* mode (มี/ไม่มีเครื่อง) segmented control */
+body.ticket-page .mode-group {
+  background: var(--xp-face-2) !important;
+  border: 1px solid #808080 !important;
+  border-radius: 2px !important;
+  padding: 4px !important;
+  gap: 4px !important;
+}
+body.ticket-page .mode-btn {
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  font-family: var(--xp-font) !important;
+  font-weight: 400 !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.ticket-page .mode-btn:hover { color: #000 !important; }
+body.ticket-page .mode-btn.is-active {
+  color: #000 !important;
+  font-weight: 700 !important;
+  background: #cfe2ff !important;
+  border-color: #808080 #fff #fff #808080 !important;
+  box-shadow: none !important;
+}
+
+/* voice / mic */
+body.ticket-page .voice-panel {
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .voice-help {
+  color: #000 !important;
+  border-left: 3px solid var(--xp-navy) !important;
+}
+body.ticket-page .voice-help strong { color: #000 !important; }
+body.ticket-page .mic-btn {
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
+body.ticket-page .mic-btn:hover { transform: none !important; filter: none !important; box-shadow: none !important; }
+body.ticket-page .mic-btn:active { transform: none !important; }
+body.ticket-page .mic-btn.listening {
+  background: #ffd9d9 !important;
+  border-color: #808080 #fff #fff #808080 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .vbar { background: var(--xp-sel) !important; }
+body.ticket-page .voice-unsupported {
+  background: #ffffe1 !important;
+  border: 1px solid #000 !important;
+  border-radius: 0 !important;
+  color: #000 !important;
+}
+
+/* photos */
+body.ticket-page .photo-count {
+  background: var(--xp-face) !important;
+  color: var(--xp-navy) !important;
+  border: 1px solid #808080 !important;
+  border-radius: 0 !important;
+}
+body.ticket-page .photo-btn {
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  border: 2px dashed #808080 !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.ticket-page .photo-btn:hover { background: var(--xp-face-2) !important; border-color: #404040 !important; transform: none !important; }
+body.ticket-page .photo-btn:active { transform: none !important; }
+body.ticket-page .cam-icon { animation: none !important; }
+body.ticket-page .photo-grid { gap: 8px !important; }
+body.ticket-page .photo-item {
+  background: var(--xp-gray) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .photo-index { background: var(--xp-navy) !important; border-radius: 0 !important; }
+body.ticket-page .photo-del {
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.ticket-page .photo-del:hover { transform: none !important; filter: none !important; }
+body.ticket-page .photo-add {
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  border: 2px dashed #808080 !important;
+  border-radius: 2px !important;
+}
+body.ticket-page .photo-add:hover { background: var(--xp-face-2) !important; transform: none !important; }
+
+/* branch / location radio cards */
+body.ticket-page .loc-option {
+  background: #fff !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.ticket-page .loc-option:hover {
+  border-color: #316ac5 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+body.ticket-page .loc-option::before {
+  background: #fff !important;
+  border-color: #808080 !important;
+  box-shadow: inset 0 0 0 2px #fff !important;
+}
+body.ticket-page .loc-group input:checked + .loc-option {
+  background: var(--xp-sel) !important;
+  border-color: #808080 #fff #fff #808080 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .loc-group input:checked + .loc-option::before {
+  background: #000 !important;
+  box-shadow: inset 0 0 0 3px #fff !important;
+  border-color: #000 !important;
+}
+body.ticket-page .loc-group input:checked + .loc-option .loc-title,
+body.ticket-page .loc-group input:checked + .loc-option .loc-desc { color: #fff !important; }
+
+/* action bar = window footer */
+body.ticket-page .action-bar {
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .action-btn {
+  border-radius: 3px !important;
+  font-family: var(--xp-font) !important;
+}
+body.ticket-page .action-btn.primary {
+  color: #000 !important;
+  font-weight: 400 !important;
+  background: linear-gradient(180deg, #fdfdfb 0%, #f0eee6 44%, #e4e2d8 45%, #d9d7cc 100%) !important;
+  border: 1px solid #003c74 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .action-btn.primary::after { display: none !important; }
+body.ticket-page .action-btn.primary:hover {
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  background: linear-gradient(180deg, #fffefc 0%, #f6f4ec 44%, #eceade 45%, #e2e0d4 100%) !important;
+}
+body.ticket-page .action-btn.primary:active {
+  transform: none !important;
+  border-color: #808080 #fff #fff #808080 !important;
+  background: #e4e2d8 !important;
+}
+body.ticket-page .action-btn.secondary {
+  color: #000 !important;
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  box-shadow: none !important;
+}
+body.ticket-page .action-btn.secondary:hover { transform: none !important; filter: none !important; box-shadow: none !important; }
+
+/* success window */
+body.ticket-page .success-box {
+  background: var(--xp-face) !important;
+  border: 2px solid #0831a3 !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 18px rgba(0, 0, 0, 0.5) !important;
+}
+body.ticket-page .success-box .success-card {
+  background: #fff !important;
+  border: 1px solid #808080 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.ticket-page .success-box h2 { color: #000080 !important; }
+body.ticket-page .success-icon {
+  background: #2e8a2e !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+body.ticket-page .success-icon::before,
+body.ticket-page .success-icon::after { animation: none !important; }
+body.ticket-page .ticket-no {
+  background: #ffffe1 !important;
+  color: #000 !important;
+  border: 1px solid #808080 !important;
+  border-radius: 0 !important;
+}
+body.ticket-page .copy-btn,
+body.ticket-page .back-btn,
+body.ticket-page .history-btn {
+  color: #000 !important;
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.ticket-page .copy-btn:hover,
+body.ticket-page .back-btn:hover,
+body.ticket-page .history-btn:hover { transform: none !important; filter: none !important; box-shadow: none !important; background: var(--xp-face-2) !important; }
+body.ticket-page .modal-close {
+  color: #000 !important;
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+}
+body.ticket-page .modal-close:hover { transform: none !important; background: var(--xp-face-2) !important; }
+
+/* =========================================================================
+   CONTACT PAGE  (ติดต่อ)
+   ========================================================================= */
+body.app-nav .contact-title { color: #000080 !important; font-weight: 700 !important; }
+body.app-nav .contact-sub,
+body.app-nav .contact-note { color: #333 !important; }
+body.app-nav .contact-icon { color: #000080 !important; background: transparent !important; }
+
+body.app-nav .contact-card {
+  position: relative;
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 0 !important;
+  padding: 42px 22px 22px !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+body.app-nav .contact-card::before {
+  content: "ติดต่อฝ่าย IT SUPPORT";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: #fff;
+  font-family: var(--xp-font);
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(90deg, #0058e6, #3f8cf3);
+}
+@media (min-width: 640px) {
+  body.app-nav .contact-card { padding: 48px 30px 30px !important; }
+}
+
+body.app-nav .support-card {
+  background: var(--xp-face-2) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.app-nav .support-card-head { color: #000080 !important; }
+body.app-nav .support-card-head::after { background: #808080 !important; }
+body.app-nav .support-row {
+  color: #000 !important;
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+}
+body.app-nav .support-row:hover {
+  color: #000 !important;
+  background: #cfe2ff !important;
+  border-color: #fff #808080 #808080 #fff !important;
+}
+body.app-nav .support-line,
+body.app-nav .support-phone {
+  background: var(--xp-face) !important;
+  color: #000080 !important;
+  border-color: #fff #808080 #808080 #fff !important;
+}
+body.app-nav .support-line:hover,
+body.app-nav .support-phone:hover { background: #cfe2ff !important; color: #000080 !important; }
+
+/* =========================================================================
+   MY TICKETS PAGE  (ประวัติ)
+   ========================================================================= */
+body.my-page .my-head {
+  background: linear-gradient(90deg, #0058e6, #3f8cf3) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 0 !important;
+  padding: 8px 12px !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+body.my-page .my-title {
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4) !important;
+  border: none !important;
+  padding-left: 0 !important;
+  -webkit-text-fill-color: #fff !important;
+}
+body.my-page .my-title::after,
+body.my-page .my-title::before { display: none !important; }
+
+body.my-page .mt-card {
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.my-page .mt-card-head { border-bottom: 1px solid #808080 !important; }
+body.my-page .mt-no { color: #000080 !important; font-weight: 700 !important; }
+body.my-page .mt-date { color: #333 !important; }
+body.my-page .mt-stamp {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid #808080 !important;
+}
+body.my-page .mt-stamp.st-new     { background: #ffffb3 !important; color: #7a5c00 !important; }
+body.my-page .mt-stamp.st-working { background: #cfe2ff !important; color: #00338d !important; }
+body.my-page .mt-stamp.st-done    { background: #c6e8c6 !important; color: #0a5a0a !important; }
+body.my-page .mt-chev { color: #333 !important; }
+
+body.my-page .mt-body { background: #fff !important; border-left: 1px solid #808080 !important; border-right: 1px solid #808080 !important; border-bottom: 1px solid #808080 !important; }
+body.my-page .mt-k { color: #333 !important; }
+body.my-page .mt-v { color: #000 !important; }
+body.my-page .mt-msg { background: var(--xp-face-2) !important; color: #000 !important; border-radius: 0 !important; }
+body.my-page .mt-mono { color: #000 !important; }
+
+body.my-page .mt-prog-track {
+  background: #c0c0c0 !important;
+  border: 1px solid #808080 !important;
+  border-radius: 0 !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+}
+body.my-page .mt-prog-fill {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: repeating-linear-gradient(90deg,
+      #3f8cf3 0 8px, #2a6be0 8px 10px) !important;
+}
+body.my-page .mt-prog-dot { background: #808080 !important; box-shadow: none !important; }
+body.my-page .mt-prog-dot.is-on { background: #000080 !important; box-shadow: none !important; }
+body.my-page .mt-prog-labels { color: #333 !important; }
+
+body.my-page .mt-photo {
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.my-page .mt-photo:hover { transform: none !important; box-shadow: none !important; border-color: #fff #808080 #808080 #fff !important; }
+body.my-page .mt-photo-more { background: rgba(0, 0, 128, 0.75) !important; }
+
+body.my-page .mt-action {
+  color: #000 !important;
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.my-page .mt-action:hover { transform: none !important; filter: none !important; box-shadow: none !important; background: var(--xp-face-2) !important; }
+body.my-page .mt-action.pdf {
+  background: linear-gradient(180deg, #fdfdfb 0%, #f0eee6 44%, #e4e2d8 45%, #d9d7cc 100%) !important;
+  border: 1px solid #003c74 !important;
+  color: #000 !important;
+}
+body.my-page .mt-action.urgent {
+  background: #ffd9d9 !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  color: #8a0000 !important;
+}
+
+body.my-page .mt-panel {
+  background: var(--xp-face-2) !important;
+  border: 2px solid !important;
+  border-color: #808080 #fff #fff #808080 !important;
+  border-radius: 0 !important;
+}
+body.my-page .mt-pbox {
+  background: #fff !important;
+  border: 2px solid !important;
+  border-color: #7f7f7f #fff #fff #7f7f7f !important;
+  border-radius: 0 !important;
+}
+body.my-page .mt-lb { color: #333 !important; }
+body.my-page .mt-vl { color: #000 !important; }
+body.my-page .mt-desc { color: #000 !important; }
+
+body.my-page .mt-photo,
+body.my-page .mt-row-photos .mt-photo {
+  border-color: #fff #808080 #808080 #fff !important;
+}
+
+body.my-page .mt-empty {
+  background: var(--xp-face) !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 0 !important;
+  color: #000 !important;
+  box-shadow: none !important;
+}
+body.my-page .mt-empty-link {
+  color: #000 !important;
+  background: linear-gradient(180deg, #fdfdfb 0%, #f0eee6 44%, #e4e2d8 45%, #d9d7cc 100%) !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================================
+   USER GATE — เข้าสู่ระบบ / สมัครใช้งาน  (verify.js : .vg-*)
+   ทำเป็นหน้าต่าง Windows XP บนพื้น Bliss
+   ========================================================================= */
+body.app-nav .vg-gate {
+  background: #7cb037 url("xp-bliss.svg") center center / cover no-repeat fixed !important;
+}
+body.app-nav .vg-gate.vg-gate--kp {
+  background: rgba(8, 40, 90, 0.45) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ---- ตัวหน้าต่าง (2 คอลัมน์ + title bar คร่อมด้านบน) ---- */
+body.app-nav .vg-box.vg-main {
+  position: relative !important;
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 8px !important;
+  box-shadow: 6px 6px 22px rgba(0, 0, 0, 0.5) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  animation: none !important;
+}
+body.app-nav .vg-box.vg-main::before {
+  content: "เข้าสู่ระบบ";
+  grid-column: 1 / -1;
+  display: block;
+  padding: 6px 12px;
+  color: #fff;
+  font-family: var(--xp-font);
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(90deg, #0058e6, #3f8cf3);
+  border-bottom: 1px solid #0831a3;
+}
+
+/* ---- คอลัมน์ซ้าย: แผงแบรนด์สีฟ้า XP ---- */
+body.app-nav .vg-main .vg-visual {
+  background: linear-gradient(160deg, #3f8cf3 0%, #1d66de 48%, #0b3fa3 100%) !important;
+  border-radius: 0 !important;
+}
+body.app-nav .vg-main .vg-visual::before,
+body.app-nav .vg-main .vg-visual::after { display: none !important; }
+body.app-nav .vg-main .vg-plants { display: none !important; }
+body.app-nav .vg-main .vg-brand-th {
+  color: #fff !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45) !important;
+}
+body.app-nav .vg-main .vg-brand-en {
+  color: #cfe2ff !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3) !important;
+}
+body.app-nav .vg-main .vg-brand-logo {
+  background: #fff !important;
+  border: 2px solid #fff !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* ---- คอลัมน์ขวา: ตัวหน้าต่างสีเทา + ข้อความ ---- */
+body.app-nav .vg-main .vg-form { background: var(--xp-face) !important; }
+body.app-nav .vg-main .vg-head { text-align: center; }
+body.app-nav .vg-gate .vg-main .vg-title { color: #000080 !important; }
+body.app-nav .vg-gate .vg-main .vg-sub { color: #333 !important; }
+body.app-nav .vg-fields { border-top: 1px solid #808080 !important; }
+body.app-nav .vg-label { color: #000 !important; font-weight: 700 !important; }
+body.app-nav .vg-req { color: #c00 !important; }
+body.app-nav .vg-or { color: #333 !important; }
+body.app-nav .vg-or::before,
+body.app-nav .vg-or::after { background: #808080 !important; }
+
+/* ---- ช่องกรอก / ตัวเลือกสาขา: เบเวลจมแบบ XP ---- */
+body.app-nav .vg-input,
+body.app-nav .vg-trigger {
+  background: #fff !important;
+  color: #000 !important;
+  font-family: var(--xp-font) !important;
+  border: 2px solid !important;
+  border-color: #7f7f7f #ffffff #ffffff #7f7f7f !important;
+  border-radius: 0 !important;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.12) !important;
+}
+body.app-nav .vg-input::placeholder { color: #8a8a8a !important; }
+body.app-nav .vg-input:focus,
+body.app-nav .vg-trigger:focus-visible {
+  border-color: #316ac5 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 1px #7ba2e0 inset !important;
+}
+body.app-nav .vg-input.invalid,
+body.app-nav .vg-trigger.invalid { border-color: #c00 !important; }
+body.app-nav .vg-trigger { color: #000 !important; }
+body.app-nav .vg-trigger.is-placeholder { color: #8a8a8a !important; }
+body.app-nav .vg-select-ic { color: #555 !important; }
+body.app-nav .vg-select-arrow { color: #555 !important; }
+body.app-nav .vg-fields { border-top-color: #808080 !important; }
+
+/* ---- dropdown เลือกสาขา = listbox XP ---- */
+body.app-nav .vg-dropdown {
+  padding: 2px !important;
+  background: #fff !important;
+  border: 1px solid #7f9db9 !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.25) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  animation: none !important;
+}
+body.app-nav .vg-dropdown li {
+  border-radius: 0 !important;
+  color: #000 !important;
+  font-weight: 400 !important;
+}
+body.app-nav .vg-dropdown li:hover,
+body.app-nav .vg-dropdown li.is-active {
+  background: #316ac5 !important;
+  color: #fff !important;
+}
+body.app-nav .vg-dropdown li.is-selected { color: #000080 !important; }
+body.app-nav .vg-dropdown .vg-check { color: inherit !important; }
+
+/* ---- ปุ่มต่างๆ ---- */
+body.app-nav .vg-btn {
+  color: #000 !important;
+  font-weight: 400 !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #fdfdfb 0%, #f0eee6 44%, #e4e2d8 45%, #d9d7cc 100%) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+body.app-nav .vg-btn::after { display: none !important; }
+body.app-nav .vg-btn:hover {
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  background: linear-gradient(180deg, #fffefc 0%, #f6f4ec 44%, #eceade 45%, #e2e0d4 100%) !important;
+}
+body.app-nav .vg-btn:active {
+  transform: none !important;
+  background: #e4e2d8 !important;
+  border-color: #808080 #fff #fff #808080 !important;
+}
+body.app-nav .vg-btn:disabled { color: #808080 !important; opacity: 1 !important; }
+
+body.app-nav .vg-line-btn {
+  border: 1px solid #0a8f3d !important;
+  border-radius: 3px !important;
+  background: #06c755 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+body.app-nav .vg-line-btn:hover { background: #05b34b !important; }
+body.app-nav .vg-line-btn:active { transform: none !important; }
+
+body.app-nav .vg-quick-btn {
+  color: #000 !important;
+  font-weight: 700 !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  background: var(--xp-face) !important;
+  box-shadow: none !important;
+}
+body.app-nav .vg-quick-btn:hover {
+  background: var(--xp-face-2) !important;
+  border-color: #fff #808080 #808080 #fff !important;
+}
+body.app-nav .vg-quick-ic { color: #000080 !important; }
+
+body.app-nav .vg-main .vg-back {
+  color: #000 !important;
+  font-weight: 700 !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  background: var(--xp-face) !important;
+}
+body.app-nav .vg-main .vg-back:hover {
+  background: var(--xp-face-2) !important;
+  border-color: #fff #808080 #808080 #fff !important;
+}
+
+body.app-nav .vg-close {
+  position: absolute !important;
+  top: 5px !important;
+  right: 6px !important;
+  z-index: 5 !important;
+  width: 22px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  border: 1px solid #fff !important;
+  border-radius: 2px !important;
+  background: #d9552f !important;
+}
+body.app-nav .vg-close:hover { background: #c0401c !important; color: #fff !important; }
+body.app-nav .vg-gate .vg-main .vg-close { top: 5px !important; right: 6px !important; }
+
+body.app-nav .vg-or { color: #555 !important; }
+body.app-nav .vg-or::before,
+body.app-nav .vg-or::after { background: #808080 !important; }
+
+body.app-nav .vg-label { color: #000 !important; }
+body.app-nav .vg-err {
+  color: #a00000 !important;
+  font-weight: 700 !important;
+}
+body.app-nav .vg-line-off {
+  background: #ffffe1 !important;
+  border: 1px solid #000 !important;
+  border-radius: 0 !important;
+  color: #000 !important;
+}
+
+/* ---- Key Pass ---- */
+body.app-nav .vg-kp-lead { color: #000 !important; }
+body.app-nav .vg-kp-lead strong { color: #000080 !important; }
+body.app-nav .vg-kp-box {
+  background: #fff !important;
+  border: 2px solid !important;
+  border-color: #7f7f7f #fff #fff #7f7f7f !important;
+  border-radius: 0 !important;
+}
+body.app-nav .vg-kp-value { color: #000080 !important; }
+body.app-nav .vg-kp-copy {
+  color: #000 !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  border-radius: 2px !important;
+  background: var(--xp-face) !important;
+}
+body.app-nav .vg-kp-copy:hover { background: var(--xp-face-2) !important; }
+body.app-nav .vg-kp-copy.is-done {
+  color: #0a5a0a !important;
+  border-color: #0a5a0a !important;
+  background: #c6e8c6 !important;
+  box-shadow: none !important;
+}
+body.app-nav .vg-kp-copy.is-done::after { display: none !important; }
+body.app-nav .vg-kp-warn { color: #555 !important; }
+body.app-nav .vg-kp-lead strong { color: #000080 !important; }
+body.app-nav .vg-input-kp {
+  color: #000 !important;
+  background: #fff !important;
+  border: 2px solid !important;
+  border-color: #7f7f7f #fff #fff #7f7f7f !important;
+  border-radius: 0 !important;
+}
+
+/* ---- popup Key Pass = หน้าต่าง XP เล็ก ---- */
+body.app-nav .vg-gate--kp .vg-box {
+  position: relative !important;
+  padding-top: 36px !important;
+  background: var(--xp-face) !important;
+  border: 1px solid #0831a3 !important;
+  border-radius: 8px !important;
+  box-shadow: 6px 6px 22px rgba(0, 0, 0, 0.55) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.app-nav .vg-gate--kp .vg-box::before {
+  content: "เข้าใช้งานด้วย Key Pass";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: #fff;
+  font-family: var(--xp-font);
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(90deg, #0058e6, #3f8cf3);
+}
+body.app-nav .vg-gate--kp .vg-close { top: 5px !important; right: 6px !important; }
+body.app-nav .vg-gate .vg-main .vg-err { color: #c00 !important; }
+body.app-nav .vg-line-off { color: #5c4a10 !important; background: #ffffe1 !important; border: 1px solid #000 !important; border-radius: 0 !important; }
+
+/* =========================================================================
+   SETTINGS WINDOW  (settings.js : .settings-*)  -- XP / Luna window
+   ========================================================================= */
+body.app-nav .settings-gate {
+  background: #7cb037 url("xp-bliss.svg") center center / cover no-repeat fixed !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.app-nav .settings-box {
+  background: var(--xp-face) !important;
+  border: 3px solid #0a52c8 !important;
+  border-radius: 8px 8px 4px 4px !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35) !important;
+  padding: 0 18px 18px !important;
+  animation: none !important;
+}
+
+/* title bar */
+body.app-nav .settings-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 3 !important;
+  margin: 0 -18px 14px !important;
+  padding: 4px 6px 4px 12px !important;
+  align-items: center !important;
+  border-radius: 5px 5px 0 0 !important;
+  background: linear-gradient(180deg, #0058e6 0%, #3f8cf3 8%, #1d66de 40%, #1454c9 92%, #0b3fa3 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+body.app-nav .settings-top .settings-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; }
+body.app-nav .settings-title {
+  padding: 0 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background: none !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55) !important;
+  letter-spacing: 0.2px !important;
+}
+body.app-nav .settings-ver {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #cfe0ff !important;
+  font-size: 11.5px !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5) !important;
+}
+body.app-nav .settings-close {
+  position: static !important;
+  flex: 0 0 auto !important;
+  margin: 0 0 0 auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  border: 1px solid #fff !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #f08a6d 0%, #e05a34 48%, #d94a25 100%) !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+body.app-nav .settings-close:hover { background: #c0401c !important; color: #fff !important; }
+
+/* profile block */
+body.app-nav .settings-profile { gap: 8px !important; margin: 0 0 16px !important; }
+body.app-nav .settings-avatar {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  border: 2px solid #fff !important;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #fff, 0 0 0 1px #404040 !important;
+  color: var(--xp-navy) !important;
+  font-family: var(--xp-font) !important;
+}
+
+/* info rows = inset listbox */
+body.app-nav .settings-rows {
+  border: 1px solid #808080 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: inset 1px 1px 0 #404040 !important;
+}
+body.app-nav .settings-row {
+  font-family: var(--xp-font) !important;
+  color: #000 !important;
+  padding: 8px 12px !important;
+  gap: 10px !important;
+}
+body.app-nav .settings-row + .settings-row { border-top: 1px solid #d4d0c8 !important; }
+body.app-nav .sr-k { color: #404040 !important; font-weight: 700 !important; }
+body.app-nav .sr-v { color: #000080 !important; }
+body.app-nav .sr-code {
+  font-family: Consolas, "Courier New", monospace !important;
+  color: #000080 !important;
+  background: #f0f0f0 !important;
+  border: 1px solid #808080 !important;
+  letter-spacing: 1px !important;
+}
+
+/* section headings = bold XP group labels */
+body.app-nav .settings-section {
+  color: #000080 !important;
+  letter-spacing: 0.3px !important;
+  text-transform: none !important;
+  margin: 16px 0 8px !important;
+}
+
+/* QR = white doc panel */
+body.app-nav .settings-qr {
+  border: 1px solid #808080 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+}
+body.app-nav .settings-qr-cap { color: #404040 !important; font-family: var(--xp-font) !important; }
+
+/* buttons = XP push buttons */
+body.app-nav .sr-copy,
+body.app-nav .settings-btn-ghost,
+body.app-nav .settings-btn-danger,
+body.app-nav .settings-btn-save {
+  border-radius: 3px !important;
+  border: 1px solid #003c74 !important;
+  background: linear-gradient(180deg, #fdfdfd 0%, #f2f2f2 45%, #e6e6e6 55%, #d8d8d8 100%) !important;
+  color: #000 !important;
+  font-family: var(--xp-font) !important;
+  font-weight: 400 !important;
+  box-shadow: inset 0 1px 0 #fff, inset -1px -1px 0 #b0b0b0 !important;
+}
+body.app-nav .sr-copy:hover,
+body.app-nav .settings-btn-ghost:hover,
+body.app-nav .settings-btn-danger:hover,
+body.app-nav .settings-btn-save:hover {
+  border-color: #e8a020 !important;
+  background: linear-gradient(180deg, #fffdf4 0%, #fff0c8 55%, #ffe08a 100%) !important;
+}
+body.app-nav .settings-btn-save {
+  font-weight: 700 !important;
+  box-shadow: inset 0 1px 0 #fff, inset -1px -1px 0 #b0b0b0, 0 0 0 1px #4a80c8 !important;
+}
+body.app-nav .settings-btn-danger { color: #7a0000 !important; }
+body.app-nav .settings-actions { border-top: 1px solid #aca899 !important; }
+
+/* small gear button in the navbar */
+body.app-nav .settings-btn {
+  border-radius: 3px !important;
+  border: 1px solid #003c74 !important;
+  background: linear-gradient(180deg, #fdfdfd, #d8d8d8) !important;
+  color: #000080 !important;
+  box-shadow: inset 0 1px 0 #fff !important;
+}
+body.app-nav .settings-btn:hover { background: linear-gradient(180deg, #fffdf4, #ffe08a) !important; }
+
+/* labels / text inputs */
+body.app-nav .settings-label { color: #000 !important; font-weight: 700 !important; }
+body.app-nav .settings-input {
+  border-radius: 0 !important;
+  border: 1px solid #7f9db9 !important;
+  background: #fff !important;
+  color: #000 !important;
+  box-shadow: inset 1px 1px 0 #404040 !important;
+  font-family: var(--xp-font) !important;
+}
+body.app-nav .settings-input:focus {
+  border-color: #316ac5 !important;
+  background: #fff !important;
+  box-shadow: inset 1px 1px 0 #404040, 0 0 0 1px #316ac5 !important;
+}
+body.app-nav .settings-input.invalid { border-color: #c00 !important; }
+body.app-nav .settings-note { color: #404040 !important; font-family: var(--xp-font) !important; }
+body.app-nav .settings-sub { color: #404040 !important; }
+body.app-nav .settings-line-ic svg { color: #008000 !important; }
+
+/* =========================================================================
+   SPLASH / LOADING  -- Bliss + XP marquee progress
+   ========================================================================= */
+body.app-nav .splash {
+  background: #7cb037 url("xp-bliss.svg") center center / cover no-repeat fixed !important;
+  color: #fff !important;
+  font-family: var(--xp-font) !important;
+  gap: 14px !important;
+}
+body.app-nav .splash::before { display: none !important; }
+body.app-nav .splash-logo {
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 3px !important;
+  border: 3px solid #fff !important;
+  background: #fff !important;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4) !important;
+  animation: none !important;
+}
+body.app-nav .splash-title {
+  font-family: var(--xp-font) !important;
+  font-size: 21px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  letter-spacing: 0 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.75) !important;
+}
+body.app-nav .splash-sub {
+  font-size: 13px !important;
+  color: #eaf3ff !important;
+  opacity: 1 !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7) !important;
+}
+body.app-nav .splash-bar {
+  width: 230px !important;
+  height: 16px !important;
+  margin-top: 6px !important;
+  padding: 2px !important;
+  box-sizing: border-box !important;
+  border-radius: 2px !important;
+  border: 1px solid #7f9db9 !important;
+  background: #fff !important;
+  box-shadow: inset 1px 1px 0 #808080 !important;
+  overflow: hidden !important;
+}
+body.app-nav .splash-bar-fill {
+  height: 100% !important;
+  width: 40% !important;
+  border-radius: 1px !important;
+  background: linear-gradient(180deg, #5aa0f4 0%, #1d66de 55%, #1454c9 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+/* top progress loader */
+body.app-nav .top-loader { background: transparent !important; }
+body.app-nav .top-loader-fill {
+  background: linear-gradient(90deg, #1d66de, #5aa0f4, #1d66de) !important;
+}
+body.app-nav .top-loader-chip {
+  border-radius: 3px !important;
+  border: 1px solid #003c74 !important;
+  background: var(--xp-face) !important;
+  color: #000 !important;
+  font-family: var(--xp-font) !important;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+body.app-nav .top-loader-spin {
+  border-color: #b8c8dd !important;
+  border-top-color: #1d66de !important;
+}

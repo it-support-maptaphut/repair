@@ -60,19 +60,40 @@
   // ---------- สร้างเกตติ้ง ----------
   function build() {
     if (gate && gate.parentNode) return;
+    // ภาพประดับ: กระถางต้นไม้ (เวกเตอร์) สำหรับฝั่งซ้ายของการ์ด
+    var PLANT =
+      '<svg class="vg-plant" viewBox="0 0 120 150" aria-hidden="true">' +
+        '<path d="M60 116 C60 84 60 60 60 34" stroke="#0e6b46" stroke-width="2.6" stroke-linecap="round" opacity="0.5"/>' +
+        '<ellipse cx="40" cy="66" rx="17" ry="9" transform="rotate(-32 40 66)" fill="#3fae7d" opacity="0.75"/>' +
+        '<ellipse cx="80" cy="58" rx="17" ry="9" transform="rotate(30 80 58)" fill="#3fae7d" opacity="0.75"/>' +
+        '<ellipse cx="46" cy="42" rx="15" ry="8" transform="rotate(-42 46 42)" fill="#54c08c" opacity="0.8"/>' +
+        '<ellipse cx="76" cy="36" rx="15" ry="8" transform="rotate(42 76 36)" fill="#54c08c" opacity="0.8"/>' +
+        '<ellipse cx="60" cy="26" rx="12" ry="7.5" fill="#66cf9b" opacity="0.85"/>' +
+        '<path d="M34 112 h52 l-5 30 a7 7 0 0 1 -7 6 H46 a7 7 0 0 1 -7 -6 Z" fill="#ffffff" opacity="0.9"/>' +
+        '<rect x="29" y="104" width="62" height="12" rx="6" fill="#ffffff"/>' +
+      "</svg>";
     gate = document.createElement("div");
     gate.id = "verifyGate";
     gate.className = "vg-gate hidden";
     gate.setAttribute("role", "dialog");
     gate.setAttribute("aria-modal", "true");
     gate.innerHTML =
-      '<div class="vg-box">' +
+      '<div class="vg-box vg-main">' +
         '<button type="button" class="vg-close hidden" id="vgClose" aria-label="ปิด">&#215;</button>' +
-        '<div class="vg-head">' +
-          '<div class="vg-logo"><img class="vg-logo-img" src="logo-ticket/logo-wan.png" alt=""></div>' +
-          '<h2 class="vg-title" id="vgTitle">เข้าสู่ระบบ</h2>' +
-          '<p class="vg-sub" id="vgSub">เข้าสู่ระบบด้วย LINE เพื่อแจ้งซ่อมและติดตามสถานะ</p>' +
-        "</div>" +
+        '<aside class="vg-visual" aria-hidden="true">' +
+          '<div class="vg-brand">' +
+            '<img class="vg-brand-logo" src="logo-ticket/logo-wan.png" alt="">' +
+            '<span class="vg-brand-th">วรรณ</span>' +
+            '<span class="vg-brand-en">WAN</span>' +
+          "</div>" +
+          '<div class="vg-plants vg-plants-a">' + PLANT + "</div>" +
+          '<div class="vg-plants vg-plants-b">' + PLANT + "</div>" +
+        "</aside>" +
+        '<div class="vg-form">' +
+          '<div class="vg-head">' +
+            '<h2 class="vg-title" id="vgTitle">เข้าสู่ระบบ</h2>' +
+            '<p class="vg-sub" id="vgSub">เข้าสู่ระบบด้วย LINE เพื่อแจ้งซ่อมและติดตามสถานะ</p>' +
+          "</div>" +
 
         // ---- ขั้นที่ 1: เลือกวิธีเข้าใช้งาน (LINE / เร่งด่วน) ----
         '<div class="vg-pane" data-pane="line">' +
@@ -92,6 +113,10 @@
 
         // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา ----
         '<div class="vg-pane hidden" data-pane="profile">' +
+          '<button type="button" class="vg-back hidden" id="vgBack">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>' +
+            "<span>ย้อนกลับ</span>" +
+          "</button>" +
           '<div class="vg-fields">' +
             '<label for="vgName" class="vg-label">ชื่อ <span class="vg-req">*</span></label>' +
             '<input type="text" id="vgName" class="vg-input" maxlength="60" autocomplete="name">' +
@@ -135,13 +160,14 @@
         "</div>" +
 
         '<p id="vgErr" class="vg-err hidden"></p>' +
+        "</div>" +
       "</div>";
     document.body.appendChild(gate);
 
     // popup สำหรับกรอก Key Pass (กดปุ่ม "เข้าใช้งานด้วย Key Pass" แล้วเด้งมา)
     var kpPopup = document.createElement("div");
     kpPopup.id = "kpPopup";
-    kpPopup.className = "vg-gate hidden";
+    kpPopup.className = "vg-gate vg-gate--kp hidden";
     kpPopup.setAttribute("role", "dialog");
     kpPopup.setAttribute("aria-modal", "true");
     kpPopup.innerHTML =
@@ -166,6 +192,7 @@
     els.next = document.getElementById("vgNext");
     els.err = document.getElementById("vgErr");
     els.close = document.getElementById("vgClose");
+    els.back = document.getElementById("vgBack");
     els.quick = document.getElementById("vgQuick");
     els.enter = document.getElementById("vgEnter");
     els.kpValue = document.getElementById("vgKpValue");
@@ -179,6 +206,7 @@
 
     els.close.addEventListener("click", close);
     if (els.quick) els.quick.addEventListener("click", openQuick);
+    if (els.back) els.back.addEventListener("click", goBack);
     // กดพื้นหลังนอกกล่องก็ปิดได้เหมือนกัน
     gate.addEventListener("click", function (e) { if (e.target === gate) close(); });
     document.addEventListener("keydown", function (e) {
@@ -377,6 +405,7 @@
     // ปุ่มปิดมีเฉพาะตอนสลับบัญชี (ปกติปิดไม่ได้ ไม่งั้นเกตติ้งเด้งกลับมาเรื่อย)
     canClose = !!o.allowClose;
     els.close.classList.toggle("hidden", !canClose);
+    setBack(false);
     showPane("line");
     gate.classList.remove("hidden");
   }
@@ -400,6 +429,7 @@
     showPane("profile");
     gate.setAttribute("data-mode", "profile");
     gate.classList.remove("hidden");
+    setBack(false);
     setTimeout(function () {
       if (els.name.value) els.position.focus(); else els.name.focus();
     }, 80);
@@ -424,6 +454,7 @@
     showPane("profile");
     gate.setAttribute("data-mode", "quick");
     gate.classList.remove("hidden");
+    setBack(true);
     setTimeout(function () { els.name.focus(); }, 80);
   }
 
@@ -431,6 +462,30 @@
   function close() {
     if (!canClose) return;
     hideGate();
+  }
+
+  // แสดง/ซ่อนปุ่มย้อนกลับ (เฉพาะทางเข้าใช้งานเร่งด่วน)
+  function setBack(on) {
+    if (els.back) els.back.classList.toggle("hidden", !on);
+  }
+
+  // ปุ่มย้อนกลับ: กลับไปหน้าเลือกวิธีเข้าใช้งาน (LINE / เร่งด่วน / Key Pass)
+  function goBack() {
+    if (busy) return;
+    current.quick = false;
+    gate.removeAttribute("data-mode");
+    els.next.textContent = "สมัคร";
+    els.name.value = "";
+    els.position.value = "";
+    if (els.branch) els.branch.value = "";
+    var trigger = document.getElementById("vgBranchTrigger");
+    if (trigger) {
+      trigger.textContent = "เลือกสาขาที่คุณประจำอยู่";
+      trigger.classList.add("is-placeholder");
+    }
+    hideErr();
+    setBack(false);
+    showPane("line");
   }
 
   function hideGate() {

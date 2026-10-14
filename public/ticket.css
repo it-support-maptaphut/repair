@@ -687,3 +687,49 @@ body.ticket-page .mode-btn svg { flex: 0 0 auto; }
   0%, 100% { height: 5px; }
   50% { height: 17px; }
 }
+
+/* ============================================================
+   DESKTOP (>=900px) — ไฟล์เดียว responsive
+   ฟอร์มกว้างขึ้น จัด 2 คอลัมน์: รายละเอียดเต็มความกว้าง,
+   แนบรูป/ตำแหน่ง ฝั่งซ้าย, สาขา ฝั่งขวา, ปุ่มส่งชิดขวา
+   ============================================================ */
+@media (min-width: 900px) {
+  body.ticket-page .navbar-inner { max-width: 1132px; }
+  body.ticket-page .navbar-title { font-size: 16px; }
+
+  body.ticket-page .draft-banner { max-width: 1132px; }
+
+  body.ticket-page .form-wrap {
+    max-width: 1180px;
+    margin-top: 26px;
+    padding: 0 24px 8px;
+  }
+
+  body.ticket-page .step.is-active {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "desc desc"
+      "photo branch"
+      "position branch";
+    gap: 24px 30px;
+    padding: 32px 32px 30px;
+  }
+
+  body.ticket-page #descField { grid-area: desc; }
+  body.ticket-page #photoField { grid-area: photo; }
+  body.ticket-page #branchField { grid-area: branch; }
+  body.ticket-page #positionField { grid-area: position; }
+
+  body.ticket-page .field { margin-bottom: 0; }
+  body.ticket-page .field + .field { margin-top: 0; padding-top: 0; }
+
+  body.ticket-page .action-bar {
+    max-width: 1132px;
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 32px;
+  }
+  body.ticket-page .action-btn.primary { flex: 0 0 auto; min-width: 280px; }
+}

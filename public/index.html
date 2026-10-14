@@ -4,227 +4,256 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#06281d">
+  <meta name="theme-color" content="#245edc">
   <title>IT SUPPORT</title>
   <link rel="icon" type="image/png" href="Favorite%20Icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
-    html { -webkit-text-size-adjust: 100%; }
+    html, body { height: 100%; }
 
     body {
       margin: 0;
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      font-family: "Prompt", "Sarabun", system-ui, -apple-system, sans-serif;
-      color: #fff;
-      background:
-        radial-gradient(1200px 800px at 12% -12%, rgba(0, 210, 130, .20), rgba(0, 210, 130, 0) 60%),
-        radial-gradient(1000px 760px at 100% 112%, rgba(0, 150, 96, .18), rgba(0, 150, 96, 0) 55%),
-        linear-gradient(160deg, #06281d 0%, #0a3a29 55%, #04170f 100%);
-      background-attachment: fixed;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: Tahoma, "Microsoft Sans Serif", "Prompt", "Sarabun", sans-serif;
+      color: #000;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
-    /* ---------------- Header ---------------- */
-    .hdr {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 24px 44px;
+    /* ---------------- Desktop / Bliss wallpaper ---------------- */
+    .xp-desktop {
+      position: fixed;
+      inset: 0 0 32px 0;
+      overflow: hidden;
     }
 
-    .hdr-logo { height: 40px; width: auto; display: block; }
-
-    .hdr-name {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, .92);
-    }
-
-    .hdr-right {
-      margin-left: auto;
-      font-size: 11.5px;
-      font-weight: 500;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, .4);
-    }
-
-    /* ---------------- Stage ---------------- */
-    .stage {
-      flex: 1;
+    .xp-bliss {
+      position: absolute;
+      inset: 0;
       width: 100%;
-      max-width: 1480px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 26px;
-      padding: 10px 44px 44px;
+      height: 100%;
+      display: block;
     }
 
-    .svc {
-      position: relative;
+    /* subtle pixel / dither overlay เพื่อความรู้สึกวินเทจ */
+    .xp-desktop::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(0, 0, 0, .055) 1px, transparent 1.3px);
+      background-size: 3px 3px;
+    }
+
+    /* ---------------- Desktop icons (top-left) ---------------- */
+    .xp-icons {
+      position: absolute;
+      top: 12px;
+      left: 12px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: 340px;
-      padding: 46px 44px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, .055);
-      border: 1px solid rgba(255, 255, 255, .12);
-      color: #fff;
+      gap: 6px;
+    }
+
+    .xp-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 92px;
+      padding: 6px 4px 4px;
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
       font: inherit;
-      text-align: left;
+      color: #000;
+      text-align: center;
       text-decoration: none;
       cursor: pointer;
-      overflow: hidden;
-      transition: transform .22s ease, background .22s ease, border-color .22s ease, box-shadow .22s ease;
     }
 
-    .svc:hover {
-      transform: translateY(-4px);
-      background: rgba(255, 255, 255, .09);
-      border-color: rgba(0, 220, 140, .5);
-      box-shadow: 0 34px 64px rgba(0, 0, 0, .38);
-    }
-
-    .svc:focus-visible { outline: 2px solid rgba(0, 220, 140, .8); outline-offset: 3px; }
-
-    .svc-ico {
-      display: grid;
-      place-items: center;
-      width: 76px;
-      height: 76px;
-      border-radius: 20px;
-      background: rgba(0, 220, 140, .13);
-      border: 1px solid rgba(0, 220, 140, .3);
-      color: #3ae6a6;
-    }
-
-    .svc-ico svg { width: 38px; height: 38px; }
-
-    .svc-en {
+    .xp-folder {
+      width: 58px;
+      height: 50px;
       display: block;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 5px;
-      text-transform: uppercase;
-      color: rgba(58, 230, 166, .85);
+      transition: filter .12s ease;
     }
 
-    .svc-title {
-      margin-top: 10px;
-      font-size: clamp(24px, 2.4vw, 34px);
-      font-weight: 800;
-      line-height: 1.25;
-      letter-spacing: .2px;
+    .xp-icon:hover .xp-folder,
+    .xp-icon:focus-visible .xp-folder { filter: brightness(1.08) saturate(1.05); }
+
+    .xp-icon-label {
+      padding: 1px 6px;
+      font-size: 12.5px;
+      line-height: 1.35;
+      color: #000;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, .7), 0 0 3px rgba(255, 255, 255, .55);
+      border: 1px dotted transparent;
+      border-radius: 2px;
     }
 
-    .svc-go {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 22px;
-      font-size: 14px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, .6);
-      transition: color .2s ease, gap .2s ease;
+    .xp-icon:hover .xp-icon-label,
+    .xp-icon:focus-visible .xp-icon-label {
+      background: #1f6fd0;
+      color: #fff;
+      text-shadow: none;
+      border-color: rgba(255, 255, 255, .8);
     }
 
-    .svc:hover .svc-go { color: #fff; gap: 16px; }
+    .xp-icon:focus-visible { outline: none; }
 
-    .svc-go svg { width: 18px; height: 18px; }
+    /* ---------------- Taskbar ---------------- */
+    .xp-taskbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 32px;
+      z-index: 50;
+      display: flex;
+      align-items: stretch;
+      background: linear-gradient(180deg, #1f5fd6 0%, #3f8cf3 6%, #2664de 13%, #2a6be0 46%, #1657c6 88%, #0d3ea0 100%);
+      border-top: 1px solid #5ba2f5;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+    }
 
-    /* ---------------- Footer ---------------- */
-    .ftr {
+    .xp-taskbar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      pointer-events: none;
+      background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .22) 0 1px, rgba(255, 255, 255, 0) 1px 3px);
+    }
+
+    .xp-start {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 0 44px 26px;
-      font-size: 11.5px;
-      letter-spacing: 1.5px;
-      color: rgba(255, 255, 255, .35);
+      gap: 6px;
+      margin: 2px 0 2px 2px;
+      padding: 0 15px 0 8px;
+      border: 0;
+      border-radius: 0 10px 10px 0;
+      color: #fff;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: .3px;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, .45);
+      cursor: pointer;
+      background: linear-gradient(180deg, #63bf3a 0%, #4caf35 8%, #379e2c 45%, #2b8a24 55%, #2f9427 92%, #1c6a1a 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -1px 0 rgba(0, 0, 0, .25), inset -1px 0 0 rgba(0, 0, 0, .12);
     }
 
-    .ftr .clock { margin-left: auto; font-variant-numeric: tabular-nums; }
+    .xp-start:active { filter: brightness(.93); }
 
-    /* ---------------- Modal ---------------- */
+    .xp-flag { width: 20px; height: 20px; display: block; }
+
+    .xp-tasks { flex: 1; }
+
+    .xp-tray {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 2px 2px 2px 0;
+      padding: 0 10px 0 10px;
+      background: linear-gradient(180deg, #0d54b4 0%, #17a7ee 8%, #1176d4 42%, #0b52b0 100%);
+      border-left: 1px solid #0a3f92;
+      border-radius: 4px 0 0 4px;
+      box-shadow: inset 1px 0 0 #4aa0ff;
+    }
+
+    .xp-tray svg { width: 15px; height: 15px; display: block; }
+
+    .xp-clock {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding-left: 3px;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, .3);
+    }
+
+    /* ---------------- XP window (contact modal) ---------------- */
     .modal {
       position: fixed;
       inset: 0;
-      z-index: 60;
+      z-index: 80;
       display: grid;
       place-items: center;
-      padding: 24px;
-      background: rgba(2, 12, 8, .74);
-      backdrop-filter: blur(7px);
-      -webkit-backdrop-filter: blur(7px);
+      padding: 20px;
+      background: rgba(0, 0, 0, .28);
     }
 
     .modal[hidden] { display: none; }
 
-    .modal-card {
-      position: relative;
-      width: min(410px, 100%);
-      padding: 34px 30px 28px;
-      border-radius: 24px;
-      background: #fff;
-      color: #10261a;
-      text-align: center;
-      box-shadow: 0 44px 96px rgba(0, 0, 0, .5);
+    .xp-window {
+      width: min(400px, 100%);
+      background: #ece9d8;
+      border: 1px solid #0831a3;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+      overflow: hidden;
     }
 
-    .modal-close {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 36px;
-      height: 36px;
-      border: none;
-      border-radius: 50%;
-      background: #f1f5f2;
-      color: #46584d;
-      font-size: 21px;
-      line-height: 1;
-      cursor: pointer;
+    .xp-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 5px 5px 8px;
+      background: linear-gradient(180deg, #0058e6 0%, #2477ec 8%, #3f8cf3 40%, #1d66de 92%, #155fd6 100%);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, .38);
+    }
+
+    .xp-titlebar .tb-ico { width: 16px; height: 16px; }
+    .xp-titlebar .tb-title { flex: 1; }
+    .xp-tb-btns { display: flex; gap: 2px; }
+
+    .xp-tb-btns button {
+      width: 22px;
+      height: 20px;
       display: grid;
       place-items: center;
+      border: 1px solid rgba(255, 255, 255, .85);
+      border-radius: 3px;
+      color: #fff;
+      font-family: "Marlett", Tahoma, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      background: linear-gradient(180deg, #4c9bf2, #2b6fd6);
     }
 
-    .modal-close:hover { background: #e6ece8; }
+    .xp-tb-btns button.xp-close { background: linear-gradient(180deg, #f0896a, #d5472a); }
+    .xp-tb-btns button:active { filter: brightness(.9); }
 
-    .m-en {
-      font-size: 11.5px;
-      font-weight: 600;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: #0c7a44;
-    }
-
-    .m-title {
-      margin: 8px 0 0;
-      font-size: 22px;
-      font-weight: 800;
-      color: #12301f;
+    .xp-body {
+      padding: 18px 20px 20px;
+      text-align: center;
     }
 
     .m-phone {
       display: inline-flex;
       align-items: center;
       gap: 11px;
-      margin: 20px 0 4px;
       text-decoration: none;
-      color: #0e6b3a;
-      font-size: 26px;
-      font-weight: 800;
+      color: #0a4f9e;
+      font-size: 25px;
+      font-weight: 700;
       letter-spacing: .5px;
     }
 
@@ -232,109 +261,244 @@
 
     .m-divider {
       height: 1px;
-      margin: 22px 0 4px;
-      background: #e6ece8;
+      margin: 18px 0 4px;
+      background: #c8c2a8;
     }
 
     .m-qr {
       width: 210px;
-      max-width: 72%;
+      max-width: 74%;
       height: auto;
       display: block;
-      margin: 18px auto 0;
-      padding: 10px;
-      border: 1px solid #e6ece8;
-      border-radius: 16px;
+      margin: 16px auto 0;
+      padding: 9px;
+      border: 2px solid #a8a495;
       background: #fff;
     }
 
     .m-caption {
-      margin: 14px 0 0;
-      font-size: 12.5px;
-      color: #7a8a80;
+      margin: 12px 0 0;
+      font-size: 12px;
+      color: #4a4a44;
     }
+
+    /* ---------------- XP message box (admin warning) ---------------- */
+    .xp-msg {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 20px 20px 6px;
+      text-align: left;
+    }
+
+    .msg-ico { width: 34px; height: 34px; flex: 0 0 auto; }
+
+    .msg-text {
+      margin: 0;
+      padding-top: 4px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: #000;
+    }
+
+    .xp-msg-actions {
+      display: flex;
+      justify-content: center;
+      padding: 16px 20px 18px;
+    }
+
+    .xp-btn {
+      min-width: 90px;
+      padding: 5px 16px;
+      border: 1px solid #003c74;
+      border-radius: 3px;
+      font: inherit;
+      font-size: 13px;
+      color: #000;
+      cursor: pointer;
+      background: linear-gradient(180deg, #fdfdfd 0%, #f2f2f2 45%, #e6e6e6 55%, #d8d8d8 100%);
+      box-shadow: inset 0 1px 0 #fff, inset -1px -1px 0 #b0b0b0;
+    }
+
+    .xp-btn:hover { border-color: #e8a020; }
+    .xp-btn:active { filter: brightness(.96); }
+    .xp-btn:focus-visible { outline: 1px solid #1d66de; outline-offset: 1px; }
 
     /* ---------------- Responsive ---------------- */
-    @media (max-width: 880px) {
-      .hdr { padding: 20px 22px; }
-      .hdr-right { display: none; }
-      .stage { grid-template-columns: 1fr; gap: 16px; padding: 6px 22px 30px; }
-      .svc { min-height: 0; padding: 30px 26px; }
-      .svc-ico { width: 60px; height: 60px; border-radius: 17px; }
-      .svc-ico svg { width: 30px; height: 30px; }
-      .ftr { padding: 0 22px 20px; }
-    }
-
     @media (max-width: 560px) {
-      .svc-title { font-size: 22px; }
-      .stage { padding: 4px 14px 24px; }
-      .hdr { padding: 16px 14px; }
-      .ftr { padding: 0 14px 16px; }
+      .xp-desktop { bottom: 30px; }
+      .xp-taskbar { height: 30px; }
+      .xp-icon { width: 78px; }
+      .xp-folder { width: 50px; height: 43px; }
+      .xp-icon-label { font-size: 11.5px; }
+      .xp-start { font-size: 13px; padding: 0 11px 0 7px; }
     }
   </style>
 </head>
 
 <body>
 
-  <header class="hdr">
-    <img class="hdr-logo" src="logo-ticket/logo-wan.png" alt="">
-    <span class="hdr-name">IT&nbsp;SUPPORT</span>
-    <span class="hdr-right">System v1.0.2</span>
-  </header>
+  <!-- shared SVG gradients -->
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1e63b0" />
+        <stop offset="0.55" stop-color="#4f93cf" />
+        <stop offset="0.85" stop-color="#a7cdea" />
+        <stop offset="1" stop-color="#c9e0f0" />
+      </linearGradient>
+      <radialGradient id="cloud" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.85" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#9ecb55" />
+        <stop offset="1" stop-color="#72a836" />
+      </linearGradient>
+      <linearGradient id="hillNear" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8bc23f" />
+        <stop offset="0.5" stop-color="#5f9c26" />
+        <stop offset="1" stop-color="#3c761b" />
+      </linearGradient>
+      <linearGradient id="fldBack" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f4cf6b" />
+        <stop offset="1" stop-color="#d9a72e" />
+      </linearGradient>
+      <linearGradient id="fldFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffe9a6" />
+        <stop offset="0.5" stop-color="#ffd977" />
+        <stop offset="1" stop-color="#f0b429" />
+      </linearGradient>
+    </defs>
+  </svg>
 
-  <main class="stage">
+  <div class="xp-desktop">
+    <svg class="xp-bliss" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="1600" height="900" fill="url(#sky)" />
+      <ellipse cx="340" cy="250" rx="380" ry="95" fill="url(#cloud)" />
+      <ellipse cx="1180" cy="170" rx="300" ry="70" fill="url(#cloud)" opacity="0.7" />
+      <path d="M0,900 L0,600 C260,560 520,600 820,660 C1120,720 1360,700 1600,640 L1600,900 Z" fill="url(#hillFar)" />
+      <path d="M0,900 L0,690 C240,624 520,640 800,692 C1100,748 1320,762 1600,690 L1600,900 Z" fill="url(#hillNear)" />
+    </svg>
 
-    <button type="button" class="svc" id="contactTile">
-      <span class="svc-ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z" />
+    <main class="xp-icons">
+      <button type="button" class="xp-icon" id="contactTile">
+        <svg class="xp-folder" viewBox="0 0 64 56" aria-hidden="true">
+          <path d="M3 15 H60 V50 H3 Z" fill="#000" opacity="0.20" transform="translate(2.5,2.5)" />
+          <path d="M4 8 H20 L25 12 H60 A3 3 0 0 1 63 15 V19 H4 Z" fill="url(#fldBack)" stroke="#c99423" stroke-width="1" />
+          <path d="M4 12 H59 A4 4 0 0 1 63 16 V47 A4 4 0 0 1 59 51 H4 A4 4 0 0 1 0 47 V16 A4 4 0 0 1 4 12 Z" fill="url(#fldFront)" stroke="#b07c10" stroke-width="1" />
+          <path d="M4 13 H59 A3 3 0 0 1 62 16 V19 H1 V16 A3 3 0 0 1 4 13 Z" fill="#ffffff" opacity="0.45" />
         </svg>
-      </span>
-      <span>
-        <span class="svc-en">Contact</span>
-        <span class="svc-title">ติดต่อด่วน</span>
-      </span>
-      <span class="svc-go">
-        เบอร์โทรและ QR Code
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-      </span>
+        <span class="xp-icon-label">ติดต่อ</span>
+      </button>
+
+      <a class="xp-icon" href="ticket.html">
+        <svg class="xp-folder" viewBox="0 0 64 56" aria-hidden="true">
+          <path d="M3 15 H60 V50 H3 Z" fill="#000" opacity="0.20" transform="translate(2.5,2.5)" />
+          <path d="M4 8 H20 L25 12 H60 A3 3 0 0 1 63 15 V19 H4 Z" fill="url(#fldBack)" stroke="#c99423" stroke-width="1" />
+          <path d="M4 12 H59 A4 4 0 0 1 63 16 V47 A4 4 0 0 1 59 51 H4 A4 4 0 0 1 0 47 V16 A4 4 0 0 1 4 12 Z" fill="url(#fldFront)" stroke="#b07c10" stroke-width="1" />
+          <path d="M4 13 H59 A3 3 0 0 1 62 16 V19 H1 V16 A3 3 0 0 1 4 13 Z" fill="#ffffff" opacity="0.45" />
+        </svg>
+        <span class="xp-icon-label">เข้าสู่ระบบ</span>
+      </a>
+
+      <button type="button" class="xp-icon" id="adminTile">
+        <svg class="xp-folder" viewBox="0 0 64 56" aria-hidden="true">
+          <ellipse cx="32" cy="50" rx="17" ry="3.2" fill="#000" opacity="0.18" />
+          <path d="M15 49 c0-9.5 7.6-15 17-15 s17 5.5 17 15 z" fill="#2f6fc4" stroke="#1b4a8c" stroke-width="1.2" />
+          <path d="M26.5 35.5 l5.5 6.5 5.5-6.5" fill="#eaf2fc" stroke="#c7d8ee" stroke-width="1" />
+          <circle cx="32" cy="21" r="10.5" fill="#f2c79a" stroke="#cf9f6d" stroke-width="1.2" />
+          <path d="M21.5 19.5 a10.5 10.5 0 0 1 21 0 q-3.5-7-10.5-7 t-10.5 7z" fill="#5a3b1e" />
+          <circle cx="28.3" cy="21.5" r="1.2" fill="#3a2a14" />
+          <circle cx="35.7" cy="21.5" r="1.2" fill="#3a2a14" />
+          <path d="M28.5 26 q3.5 3 7 0" fill="none" stroke="#a86a3c" stroke-width="1.1" stroke-linecap="round" />
+          <g>
+            <circle cx="46" cy="40.5" r="8.6" fill="#ffd24a" stroke="#b8860b" stroke-width="1.4" />
+            <circle cx="45" cy="38.6" r="2.4" fill="none" stroke="#7a5200" stroke-width="1.6" />
+            <rect x="44.1" y="40.2" width="1.9" height="5.4" fill="#7a5200" />
+            <rect x="44.1" y="43.8" width="3" height="1.4" fill="#7a5200" />
+          </g>
+      </svg>
+      <span class="xp-icon-label">Administrator</span>
     </button>
+    </main>
+  </div>
 
-    <a class="svc" href="ticket.html">
-      <span class="svc-ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-        </svg>
-      </span>
-      <span>
-        <span class="svc-en">Service Request</span>
-        <span class="svc-title">แจ้งซ่อม / เช็กความคืบหน้า</span>
-      </span>
-      <span class="svc-go">
-        เข้าสู่ระบบ
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-      </span>
-    </a>
-
-  </main>
-
-  <footer class="ftr">
-    <span>IT SUPPORT</span>
-    <span class="clock" id="clock">--:--</span>
-  </footer>
+  <div class="xp-taskbar">
+    <button class="xp-start" type="button" aria-label="start">
+      <svg class="xp-flag" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3.2 6.1 L10.6 4.3 V11.1 L3.2 11.5 Z" fill="#f65314" />
+        <path d="M11.6 4.1 L21 2 V10.9 L11.6 11.1 Z" fill="#7cbb00" />
+        <path d="M3.2 12.5 L10.6 12.1 V18.9 L3.2 17.1 Z" fill="#00a1f1" />
+        <path d="M11.6 12.3 L21 11.4 V19.9 L11.6 18.1 Z" fill="#ffbb00" />
+      </svg>
+      <span>start</span>
+    </button>
+    <div class="xp-tasks"></div>
+    <div class="xp-tray">
+      <svg viewBox="0 0 16 16" aria-hidden="true" title="เครือข่าย">
+        <rect x="1" y="2.5" width="8" height="6" rx="1" fill="#dbeaff" stroke="#0b3f8f" />
+        <rect x="6.5" y="6.5" width="8" height="6" rx="1" fill="#bcd8ff" stroke="#0b3f8f" />
+      </svg>
+      <svg viewBox="0 0 16 16" aria-hidden="true" title="เสียง">
+        <path d="M2 6 h2.5 L8 3 v10 L4.5 10 H2 Z" fill="#eaf3ff" />
+        <path d="M10.4 5.2 a4 4 0 0 1 0 5.6" fill="none" stroke="#eaf3ff" stroke-width="1.2" />
+        <path d="M12.1 3.6 a6.2 6.2 0 0 1 0 8.8" fill="none" stroke="#eaf3ff" stroke-width="1.1" />
+      </svg>
+      <span class="xp-clock" id="clock">--:--</span>
+    </div>
+  </div>
 
   <div class="modal" id="contactModal" hidden>
-    <div class="modal-card">
-      <button type="button" class="modal-close" id="modalClose" aria-label="ปิด">&times;</button>
-      <div class="m-en">Contact</div>
-      <h2 class="m-title">ติดต่อด่วน</h2>
-      <a class="m-phone" href="tel:0630050430">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z" /></svg>
-        063-005-0430
-      </a>
-      <div class="m-divider"></div>
-      <img class="m-qr" src="logo-ms/my-qr/image.png" alt="QR Code ติดต่อ IT SUPPORT">
-      <p class="m-caption">สแกน QR Code เพื่อติดต่อฝ่ายไอที</p>
+    <div class="xp-window" role="dialog" aria-modal="true" aria-label="ติดต่อด่วน">
+      <div class="xp-titlebar">
+        <svg class="tb-ico" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z" fill="#fff" />
+        </svg>
+        <span class="tb-title">ติดต่อด่วน</span>
+        <span class="xp-tb-btns">
+          <button type="button" tabindex="-1" aria-hidden="true">&#8211;</button>
+          <button type="button" tabindex="-1" aria-hidden="true">&#9633;</button>
+          <button type="button" class="xp-close" id="modalClose" aria-label="ปิด">&#10005;</button>
+        </span>
+      </div>
+      <div class="xp-body">
+        <a class="m-phone" href="tel:0630050430">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z" /></svg>
+          063-005-0430
+        </a>
+        <div class="m-divider"></div>
+        <img class="m-qr" src="logo-ms/my-qr/image.png" alt="QR Code ติดต่อ IT SUPPORT">
+        <p class="m-caption">สแกน QR Code เพื่อติดต่อฝ่ายไอที</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="adminModal" hidden>
+    <div class="xp-window" role="alertdialog" aria-modal="true" aria-label="Administrator">
+      <div class="xp-titlebar">
+        <svg class="tb-ico" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4.2" fill="#fff" />
+          <path d="M4 21 c0-4.4 3.6-7.5 8-7.5 s8 3.1 8 7.5 z" fill="#fff" />
+        </svg>
+        <span class="tb-title">Administrator</span>
+        <span class="xp-tb-btns">
+          <button type="button" tabindex="-1" aria-hidden="true">&#8211;</button>
+          <button type="button" tabindex="-1" aria-hidden="true">&#9633;</button>
+          <button type="button" class="xp-close" id="adminClose" aria-label="ปิด">&#10005;</button>
+        </span>
+      </div>
+      <div class="xp-msg">
+        <svg class="msg-ico" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 2.4 L30 29 H2 Z" fill="#ffcc00" stroke="#9a7400" stroke-width="1.6" stroke-linejoin="round" />
+          <rect x="14.4" y="10.8" width="3.2" height="9.6" rx="1.6" fill="#000" />
+          <circle cx="16" cy="24.4" r="1.9" fill="#000" />
+        </svg>
+        <p class="msg-text">ไม่สามารถเข้าใช้งานได้ในขณะนี้</p>
+      </div>
+      <div class="xp-msg-actions">
+        <button type="button" class="xp-btn" id="adminOk" autofocus>ตกลง</button>
+      </div>
     </div>
   </div>
 
@@ -352,19 +516,24 @@
       tick();
       setInterval(tick, 15000);
 
-      var modal = document.getElementById("contactModal");
-      var openBtn = document.getElementById("contactTile");
-      var closeBtn = document.getElementById("modalClose");
+      function bindModal(tileId, modalId, closeIds) {
+        var modal = document.getElementById(modalId);
+        var openBtn = document.getElementById(tileId);
+        if (!modal || !openBtn) return;
 
-      function open() { if (modal) modal.hidden = false; }
-      function close() { if (modal) modal.hidden = true; }
+        function close() { modal.hidden = true; }
 
-      if (openBtn && modal) {
-        openBtn.addEventListener("click", open);
+        openBtn.addEventListener("click", function () { modal.hidden = false; });
         modal.addEventListener("click", function (e) { if (e.target === modal) close(); });
-        if (closeBtn) closeBtn.addEventListener("click", close);
+        (closeIds || []).forEach(function (id) {
+          var btn = document.getElementById(id);
+          if (btn) btn.addEventListener("click", close);
+        });
         document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
       }
+
+      bindModal("contactTile", "contactModal", ["modalClose"]);
+      bindModal("adminTile", "adminModal", ["adminClose", "adminOk"]);
     })();
   </script>
 </body>
