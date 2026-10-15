@@ -180,19 +180,32 @@
   // แสดง Key Pass ของผู้ใช้ (ดึงจาก /api/visitors/me/keypass)
   function loadKeypass(visitor) {
     if (!els.keypass) return;
-    els.keypass.textContent = "—";
+    els.keypass.textContent = "…";
     if (els.keypassCopy) els.keypassCopy.disabled = true;
-    if (!visitor.hasKeypass) {
-      els.keypass.textContent = "ยังไม่มี (ติดต่อฝ่าย IT)";
-      return;
-    }
-    api("/api/visitors/me/keypass").then(function (r) {
-      if (r.ok && r.d && r.d.keypass) {
+
+    function apply(r) {
+      if (r && r.ok && r.d && r.d.keypass) {
         els.keypass.textContent = r.d.keypass;
         if (els.keypassCopy) els.keypassCopy.disabled = false;
-      } else {
-        els.keypass.textContent = "ติดต่อฝ่าย IT";
+        return true;
       }
+      return false;
+    }
+    function fail() {
+      els.keypass.textContent = visitor.hasKeypass ? "ติดต่อฝ่าย IT" : "ยังไม่มี (ติดต่อฝ่าย IT)";
+    }
+
+    api("/api/visitors/me/keypass").then(function (r) {
+      if (apply(r)) return;
+      // พลาดครั้งแรก (session หมดอายุ / สถานะ cache เก่า) → refresh สถานะแล้วลองใหม่ 1 ครั้ง
+      if (window.WanGate && window.WanGate.refresh) {
+        return window.WanGate.refresh().then(function () {
+          return api("/api/visitors/me/keypass");
+        }).then(function (r2) {
+          if (!apply(r2)) fail();
+        }).catch(fail);
+      }
+      fail();
     }).catch(function () { els.keypass.textContent = "—"; });
   }
 

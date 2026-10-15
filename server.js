@@ -920,7 +920,7 @@ app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields(
         return res.status(403).json({ ok: false, message: "ใบแจ้งภายในต้องเข้าสู่ระบบฝ่าย IT ก่อน" });
       }
     } else {
-      visitor = await requireVisitorSession(req);
+      visitor = await requireVisitorSession(req, res);
       if (!visitor) {
         return res.status(401).json({ ok: false, needsIdentity: true, message: "กรุณากรอกชื่อและตำแหน่งก่อนแจ้งซ่อม" });
       }
@@ -997,7 +997,7 @@ app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields(
 // ผูกกับบัญชีผู้ใช้ (visitor_id) — เปลี่ยนเครือข่ายแล้วยังได้รับแจ้งเตือน
 app.get("/api/notify/stream", async (req, res) => {
   try {
-    const visitor = await requireVisitorSession(req);
+    const visitor = await requireVisitorSession(req, res);
     if (!visitor) {
       return notif.handleStream(req, res, null);
     }
@@ -1203,18 +1203,25 @@ async function resolveVisitor(req, opts) {
   return row;
 }
 
-// ผู้ใช้ที่ "เข้าสู่ระบบแล้ว" = มี session ที่ยังใช้ได้ (ไม่ผูกกับ IP/เครื่อง)
-async function requireVisitorSession(req) {
-  const session = verifyVisitorToken(parseCookies(req).vst_token);
-  if (!session) return null;
-  const adapter = db.getAdapter();
-  if (!adapter.ready) return null;
-  const row = await adapter.getVisitorById(session.v);
-  if (!row) return null;
-  row.matchedBy = "session";
-  return row;
+// ผู้ใช้ที่ "ยืนยันตัวตนแล้ว" = session (vst_token) หรือคุกกี้เครื่องเดิม (visitor_token)
+// ให้ความหมายเดียวกับ /api/visitors/me (authed = session | token) เพื่อไม่ให้เกิดเคส
+// "หน้าเว็บบอกว่าล็อกอินแล้ว แต่ API ตอบ 401" — เดิมบังคับแค่ session ทำให้ session 30 วันหมดอายุ
+// ทั้งที่ cookie เครื่องเดิม (1 ปี) ยังอยู่ => ผู้ใช้เห็นสถานะ authed แต่ดึง Key Pass/ประวัติไม่ได้
+// เมื่อรู้จักด้วย token จะต่ออายุ session ให้อัตโนมัติ (ต้องส่ง res เข้ามาด้วย)
+async function requireVisitorSession(req, res) {
+  // ใช้ resolveVisitor ตัวเดียวกับ /api/visitors/me เพื่อให้ความหมาย authed ตรงกันเป๊ะ
+  // (authed = รู้จักด้วย session หรือ cookie เครื่องเดิม — ไม่นับ IP)
+  const visitor = await resolveVisitor(req);
+  if (!visitor) return null;
+  if (visitor.matchedBy === "session") return visitor;
+  if (visitor.matchedBy === "token") {
+    // ต่ออายุ session ให้ตรงกับ cookie เครื่องเดิมที่มีอายุยาวกว่า
+    if (res && typeof setVisitorSessionCookie === "function") setVisitorSessionCookie(req, res, visitor.id);
+    return visitor;
+  }
+  // matchedBy === "ip" ไม่ถือว่ายืนยันตัวตนแล้ว
+  return null;
 }
-
 // GET /api/visitors/me — สถานะบัญชีของผู้ใช้บนเครื่องนี้
 app.get("/api/visitors/me", async (req, res) => {
   try {
@@ -1245,7 +1252,7 @@ app.get("/api/visitors/me", async (req, res) => {
 // GET /api/visitors/me/keypass — ดู Key Pass ของตัวเองในหน้า Settings (ผู้ใช้เก่าที่ยังไม่มี keypass_enc จะดูไม่ได้ ต้องให้แอดมินออกใหม่)
 app.get("/api/visitors/me/keypass", async (req, res) => {
   try {
-    const visitor = await requireVisitorSession(req);
+    const visitor = await requireVisitorSession(req, res);
     if (!visitor) return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน" });
     const keypass = keypassDecrypt(visitor.keypass_enc);
     if (!keypass) {
@@ -1265,7 +1272,7 @@ app.patch("/api/visitors/me", async (req, res) => {
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const visitor = await requireVisitorSession(req);
+    const visitor = await requireVisitorSession(req, res);
     if (!visitor) {
       return res.status(401).json({ ok: false, message: "กรุณากรอกชื่อและตำแหน่งก่อนแก้ไขข้อมูลผู้ใช้" });
     }
@@ -3268,7 +3275,7 @@ app.get("/api/tickets/mine", async (req, res) => {
     if (!adapter.ready) {
       return res.status(500).json({ ok: false, message: "ยังไม่ได้ตั้งค่าฐานข้อมูลใน .env" });
     }
-    const visitor = await requireVisitorSession(req);
+    const visitor = await requireVisitorSession(req, res);
     if (!visitor) {
       return res.status(401).json({
         ok: false,
@@ -3324,7 +3331,7 @@ app.get("/api/tickets/:ticketNo/status", async (req, res) => {
     }
     // ต้องเป็นเจ้าของใบแจ้งซ่อม (หรือฝ่าย IT) — ห้ามเปิดดูของคนอื่นโดยเดาหมายเลข
     if (!isAdminAuthed(req) && !isUserAuthed(req)) {
-      const visitor = await requireVisitorSession(req);
+      const visitor = await requireVisitorSession(req, res);
       if (!visitor) {
         return res.status(401).json({ ok: false, message: "กรุณาเข้าสู่ระบบก่อนดูสถานะงาน" });
       }
