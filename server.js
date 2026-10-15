@@ -729,14 +729,12 @@ async function serveAdminPage(req, res, next) {
       background: #000;
       color: #fff;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
     }
     .error-label {
       font-size: clamp(2rem, 8vw, 4rem);
       font-weight: 900;
       color: #ff0000;
       letter-spacing: 0.1em;
-      margin-bottom: 24px;
       text-shadow: 0 0 30px rgba(255,0,0,0.6), 0 0 60px rgba(255,0,0,0.3);
       animation: pulse 1.5s ease-in-out infinite;
     }
@@ -744,29 +742,10 @@ async function serveAdminPage(req, res, next) {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
-    .error-message {
-      font-size: clamp(1rem, 3vw, 1.25rem);
-      line-height: 1.6;
-      max-width: 600px;
-      text-align: center;
-      color: #ccc;
-    }
-    .icon {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 16px;
-      opacity: 0.8;
-    }
   </style>
 </head>
 <body>
-  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#ff0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="12" y1="8" x2="12" y2="12"></line>
-    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-  </svg>
   <div class="error-label">ERROR ADMIN</div>
-  <p class="error-message">บัญชีผู้ดูแลระบบเข้าถึงหน้า admin ได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) โดยตรงเท่านั้น</p>
 </body>
 </html>
       `);
