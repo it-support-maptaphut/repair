@@ -515,7 +515,7 @@ copyTicketBtn.addEventListener("click", copyTicket);
 successClose.addEventListener("click", function () {
   successOverlay.classList.add("hidden");
   submitBtn.disabled = false;
-  window.location.href = "ticket.html";
+    window.location.href = "/ticket";
 });
 
 function escapeHtml(s) {

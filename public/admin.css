@@ -2972,4 +2972,125 @@
     #ticketsBody tr.ticket-card:hover .branch-5, .branch-5:hover { background: #7f1d1d !important; color: #ffffff !important; border-color: #450a0a !important; }
     #ticketsBody tr.ticket-card:hover .branch-3, .branch-3:hover { background: #be185d !important; color: #ffffff !important; border-color: #831843 !important; }
     #ticketsBody tr.ticket-card:hover .branch-1, .branch-1:hover { background: #a16207 !important; color: #ffffff !important; border-color: #713f12 !important; }
-    
+
+    /* สถานที่: สาขาบรรทัดบน / ตำแหน่ง-แผนกบรรทัดล่าง (ไฮไลท์) */
+    .loc-branch { display: block; line-height: 1.35; }
+    .loc-pos { display: block; margin-top: 3px; }
+    .loc-pos-chip {
+      display: inline-block;
+      padding: 1px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.55;
+      border-radius: 6px;
+      background: #eef4ff;
+      color: #1e3a8a;
+      border: 1px solid #c7d7f5;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* ตัวกรองรายการแจ้งซ่อม (สถานที่ / ประเภทอุปกรณ์) */
+    .filter-select {
+      padding: 7px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text, #111);
+      cursor: pointer;
+      max-width: 220px;
+    }
+    .filter-select:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+    .btn-filter-reset {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      background: #f3f8f5;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-filter-reset:hover { background: #e6f2ea; color: var(--green-dark); }
+
+    /* กล่องวันเวลาในขั้นตอนบันทึกสถานะ (แสดงเมื่อสถานะไม่ใช่งานใหม่) */
+    .tf-when-box {
+      margin: 4px 0 0;
+      padding: 12px 12px 2px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: #f8fbf9;
+    }
+    .tf-when-box .tf-field:last-child { margin-bottom: 10px; }
+
+    /* ส่วนล่าง sidebar: ตั้งค่า / ออกจากระบบ (มาตรฐานเดียวกัน) */
+    .side-footer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    .side-footer .side-group { margin: 0 0 6px !important; }
+    .side-btn.side-logout {
+      margin-top: 2px !important;
+      color: #b91c1c !important;
+      font-weight: 600 !important;
+    }
+    .side-btn.side-logout:hover { background: #fdecec !important; color: #991b1b !important; }
+    .sidebar.collapsed .side-btn.side-logout { justify-content: center; }
+
+    /* แก้ไขอุปกรณ์หลายชิ้นในใบเดียว: แต่ละแถว = 1 อุปกรณ์ + รายละเอียด */
+    .edit-dev-rows { display: flex; flex-direction: column; gap: 10px; }
+    .edit-dev-row {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fbf9;
+    }
+    .edit-dev-head {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .edit-dev-head .edit-dev-cat { flex: 0 0 128px; }
+    .edit-dev-head .edit-dev-name { flex: 1 1 auto; min-width: 0; }
+    .edit-dev-cat,
+    .edit-dev-name,
+    .edit-dev-problem {
+      width: 100%;
+      font-family: inherit;
+      font-size: 13px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text, #111);
+    }
+    .edit-dev-problem { resize: vertical; min-height: 44px; line-height: 1.5; }
+    .edit-dev-del {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #f2c4c4;
+      background: #fdecec;
+      color: #c0392b;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .edit-dev-del:hover { background: #f9d4d4; }
+    .edit-dev-add {
+      margin-top: 10px;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+

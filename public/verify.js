@@ -169,7 +169,7 @@
           '<button type="button" class="vg-quick-btn" id="vgKpOpen">' +
             "<span>เข้าใช้งานด้วย Key Pass</span>" +
           "</button>" +
-          '<a class="vg-home-link" href="index.html">ย้อนกลับสู่หน้าหลัก</a>' +
+          '<a class="vg-home-link" href="/">ย้อนกลับสู่หน้าหลัก</a>' +
         "</div>" +
 
         // ---- ขั้นที่ 2: กรอกชื่อ / ตำแหน่ง / ประจำสาขา ----

@@ -28,7 +28,7 @@
     '<text x="16" y="23" text-anchor="middle" font-family="Tahoma, sans-serif" ' +
     'font-size="21" font-weight="700" fill="#0a52c8">?</text></svg>';
 
-  var HOME_URL = "index.html";
+  var HOME_URL = "/";
   var confirmGate = null;
 
   function buildConfirm() {

@@ -2763,6 +2763,93 @@
 
     /* ระบบนี้ใช้ขอบเหลี่ยมทั้งหมด (ไม่มีขอบมน) */
     * { border-radius: 0 !important; }
+
+    /* สถานที่: สาขา / ตำแหน่ง-แผนก คนละบรรทัด + ไฮไลท์ตำแหน่ง */
+    .loc-branch { display: block; line-height: 1.35; }
+    .loc-pos { display: block; margin-top: 3px; }
+    .loc-pos-chip {
+      display: inline-block;
+      padding: 1px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.55;
+      background: #eef4ff;
+      color: #1e3a8a;
+      border: 1px solid #c7d7f5;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* ตัวกรองรายการแจ้งซ่อม (สถานที่ / ประเภทอุปกรณ์) */
+    .filter-select {
+      padding: 7px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text, #111);
+      cursor: pointer;
+      max-width: 220px;
+    }
+    .btn-filter-reset {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      background: #f3f8f5;
+      border: 1px solid var(--line);
+      cursor: pointer;
+    }
+
+    /* กล่องวันเวลาในขั้นตอนบันทึกสถานะ (แสดงเมื่อสถานะไม่ใช่งานใหม่) */
+    .tf-when-box {
+      margin: 4px 0 0;
+      padding: 12px 12px 2px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: #f8fbf9;
+    }
+    .tf-when-box .tf-field:last-child { margin-bottom: 10px; }
+
+    /* แก้ไขอุปกรณ์หลายชิ้นในใบเดียว: แต่ละแถว = 1 อุปกรณ์ + รายละเอียด */
+    .edit-dev-rows { display: flex; flex-direction: column; gap: 10px; }
+    .edit-dev-row {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fbf9;
+    }
+    .edit-dev-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .edit-dev-head .edit-dev-cat { flex: 0 0 118px; }
+    .edit-dev-head .edit-dev-name { flex: 1 1 auto; min-width: 0; }
+    .edit-dev-cat,
+    .edit-dev-name,
+    .edit-dev-problem {
+      width: 100%;
+      font-family: inherit;
+      font-size: 13px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text, #111);
+    }
+    .edit-dev-problem { resize: vertical; min-height: 44px; line-height: 1.5; }
+    .edit-dev-del {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #f2c4c4;
+      background: #fdecec;
+      color: #c0392b;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .edit-dev-add { margin-top: 10px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   </style>
   <!-- ธีมระบบ: 90S (กำหนดเป็นธีมหลักของระบบ) -->
   <link rel="stylesheet" href="admin-retro.css">
@@ -2885,7 +2972,14 @@
         </div>
         <div><div class="stat-num" id="statAll">0</div><div class="stat-label">รวมทั้งหมด</div></div>
       </div>
-      <div class="stats-actions" style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
+      <div class="stats-actions" style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; align-items:center;">
+      <div class="filter-bar" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-right:auto;">
+        <select id="filterLocation" class="filter-select" onchange="onFilterChange()" title="กรองตามสถานที่"><option value="">ทุกสถานที่</option></select>
+        <select id="filterDevice" class="filter-select" onchange="onFilterChange()" title="กรองตามประเภทอุปกรณ์"><option value="">ทุกประเภทอุปกรณ์</option></select>
+        <button class="btn-filter-reset" type="button" onclick="clearAllFilters()">
+          <span>ล้างตัวกรอง</span>
+        </button>
+      </div>
       <button class="btn-inbox" onclick="toggleInbox()" title="กล่องข้อความจากผู้แจ้งภายนอก (ยังไม่เข้าระบบ — รอตอบรับ)" style="display:inline-flex; align-items:center;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m22 6-10 7L2 6"/></svg>
         <span style="font-size:13px; font-weight:500;">กล่องข้อความ</span>
@@ -4236,20 +4330,12 @@
           <h3 class="modal-title">แก้ไขใบแจ้งซ่อม</h3>
           <div class="modal-no"><span class="tno" id="editNo"></span></div>
           <div class="form-field">
-            <label>หมวด / อุปกรณ์</label>
-            <select id="editDeviceCat" onchange="editDeviceCatChange()">
-              <option value="">— เลือกหมวด —</option>
-              <option value="Hardware">Hardware</option>
-              <option value="Software">Software</option>
-              <option value="Disk">Disk</option>
-            </select>
-            <select id="editDevice" style="margin-top:8px">
-              <option value="">— เลือกอุปกรณ์ —</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>รายละเอียด</label>
-            <textarea id="editSymptom"></textarea>
+            <label>อุปกรณ์ และรายละเอียด</label>
+            <div id="editDeviceRows" class="edit-dev-rows"></div>
+            <button type="button" class="btn btn-ghost edit-dev-add" id="editAddDeviceBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              เพิ่มอุปกรณ์
+            </button>
           </div>
           <div class="form-row">
             <div class="form-field">
@@ -4264,6 +4350,11 @@
                 <option value="done">เสร็จสิ้น</option>
               </select>
             </div>
+          </div>
+          <div class="form-field" id="editDoneField" hidden>
+            <label>วันเวลาที่เสร็จสิ้น</label>
+            <input type="datetime-local" id="editStatusAt">
+            <div class="field-hint" id="editDurationHint" style="margin-top:6px;color:var(--muted);font-size:12.5px"></div>
           </div>
           <div class="form-field">
             <label>ผู้รับผิดชอบ</label>
@@ -5008,22 +5099,6 @@
                 <p class="tf-step-heading">บันทึกสถานะ และระบุผู้ดำเนินการ</p>
 
                 <div class="tf-field">
-                  <label class="tf-field-label">วันที่ <span class="tf-req">*</span></label>
-                  <p class="tf-field-hint">วันที่ของสถานะนี้เป็น พ.ศ. (ค่าเริ่มต้นเป็นวันนี้)</p>
-                  <div class="tf-thaidate-row">
-                    <select id="tfStatusDay" class="tf-input tf-select"></select>
-                    <select id="tfStatusMon" class="tf-input tf-select"></select>
-                    <select id="tfStatusYear" class="tf-input tf-select"></select>
-                  </div>
-                </div>
-
-                <div class="tf-field">
-                  <label for="tfStatusTime" class="tf-field-label">เวลา (โดยประมาณ) <span class="tf-req">*</span></label>
-                  <p class="tf-field-hint">เวลาที่เกิดเหตุ เช่น 7 โมงเช้า ให้เลือก 07:00</p>
-                  <input type="time" id="tfStatusTime" class="tf-input" value="08:00">
-                </div>
-
-                <div class="tf-field">
                   <label class="tf-field-label">สถานะ <span class="tf-req">*</span></label>
                   <p class="tf-field-hint">เลือกสถานะของงานนี้หลังบันทึกใบแจ้งซ่อม</p>
                   <div class="tf-status-group">
@@ -5059,6 +5134,24 @@
                     <option value="บาส IT support">บาส IT support</option>
                     <option value="พี่เอ็ม IT support">พี่เอ็ม IT support</option>
                   </select>
+                </div>
+
+                <div class="tf-when-box" id="tfWhenFields">
+                  <div class="tf-field">
+                    <label class="tf-field-label"><span id="tfDateLabel">วันที่</span> <span class="tf-req">*</span></label>
+                    <p class="tf-field-hint" id="tfDateHint">วันที่ของสถานะนี้เป็น พ.ศ. (ค่าเริ่มต้นเป็นวันนี้)</p>
+                    <div class="tf-thaidate-row">
+                      <select id="tfStatusDay" class="tf-input tf-select"></select>
+                      <select id="tfStatusMon" class="tf-input tf-select"></select>
+                      <select id="tfStatusYear" class="tf-input tf-select"></select>
+                    </div>
+                  </div>
+
+                  <div class="tf-field">
+                    <label for="tfStatusTime" class="tf-field-label"><span id="tfTimeLabel">เวลา (โดยประมาณ)</span> <span class="tf-req">*</span></label>
+                    <p class="tf-field-hint" id="tfTimeHint">เวลาที่เกิดเหตุ เช่น 7 โมงเช้า ให้เลือก 07:00</p>
+                    <input type="time" id="tfStatusTime" class="tf-input" value="08:00">
+                  </div>
                 </div>
               </div>
 
@@ -5169,6 +5262,8 @@
     var tickets = [];
     var currentRow = null;
     var statusFilter = null; // null = all, "new", "working", "done"
+    var locFilter = "";      // "" = all, otherwise branch name
+    var deviceFilter = "";   // "" = all, otherwise device type
     var currentPage = 1;
     var itemsPerPage = 50;
 
@@ -5242,6 +5337,7 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           tickets = data.tickets || [];
+          if (typeof populateFilters === "function") populateFilters();
           renderStats();
           renderTable();
           if (!document.getElementById("analyticsView").hidden) renderAnalytics();
@@ -5292,8 +5388,73 @@
       if (cardNew) cardNew.addEventListener("click", function () { setStatusFilter("new"); });
       if (cardWorking) cardWorking.addEventListener("click", function () { setStatusFilter("working"); });
       if (cardDone) cardDone.addEventListener("click", function () { setStatusFilter("done"); });
-      if (cardAll) cardAll.addEventListener("click", function () { setStatusFilter(null); });
+      if (cardAll) cardAll.addEventListener("click", function () { clearAllFilters(); });
     }
+
+    // ---------- FILTERS: สถานที่ / ประเภทอุปกรณ์ ----------
+    function fillFilterSelect(sel, current, items, allLabel) {
+      if (!sel) return;
+      var opts = ['<option value="">' + allLabel + "</option>"];
+      items.forEach(function (v) {
+        opts.push('<option value="' + esc(v) + '">' + esc(v) + "</option>");
+      });
+      sel.innerHTML = opts.join("");
+      sel.value = current && items.indexOf(current) > -1 ? current : "";
+    }
+
+    function populateFilters() {
+      var branches = [];
+      var types = [];
+      tickets.forEach(function (t) {
+        var b = parseLocation(t.location).branch;
+        if (b && b !== "-" && branches.indexOf(b) === -1) branches.push(b);
+        parseDeviceParts(t.device).forEach(function (p) {
+          var ty = deviceType(p);
+          if (ty && types.indexOf(ty) === -1) types.push(ty);
+        });
+      });
+      branches.sort(function (a, b) { return a.localeCompare(b, "th"); });
+      types.sort();
+      fillFilterSelect(document.getElementById("filterLocation"), locFilter, branches, "ทุกสถานที่");
+      fillFilterSelect(document.getElementById("filterDevice"), deviceFilter, types, "ทุกประเภทอุปกรณ์");
+    }
+
+    function applyRowFilters(rows) {
+      var out = rows;
+      if (locFilter) {
+        out = out.filter(function (t) { return parseLocation(t.location).branch === locFilter; });
+      }
+      if (deviceFilter) {
+        out = out.filter(function (t) {
+          return parseDeviceParts(t.device).some(function (p) { return deviceType(p) === deviceFilter; });
+        });
+      }
+      return out;
+    }
+
+    function onFilterChange() {
+      var locSel = document.getElementById("filterLocation");
+      var devSel = document.getElementById("filterDevice");
+      locFilter = locSel ? locSel.value : "";
+      deviceFilter = devSel ? devSel.value : "";
+      currentPage = 1;
+      renderTable();
+    }
+    window.onFilterChange = onFilterChange;
+
+    function clearAllFilters() {
+      statusFilter = null;
+      locFilter = "";
+      deviceFilter = "";
+      var locSel = document.getElementById("filterLocation");
+      var devSel = document.getElementById("filterDevice");
+      if (locSel) locSel.value = "";
+      if (devSel) devSel.value = "";
+      currentPage = 1;
+      updateFilterUI();
+      renderTable();
+    }
+    window.clearAllFilters = clearAllFilters;
 
     // Call init after DOM is ready
     initStatCardFilters();
@@ -7983,6 +8144,8 @@
       if (statusFilter) {
         rows = rows.filter(function (t) { return t.status === statusFilter; });
       }
+      // Apply สถานที่ / ประเภทอุปกรณ์ filters
+      rows = applyRowFilters(rows);
       // Pagination
       var totalItems = rows.length;
       var totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -8004,7 +8167,7 @@
           '<td data-c="date" data-label="วันที่">' + esc(fmtDate(t.created_at)) + "</td>" +
           '<td data-c="device" data-label="ประเภท">' + fmtDevices(t.device) + "</td>" +
           '<td data-c="symptom" data-label="รายละเอียด"><span class="cell-trunc">' + fmtSymptoms(t.symptom) + "</span></td>" +
-          '<td data-c="loc" data-label="สถานที่">' + branchChip(loc.branch) + (loc.position && loc.position !== "-" ? " · " + esc(loc.position) : "") + "</td>" +
+          '<td data-c="loc" data-label="สถานที่"><div class="loc-branch">' + branchChip(loc.branch) + '</div>' + (loc.position && loc.position !== "-" ? '<div class="loc-pos"><span class="loc-pos-chip">' + esc(loc.position) + "</span></div>" : "") + "</td>" +
           '<td data-c="user" data-label="ผู้รับผิดชอบ">' + esc(t.handler_name || "-") + "</td>" +
           '<td data-c="actions" data-label="จัดการ">' + statusButtons(t, i) + "</td>" +
           "</tr>"
@@ -8288,41 +8451,146 @@
       return editDeviceOptionsPromise;
     }
 
-    function editDeviceCatChange(keep) {
-      var cat = document.getElementById("editDeviceCat").value;
-      var devSel = document.getElementById("editDevice");
-      if (!cat) {
-        devSel.innerHTML = '<option value="">— เลือกอุปกรณ์ —</option>';
-        return;
-      }
-      var build = function () {
-        var list = (editDeviceOptions && editDeviceOptions[cat]) || [];
-        var opts = ['<option value="">— เลือกอุปกรณ์ —</option>'];
-        list.forEach(function (n) {
-          opts.push('<option value="' + esc(n) + '">' + esc(n) + '</option>');
-        });
-        if (keep && list.indexOf(keep) === -1) {
-          opts.push('<option value="' + esc(keep) + '">' + esc(keep) + ' (เดิม)</option>');
-        }
-        devSel.innerHTML = opts.join("");
-        devSel.value = keep || "";
-      };
-      if (editDeviceOptions) build();
-      else loadEditDeviceOptions().then(build);
-    }
+    function editDeviceCatChange() {}
 
     window.editDeviceCatChange = editDeviceCatChange;
 
-    function setEditDevice(deviceStr) {
-      var parts = parseDeviceParts(deviceStr);
-      editDeviceExtra = parts.slice(1);
-      var first = parts[0] || "";
-      var type = "", label = "";
-      if (first) { type = deviceType(first); label = deviceLabel(first); }
-      if (type !== "Hardware" && type !== "Software" && type !== "Disk") type = first ? "Hardware" : "";
-      document.getElementById("editDeviceCat").value = type;
-      editDeviceCatChange(label);
+    var EDIT_DEV_CATS = ["Hardware", "Software", "Disk"];
+
+    function editCatOptionsHtml(sel) {
+      var h = '<option value="">— หมวด —</option>';
+      EDIT_DEV_CATS.forEach(function (c) {
+        h += '<option value="' + c + '"' + (c === sel ? " selected" : "") + ">" + c + "</option>";
+      });
+      return h;
     }
+
+    function editNameOptionsHtml(cat, sel) {
+      var list = (cat && editDeviceOptions && editDeviceOptions[cat]) || [];
+      var h = '<option value="">— เลือกอุปกรณ์ —</option>';
+      var found = false;
+      list.forEach(function (n) {
+        if (n === sel) found = true;
+        h += '<option value="' + esc(n) + '"' + (n === sel ? " selected" : "") + ">" + esc(n) + "</option>";
+      });
+      if (sel && !found) {
+        h += '<option value="' + esc(sel) + '" selected>' + esc(sel) + " (เดิม)</option>";
+      }
+      return h;
+    }
+
+    function renderEditDeviceRows(rows) {
+      var box = document.getElementById("editDeviceRows");
+      if (!box) return;
+      box.innerHTML = (rows && rows.length ? rows : [{}]).map(function (r) {
+        var cat = r.cat || "", label = r.label || "", problem = r.problem || "";
+        return '<div class="edit-dev-row">' +
+          '<div class="edit-dev-head">' +
+            '<select class="edit-dev-cat">' + editCatOptionsHtml(cat) + "</select>" +
+            '<select class="edit-dev-name">' + editNameOptionsHtml(cat, label) + "</select>" +
+            '<button type="button" class="edit-dev-del" aria-label="ลบอุปกรณ์">&times;</button>' +
+          "</div>" +
+          '<textarea class="edit-dev-problem" rows="2" maxlength="500" placeholder="รายละเอียด / อาการของอุปกรณ์ชิ้นนี้">' + esc(problem) + "</textarea>" +
+          "</div>";
+      }).join("");
+      box.querySelectorAll(".edit-dev-cat").forEach(function (sel) {
+        sel.addEventListener("change", function () {
+          var nameSel = this.closest(".edit-dev-row").querySelector(".edit-dev-name");
+          nameSel.innerHTML = editNameOptionsHtml(this.value, "");
+        });
+      });
+      box.querySelectorAll(".edit-dev-del").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var row = this.closest(".edit-dev-row");
+          if (box.querySelectorAll(".edit-dev-row").length <= 1) {
+            row.querySelector(".edit-dev-cat").value = "";
+            row.querySelector(".edit-dev-name").innerHTML = editNameOptionsHtml("", "");
+            row.querySelector(".edit-dev-problem").value = "";
+            return;
+          }
+          row.remove();
+        });
+      });
+    }
+
+    function editRowsFromTicket(deviceStr, symptomStr) {
+      var parts = parseDeviceParts(deviceStr);
+      var lines = symptomLines(symptomStr);
+      var rows = [];
+      parts.forEach(function (p, i) {
+        var type = deviceType(p);
+        var label = deviceLabel(p);
+        if (EDIT_DEV_CATS.indexOf(type) === -1) type = "Hardware";
+        var problem = lines[i] || "";
+        rows.push({ cat: type, label: label, problem: problem });
+      });
+      if (lines.length > parts.length) {
+        for (var j = parts.length; j < lines.length; j++) {
+          if (lines[j]) rows.push({ cat: "", label: "", problem: lines[j] });
+        }
+      }
+      if (!rows.length) rows.push({ cat: "", label: "", problem: "" });
+      return rows;
+    }
+
+    function renderEditDevices(deviceStr, symptomStr) {
+      editDeviceExtra = [];
+      var box = document.getElementById("editDeviceRows");
+      if (!box) return;
+      box.innerHTML = "";
+      var rows = editRowsFromTicket(deviceStr || "", symptomStr || "");
+      loadEditDeviceOptions().then(function () { renderEditDeviceRows(rows); });
+    }
+
+    function appendEditDeviceRow() {
+      var box = document.getElementById("editDeviceRows");
+      if (!box) return;
+      var tmp = document.createElement("div");
+      tmp.innerHTML = '<div class="edit-dev-row"><div class="edit-dev-head">' +
+        '<select class="edit-dev-cat">' + editCatOptionsHtml("") + "</select>" +
+        '<select class="edit-dev-name">' + editNameOptionsHtml("", "") + "</select>" +
+        '<button type="button" class="edit-dev-del" aria-label="ลบ">&times;</button>' +
+        '</div><textarea class="edit-dev-problem" rows="2" maxlength="500" placeholder="รายละเอียด / อาการของอุปกรณ์ชิ้นนี้"></textarea></div>';
+      var row = tmp.firstChild;
+      box.appendChild(row);
+      row.querySelector(".edit-dev-cat").addEventListener("change", function () {
+        row.querySelector(".edit-dev-name").innerHTML = editNameOptionsHtml(this.value, "");
+      });
+      row.querySelector(".edit-dev-del").addEventListener("click", function () {
+        if (box.querySelectorAll(".edit-dev-row").length <= 1) return;
+        row.remove();
+      });
+      row.querySelector(".edit-dev-problem").focus();
+    }
+
+    function ensureSymptomPrefix(label, problem) {
+      if (!label) return problem;
+      if (!problem) return label + ":";
+      if (/^[^:\n]{1,60}:\s*/.test(problem)) return problem;
+      return label + ": " + problem;
+    }
+
+    function buildDevicesFromEditRows() {
+      var devParts = [];
+      var sympLines = [];
+      document.querySelectorAll("#editDeviceRows .edit-dev-row").forEach(function (r) {
+        var cat = r.querySelector(".edit-dev-cat").value.trim();
+        var label = r.querySelector(".edit-dev-name").value.trim();
+        var problem = r.querySelector(".edit-dev-problem").value.trim();
+        if (!cat && !label && !problem) return;
+        if (cat && label) devParts.push(cat + " · " + label);
+        else if (label) devParts.push(label);
+        if (cat === "Disk") sympLines.push(problem || label);
+        else if (label) sympLines.push(ensureSymptomPrefix(label, problem));
+        else if (problem) sympLines.push(problem);
+      });
+      return { device: devParts.join(", "), symptom: sympLines.join("\n") };
+    }
+
+    (function initEditDeviceAdd() {
+      var btn = document.getElementById("editAddDeviceBtn");
+      if (btn) btn.addEventListener("click", appendEditDeviceRow);
+    })();
 
     function openEdit(row) {
       currentRow = row;
@@ -8330,12 +8598,19 @@
       var loc = parseLocation(row.location);
       var created = new Date(row.created_at);
       document.getElementById("editNo").textContent = row.ticket_no;
-      loadEditDeviceOptions();
-      setEditDevice(row.device || "");
-      document.getElementById("editSymptom").value = row.symptom || "";
+      renderEditDevices(row.device || "", row.symptom || "");
       document.getElementById("editCreatedAt").value = localInputValue(created);
       document.getElementById("editStatus").value = row.status === "working" ? "working" : row.status === "done" ? "done" : "new";
       document.getElementById("editHandler").value = row.handler_name || "";
+      var statusAt = "";
+      if (row.status_date) {
+        var stTime = String(row.status_time || "").trim();
+        if (!/^\d{1,2}:\d{2}$/.test(stTime)) stTime = "00:00";
+        statusAt = String(row.status_date) + "T" + (stTime.length === 4 ? "0" + stTime : stTime);
+      }
+      var statusAtEl = document.getElementById("editStatusAt");
+      if (statusAtEl) statusAtEl.value = statusAt;
+      updateEditStatusUI();
       var bn = branchNumber(loc.branch);
       var brSel = document.getElementById("editBranch");
       var matched = false;
@@ -8469,6 +8744,39 @@
 
     window.saveFinish = saveFinish;
 
+    function updateEditDurationHint() {
+      var hint = document.getElementById("editDurationHint");
+      if (!hint) return;
+      var created = document.getElementById("editCreatedAt");
+      var at = document.getElementById("editStatusAt");
+      if (!created || !at || !created.value || !at.value) { hint.textContent = ""; return; }
+      var a = new Date(created.value), b = new Date(at.value);
+      if (isNaN(a) || isNaN(b) || b < a) { hint.textContent = ""; return; }
+      var min = Math.floor((b - a) / 60000);
+      var d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60), m = min % 60;
+      var parts = [];
+      if (d) parts.push(d + " วัน");
+      if (h) parts.push(h + " ชั่วโมง");
+      parts.push(m + " นาที");
+      hint.textContent = "ระยะเวลาดำเนินการ: " + parts.join(" ");
+    }
+
+    function updateEditStatusUI() {
+      var st = document.getElementById("editStatus");
+      var wrap = document.getElementById("editDoneField");
+      if (wrap) wrap.hidden = !st || st.value !== "done";
+      updateEditDurationHint();
+    }
+
+    (function initEditStatusUI() {
+      var st = document.getElementById("editStatus");
+      var at = document.getElementById("editStatusAt");
+      var ca = document.getElementById("editCreatedAt");
+      if (st) st.addEventListener("change", updateEditStatusUI);
+      if (at) { at.addEventListener("change", updateEditDurationHint); at.addEventListener("input", updateEditDurationHint); }
+      if (ca) ca.addEventListener("change", updateEditDurationHint);
+    })();
+
     function saveEdit() {
       var row = currentRow;
       if (!row) return;
@@ -8477,26 +8785,28 @@
       var location = branch + (pos ? " · " + pos : "");
       var createdAt = document.getElementById("editCreatedAt").value;
       var status = document.getElementById("editStatus").value;
-      var devCat = document.getElementById("editDeviceCat").value.trim();
-      var devLabel = document.getElementById("editDevice").value.trim();
-      var devParts = [];
-      if (devCat && devLabel) devParts.push(devCat + " · " + devLabel);
-      else if (devLabel) devParts.push(devLabel);
-      editDeviceExtra.forEach(function (p) { if (p) devParts.push(p); });
+      var dev = buildDevicesFromEditRows();
       var payload = {
-        device: devParts.join(", "),
-        symptom: document.getElementById("editSymptom").value.trim(),
+        device: dev.device,
+        symptom: dev.symptom,
         location: location.trim(),
         handler_name: document.getElementById("editHandler").value.trim()
       };
       if (createdAt) payload.created_at = new Date(createdAt).toISOString();
       if (status && status !== row.status) {
         payload.status = status;
-        if (status === "done" && !row.status_date) {
-          var now = new Date();
-          var pad = function (n) { return String(n).padStart(2, "0"); };
-          payload.status_date = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
-          payload.status_time = pad(now.getHours()) + ":" + pad(now.getMinutes());
+      }
+      if (status === "done") {
+        var pad2 = function (n) { return String(n).padStart(2, "0"); };
+        var atEl2 = document.getElementById("editStatusAt");
+        var whenDone = atEl2 && atEl2.value ? new Date(atEl2.value) : null;
+        if (whenDone && !isNaN(whenDone)) {
+          payload.status_date = whenDone.getFullYear() + "-" + pad2(whenDone.getMonth() + 1) + "-" + pad2(whenDone.getDate());
+          payload.status_time = pad2(whenDone.getHours()) + ":" + pad2(whenDone.getMinutes());
+        } else if (!row.status_date) {
+          var now2 = new Date();
+          payload.status_date = now2.getFullYear() + "-" + pad2(now2.getMonth() + 1) + "-" + pad2(now2.getDate());
+          payload.status_time = pad2(now2.getHours()) + ":" + pad2(now2.getMinutes());
         }
       }
       var no = row.ticket_no;
@@ -11826,6 +12136,7 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     });
     tf$("tfPrevBtn").classList.toggle("hidden", step === 1);
     tf$("tfNextBtn").textContent = step === 4 ? "ส่งแจ้งซ่อม" : "ถัดไป";
+    if (step === 4 && typeof tfUpdateWhenFields === "function") tfUpdateWhenFields();
   }
 
   var TF_THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
@@ -11900,17 +12211,20 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
       return true;
     }
     if (step === 4) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(tfThaiDateISO())) {
-        tf$("tfStatusDay").classList.add("invalid");
-        tf$("tfStatusMon").classList.add("invalid");
-        tf$("tfStatusYear").classList.add("invalid");
-        tfToast("กรุณาเลือกวันที่ของสถานะให้ถูกต้อง");
-        return false;
-      }
-      if (!tf$("tfStatusTime").value) {
-        tf$("tfStatusTime").classList.add("invalid");
-        tfToast("กรุณาใส่เวลาของสถานะ");
-        return false;
+      var st4 = tfSelectedStatus();
+      if (st4 !== "new") {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(tfThaiDateISO())) {
+          tf$("tfStatusDay").classList.add("invalid");
+          tf$("tfStatusMon").classList.add("invalid");
+          tf$("tfStatusYear").classList.add("invalid");
+          tfToast("กรุณาเลือกวันที่ของสถานะให้ถูกต้อง");
+          return false;
+        }
+        if (!tf$("tfStatusTime").value) {
+          tf$("tfStatusTime").classList.add("invalid");
+          tfToast("กรุณาใส่เวลาของสถานะ");
+          return false;
+        }
       }
       var hd = tf$("tfHandler");
       if (!hd.value) {
@@ -11944,6 +12258,34 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
   tf$("tfStatusTime").addEventListener("input", function () { this.classList.remove("invalid"); });
   tf$("tfHandler").addEventListener("change", function () { this.classList.remove("invalid"); });
 
+  function tfSelectedStatus() {
+    var r = document.querySelector("#ticketFormMask input[name='tfStatusRadio']:checked");
+    return r ? r.value : "new";
+  }
+
+  function tfUpdateWhenFields() {
+    var st = tfSelectedStatus();
+    var box = tf$("tfWhenFields");
+    if (box) box.style.display = st === "new" ? "none" : "";
+    var dateLabel = tf$("tfDateLabel"), timeLabel = tf$("tfTimeLabel");
+    var dateHint = tf$("tfDateHint"), timeHint = tf$("tfTimeHint");
+    if (st === "done") {
+      if (dateLabel) dateLabel.textContent = "วันที่เสร็จสิ้น";
+      if (timeLabel) timeLabel.textContent = "เวลาที่เสร็จสิ้น";
+      if (dateHint) dateHint.textContent = "วันที่ดำเนินการเสร็จสิ้น (พ.ศ.)";
+      if (timeHint) timeHint.textContent = "เวลาที่ดำเนินการเสร็จสิ้น เช่น 16:30";
+    } else {
+      if (dateLabel) dateLabel.textContent = "วันที่เริ่มดำเนินการ";
+      if (timeLabel) timeLabel.textContent = "เวลา (โดยประมาณ)";
+      if (dateHint) dateHint.textContent = "วันที่ของสถานะนี้เป็น พ.ศ. (ค่าเริ่มต้นเป็นวันนี้)";
+      if (timeHint) timeHint.textContent = "เวลาที่เริ่มดำเนินการ เช่น 7 โมงเช้า ให้เลือก 07:00";
+    }
+  }
+  window.tfUpdateWhenFields = tfUpdateWhenFields;
+  document.querySelectorAll("#ticketFormMask input[name='tfStatusRadio']").forEach(function (r) {
+    r.addEventListener("change", tfUpdateWhenFields);
+  });
+
   function tfBuildSymptom() {
     return tfSelected.map(function (d) {
       var k = tfKey(d);
@@ -11971,10 +12313,16 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     fd.append("reporter_phone", tf$("tfPhone").value.trim());
     fd.append("reporter_line_id", tf$("tfLineId").value.trim());
     var statusRadio = document.querySelector("#ticketFormMask input[name='tfStatusRadio']:checked");
-    fd.append("status", statusRadio ? statusRadio.value : "new");
+    var curStatus = statusRadio ? statusRadio.value : "new";
+    fd.append("status", curStatus);
     fd.append("handler_name", tf$("tfHandler").value.trim());
-    fd.append("status_date", tfThaiDateISO());
-    fd.append("status_time", tf$("tfStatusTime").value);
+    if (curStatus === "new") {
+      fd.append("status_date", "");
+      fd.append("status_time", "");
+    } else {
+      fd.append("status_date", tfThaiDateISO());
+      fd.append("status_time", tf$("tfStatusTime").value);
+    }
     fd.append("source", "internal");
 
     fetch("/api/tickets", { method: "POST", body: fd })
@@ -12040,6 +12388,7 @@ document.getElementById("sidebar").addEventListener("click", function (e) {
     document.querySelectorAll("#ticketFormMask input[name='tfStatusRadio']").forEach(function (r) {
       r.checked = r.value === "new";
     });
+    if (typeof tfUpdateWhenFields === "function") tfUpdateWhenFields();
     tf$("tfHandler").value = "";
     tf$("tfHandler").classList.remove("invalid");
     document.querySelectorAll(".tf-loc-group input[name='tfBranch']").forEach(function (r) { r.checked = false; });

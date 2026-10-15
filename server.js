@@ -779,6 +779,30 @@ app.get("/admin-db.html", serveAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin-db.html"));
 });
 
+// ---------- Clean URLs: เปิดหน้าเว็บโดยไม่มีนามสกุล .html ----------
+// index = หน้าหลัก, ticket = แจ้งซ่อม, myticket = แจ้งซ่อมของฉัน, contact = ติดต่อไอที
+const CLEAN_PAGES = {
+  "/": "index.html",
+  "/index": "index.html",
+  "/ticket": "ticket.html",
+  "/myticket": "my-tickets.html",
+  "/my-tickets": "my-tickets.html",
+  "/contact": "contact.html"
+};
+const LEGACY_HTML_REDIRECTS = {
+  "/index.html": "/",
+  "/ticket.html": "/ticket",
+  "/my-tickets.html": "/myticket",
+  "/contact.html": "/contact"
+};
+app.get(Object.keys(LEGACY_HTML_REDIRECTS), (req, res) => {
+  const q = req.url.indexOf("?") > -1 ? req.url.slice(req.url.indexOf("?")) : "";
+  res.redirect(301, LEGACY_HTML_REDIRECTS[req.path] + q);
+});
+app.get(Object.keys(CLEAN_PAGES), (req, res) => {
+  res.sendFile(path.join(__dirname, "public", CLEAN_PAGES[req.path]));
+});
+
 app.use(function (req, res, next) {
   // หน้า login: ห้ามแคชไว้ทุกกรณี เพื่อไม่ให้รหัสผ่าน/ฟอร์มค้างในแคชเบราว์เซอร์
   const noStore = ["/admin", "/admin.html", "/admin-mobile.html", "/admin-db", "/admin-db.html",
@@ -793,7 +817,6 @@ app.use(function (req, res, next) {
 });
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/fonts", express.static(path.join(__dirname, "fonts")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 // SEC-07: allowlist ชนิดไฟล์ที่ยอมรับ (กันอัปไฟล์อันตราย/สคริปต์ขึ้น bucket สาธารณะ)
 const ALLOWED_MIME = new Set([
@@ -959,9 +982,9 @@ app.post("/api/tickets", rateLimit("ticket", 20, 60 * 60 * 1000), upload.fields(
       reporterPhone: phone,
       reporterLineId,
       status,
-      effHandlerName,
-      effStatusDate,
-      effStatusTime,
+      handlerName: effHandlerName,
+      statusDate: effStatusDate,
+      statusTime: effStatusTime,
       source,
       acceptedAt,
       audioUrl,
@@ -1256,6 +1279,10 @@ app.get("/api/visitors/me/keypass", async (req, res) => {
     if (!visitor) return res.status(401).json({ ok: false, message: "ยังไม่ได้ยืนยันตัวตน" });
     const keypass = keypassDecrypt(visitor.keypass_enc);
     if (!keypass) {
+      // แยกให้ออก: ไม่มี keypass_enc เลย (ออกก่อนมีระบบดูเอง) กับมีแต่ถอดรหัสไม่ได้ (คีย์ ENC_KEY ไม่ตรงกับตอนออก)
+      if (visitor.keypass_enc) {
+        console.warn("[keypass] ถอดรหัสไม่สำเร็จ — VISITOR_KEYPASS_ENC_KEY อาจไม่ตรงกับตอนออก Key Pass (visitor=" + visitor.id + ")");
+      }
       return res.status(404).json({ ok: false, message: "Key Pass นี้ถูกออกก่อนเพิ่มระบบดูด้วยตัวเอง กรุณาติดต่อฝ่าย IT เพื่อออกใหม่" });
     }
     res.json({ ok: true, keypass: keypass });

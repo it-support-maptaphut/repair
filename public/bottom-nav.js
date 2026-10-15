@@ -5,23 +5,23 @@
   var TABS = [
     {
       key: "ticket",
-      href: "ticket.html",
+      href: "/ticket",
       label: "แจ้งซ่อม",
-      match: ["ticket.html", "/", "/ticket"],
+      match: ["ticket", "ticket.html", "", "/"],
       icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
     },
     {
       key: "history",
-      href: "my-tickets.html",
+      href: "/myticket",
       label: "ประวัติ",
-      match: ["my-tickets.html"],
+      match: ["myticket", "my-tickets", "my-tickets.html"],
       icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'
     },
     {
       key: "contact",
-      href: "contact.html",
+      href: "/contact",
       label: "ติดต่อ",
-      match: ["contact.html"],
+      match: ["contact", "contact.html"],
       icon: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.6 2.81.72A2 2 0 0 1 22 16.92z"/>'
     },
     {
@@ -39,7 +39,7 @@
     for (var i = 0; i < TABS.length; i++) {
       if (TABS[i].match.indexOf(file) !== -1) return TABS[i].key;
     }
-    if (!file || file === "index.html") return "ticket";
+    if (!file || file === "index" || file === "index.html") return "ticket";
     return "";
   }
 
