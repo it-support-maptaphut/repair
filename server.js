@@ -35,6 +35,26 @@ function clientIp(req) {
   return (req && req.ip) || (req && req.socket && req.socket.remoteAddress) || "";
 }
 
+// ดึง IP จริงจาก socket (ไม่ผ่าน trust proxy) — ใช้สำหรับเช็คความปลอดภัย เช่น localhost verification
+function realClientIp(req) {
+  return (req && req.socket && req.socket.remoteAddress) || "";
+}
+
+// ตรวจสอบว่า IP เป็น localhost หรือไม่ (รองรับ IPv4/IPv6/mapped)
+function isLocalhost(ip) {
+  if (!ip) return false;
+  const normalized = String(ip).trim();
+  // IPv4 localhost
+  if (normalized === "127.0.0.1") return true;
+  // IPv6 localhost
+  if (normalized === "::1") return true;
+  // IPv4-mapped IPv6 localhost
+  if (normalized === "::ffff:127.0.0.1") return true;
+  // ::ffff:0:127.0.0.1 (alternative form)
+  if (normalized === "::ffff:0:127.0.0.1") return true;
+  return false;
+}
+
 // ---------- security headers (SEC-06) ----------
 app.disable("x-powered-by");
 app.use(function (req, res, next) {
@@ -581,6 +601,11 @@ app.post("/api/auth/login", (req, res) => {
   if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
     return res.status(401).json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
   }
+  // Admin account (wan2024) can only login from localhost
+  const ip = realClientIp(req);
+  if (!isLocalhost(ip)) {
+    return res.status(403).json({ ok: false, message: "บัญชีผู้ดูแลระบบเข้าถึงได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) เท่านั้น" });
+  }
   const token = signAdminToken({ e: "admin", exp: Date.now() + ADMIN_SESSION_TTL });
   setAdminCookie(res, token);
   setCsrfCookie(req, res);
@@ -666,7 +691,14 @@ app.get("/api/auth/status", async (req, res) => {
 // เปิดหน้า /admin.html ได้เฉพาะผู้ที่ Authed แล้ว (admin หรือ พนักงานที่มีสิทธิ์)
 // วางก่อน express.static เพื่อไม่ให้ static serve admin.html ข้าม gate
 async function serveAdminPage(req, res, next) {
-  if (isAdminAuthed(req)) return next();
+  if (isAdminAuthed(req)) {
+    // Admin account (wan2024) can only access admin pages from localhost
+    const ip = realClientIp(req);
+    if (!isLocalhost(ip)) {
+      return res.status(403).send("บัญชีผู้ดูแลระบบเข้าถึงหน้า admin ได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) เท่านั้น");
+    }
+    return next();
+  }
   const username = isUserAuthed(req);
   if (username) {
     try {
