@@ -55,6 +55,22 @@ function isLocalhost(ip) {
   return false;
 }
 
+// ตรวจสอบว่า request มาโดยตรง (ไม่ผ่าน Reverse Proxy) — ไม่มี header proxy ทั่วไป
+function isDirectRequest(req) {
+  if (!req || !req.headers) return false;
+  const h = req.headers;
+  // หากมี header ที่ proxy มักจะส่งมา ถือว่าไม่ใช่ direct
+  return !(
+    h["x-forwarded-for"] ||
+    h["x-real-ip"] ||
+    h["x-forwarded-proto"] ||
+    h["x-forwarded-host"] ||
+    h["x-forwarded-port"] ||
+    h["via"] ||
+    h["forwarded"]
+  );
+}
+
 // ---------- security headers (SEC-06) ----------
 app.disable("x-powered-by");
 app.use(function (req, res, next) {
@@ -601,10 +617,10 @@ app.post("/api/auth/login", (req, res) => {
   if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
     return res.status(401).json({ ok: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
   }
-  // Admin account (wan2024) can only login from localhost
+  // Admin account (wan2024) can only login from localhost DIRECTLY (not via proxy)
   const ip = realClientIp(req);
-  if (!isLocalhost(ip)) {
-    return res.status(403).json({ ok: false, message: "บัญชีผู้ดูแลระบบเข้าถึงได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) เท่านั้น" });
+  if (!isLocalhost(ip) || !isDirectRequest(req)) {
+    return res.status(403).json({ ok: false, message: "บัญชีผู้ดูแลระบบเข้าถึงได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) โดยตรงเท่านั้น" });
   }
   const token = signAdminToken({ e: "admin", exp: Date.now() + ADMIN_SESSION_TTL });
   setAdminCookie(res, token);
@@ -692,10 +708,10 @@ app.get("/api/auth/status", async (req, res) => {
 // วางก่อน express.static เพื่อไม่ให้ static serve admin.html ข้าม gate
 async function serveAdminPage(req, res, next) {
   if (isAdminAuthed(req)) {
-    // Admin account (wan2024) can only access admin pages from localhost
+    // Admin account (wan2024) can only access admin pages from localhost DIRECTLY (not via proxy)
     const ip = realClientIp(req);
-    if (!isLocalhost(ip)) {
-      return res.status(403).send("บัญชีผู้ดูแลระบบเข้าถึงหน้า admin ได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) เท่านั้น");
+    if (!isLocalhost(ip) || !isDirectRequest(req)) {
+      return res.status(403).send("บัญชีผู้ดูแลระบบเข้าถึงหน้า admin ได้เฉพาะจากเครื่องเซิร์ฟเวอร์ (localhost) โดยตรงเท่านั้น");
     }
     return next();
   }
